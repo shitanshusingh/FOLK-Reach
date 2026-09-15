@@ -43,11 +43,14 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
         personName: person?.name || "Unknown",
         personPhone: person?.phone || "",
         personPriority: person?.priorityScore || 0,
+        personOwnerId: person?.ownerId,
         callerName: user?.name || "Unassigned"
       };
     }));
 
-    joined.sort((a, b) => {
+    const filtered = joined.filter(r => r.personOwnerId === currentUser?.id);
+
+    filtered.sort((a, b) => {
       // 1. Current user's assigned contacts bubble to the top
       if (a.assignedUserId === currentUser?.id && b.assignedUserId !== currentUser?.id) return -1;
       if (a.assignedUserId !== currentUser?.id && b.assignedUserId === currentUser?.id) return 1;
@@ -56,7 +59,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
       return b.personPriority - a.personPriority;
     });
 
-    return joined;
+    return filtered;
   }, [id, currentUser?.id]);
 
   const handleStatusChange = async (recordId: number, newStatus: SessionAttendance['status']) => {

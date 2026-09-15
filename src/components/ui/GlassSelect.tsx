@@ -42,7 +42,21 @@ export function GlassSelect({ value, onChange, options, placeholder = "Select an
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
-        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <select 
+          className={styles.nativeSelect}
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value);
+            setIsOpen(false);
+          }}
+        >
+          <option value="" disabled>{placeholder}</option>
+          {options.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+
+        <span style={{ display: 'flex', alignItems: 'center', gap: '8px', pointerEvents: 'none' }}>
           {selectedOption ? (
             <>
               {selectedOption.icon}
@@ -52,7 +66,7 @@ export function GlassSelect({ value, onChange, options, placeholder = "Select an
             <span style={{ color: 'var(--color-text-muted)' }}>{placeholder}</span>
           )}
         </span>
-        <ChevronDown size={18} className={`${styles.icon} ${isOpen ? styles.iconOpen : ''}`} />
+        <ChevronDown size={18} className={`${styles.icon} ${isOpen ? styles.iconOpen : ''}`} style={{ pointerEvents: 'none' }} />
       </button>
 
       {isOpen && (
