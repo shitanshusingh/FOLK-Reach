@@ -28,6 +28,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
   const [activeTab, setActiveTab] = useState<'CALLING' | 'ATTENDANCE' | 'ANALYTICS'>('CALLING');
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [activeCallModal, setActiveCallModal] = useState<number | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { currentUser } = useAuth();
 
   const session = useFirestoreDoc('sessions', id);
@@ -60,14 +61,16 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
     });
 
     return filtered;
-  }, [id, currentUser?.id]);
+  }, [id, currentUser?.id, refreshTrigger]);
 
   const handleStatusChange = async (recordId: number, newStatus: SessionAttendance['status']) => {
     await firestoreAPI.update('sessionAttendance', recordId, { status: newStatus });
+    setRefreshTrigger(prev => prev + 1);
   };
 
   const handleAssignCaller = async (recordId: number, userId: number) => {
     await firestoreAPI.update('sessionAttendance', recordId, { assignedUserId: userId });
+    setRefreshTrigger(prev => prev + 1);
   };
 
   if (session === undefined || attendanceRecords === undefined) return <div className={styles.container}>Loading...</div>;
@@ -276,6 +279,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
         <CallOutcomeModal 
           recordId={activeCallModal} 
           onClose={() => setActiveCallModal(null)} 
+          onSuccess={() => setRefreshTrigger(prev => prev + 1)}
         />
       )}
 
@@ -284,6 +288,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
         <InviteModal 
           sessionId={id} 
           onClose={() => setShowInviteModal(false)} 
+          onSuccess={() => setRefreshTrigger(prev => prev + 1)}
           existingRecords={attendanceRecords}
         />
       )}
@@ -295,7 +300,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
 // Modals
 // ----------------------------------------------------
 
-function CallOutcomeModal({ recordId, onClose }: { recordId: number, onClose: () => void }) {
+function CallOutcomeModal({ recordId, onClose, onSuccess }: { recordId: number, onClose: () => void, onSuccess: () => void }) {
   const [status, setStatus] = useState<SessionAttendance['status']>('CONFIRMED');
   const [outcomeStr, setOutcomeStr] = useState("");
 
@@ -305,6 +310,7 @@ function CallOutcomeModal({ recordId, onClose }: { recordId: number, onClose: ()
       callOutcome: outcomeStr, 
       calledAt: new Date() 
     });
+    onSuccess();
     onClose();
   };
 
@@ -351,7 +357,7 @@ function CallOutcomeModal({ recordId, onClose }: { recordId: number, onClose: ()
   );
 }
 
-function InviteModal({ sessionId, onClose, existingRecords }: any) {
+function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
   const { currentUser } = useAuth();
   const allPeople = useLiveQuery(async () => {
     if (!currentUser?.id) return [];
@@ -367,6 +373,7 @@ function InviteModal({ sessionId, onClose, existingRecords }: any) {
       status: 'PENDING_CALL',
       isNewContact
     });
+    onSuccess();
   };
 
   const handleBulkInvite = async (type: 'HOT' | 'PRIORITY' | 'WARM' | 'COLD' | 'DORMANT' | 'ALL') => {
@@ -386,6 +393,7 @@ function InviteModal({ sessionId, onClose, existingRecords }: any) {
 
     if (records.length > 0) {
       await db.sessionAttendance.bulkAdd(records);
+      onSuccess();
     } else {
       alert(`No ${type} contacts available to add.`);
     }

@@ -45,6 +45,7 @@ export function GlassSelect({ value, onChange, options, placeholder = "Select an
         <select 
           className={styles.nativeSelect}
           value={value}
+          onClick={(e) => e.stopPropagation()}
           onChange={(e) => {
             onChange(e.target.value);
             setIsOpen(false);
