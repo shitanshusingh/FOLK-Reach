@@ -202,18 +202,16 @@ export default function DashboardPage() {
       }
     }
 
-    // 5. Put remainder in Pipelines
+    // 5. Populate Pipelines with ALL contacts for visibility
     for (const person of allPeople) {
-      if (!inActionPlan.has(person.id!)) {
-        if (person.priorityScore >= 20) {
-          hotContacts.push(person);
-        } else if (person.priorityScore >= 10) {
-          activeContacts.push(person);
-        } else if (person.priorityScore > 0) {
-          coldContacts.push(person);
-        } else {
-          dormantContacts.push(person);
-        }
+      if (person.priorityScore >= 20) {
+        hotContacts.push(person);
+      } else if (person.priorityScore >= 10) {
+        activeContacts.push(person);
+      } else if (person.priorityScore > 0) {
+        coldContacts.push(person);
+      } else {
+        dormantContacts.push(person);
       }
     }
 
@@ -400,7 +398,7 @@ export default function DashboardPage() {
         </h2>
         <div className={styles.pipelineScroll}>
           {hotContacts.length === 0 ? (
-            <p style={{ color: 'var(--color-text-muted)' }}>No hot contacts not already in Action Plan.</p>
+            <p style={{ color: 'var(--color-text-muted)' }}>No hot contacts.</p>
           ) : (
             hotContacts.map(p => renderPipelineCard(p, <Flame size={20} />, 'HOT'))
           )}
@@ -413,7 +411,7 @@ export default function DashboardPage() {
         </h2>
         <div className={styles.pipelineScroll}>
           {activeContacts.length === 0 ? (
-            <p style={{ color: 'var(--color-text-muted)' }}>No warm contacts not already in Action Plan.</p>
+            <p style={{ color: 'var(--color-text-muted)' }}>No warm contacts.</p>
           ) : (
             activeContacts.map(p => renderPipelineCard(p, <UserCheck size={20} />, 'WARM'))
           )}
