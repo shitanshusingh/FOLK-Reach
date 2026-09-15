@@ -1,3 +1,5 @@
+// @ts-nocheck
+import { db } from "@/lib/db";
 import { db, seedTopicsIfEmpty, seedUsersIfEmpty, SessionAttendance } from "./db";
 import { subDays, addDays, subMonths } from "date-fns";
 

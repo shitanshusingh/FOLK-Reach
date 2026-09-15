@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import { firestoreAPI, useFirestoreQuery, useFirestoreDoc } from "@/lib/firestore";

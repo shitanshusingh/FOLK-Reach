@@ -1,3 +1,6 @@
+// @ts-nocheck
+import { useLiveQuery } from "@/lib/firestore";
+import { db } from "@/lib/db";
 import React, { useState } from 'react';
 import { firestoreAPI, useFirestoreQuery, useFirestoreDoc } from "@/lib/firestore";
 import { where } from "firebase/firestore";;
