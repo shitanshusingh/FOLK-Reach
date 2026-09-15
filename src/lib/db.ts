@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { db } from "@/lib/db";
+
 // In our massive migration to Firebase, we've replaced Dexie with Firestore!
 // This file used to be the Dexie configuration. Now, it just exports our TypeScript interfaces
 // and re-exports our Firestore API to keep the rest of the application imports working smoothly!
