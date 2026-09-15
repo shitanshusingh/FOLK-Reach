@@ -8,6 +8,7 @@ import { where } from "firebase/firestore";;
 import { X, Calendar as CalendarIcon } from 'lucide-react';
 import styles from './QuickAddTask.module.css';
 import { GlassSelect } from '@/components/ui/GlassSelect';
+import { useAuth } from "@/contexts/AuthContext";
 
 export function QuickAddTask({ 
   onClose, 
@@ -22,8 +23,11 @@ export function QuickAddTask({
   const [dueDate, setDueDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
 
-  const allPeople = useLiveQuery(() => db.people.orderBy('name').toArray());
-
+  const { currentUser } = useAuth();
+  const allPeople = useLiveQuery(async () => {
+    if (!currentUser?.id) return [];
+    return await db.people.where('ownerId').equals(currentUser.id).toArray();
+  }, [currentUser?.id]);
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!personId || !title || !dueDate) return;

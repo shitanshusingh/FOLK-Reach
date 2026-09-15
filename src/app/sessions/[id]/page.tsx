@@ -349,7 +349,11 @@ function CallOutcomeModal({ recordId, onClose }: { recordId: number, onClose: ()
 }
 
 function InviteModal({ sessionId, onClose, existingRecords }: any) {
-  const allPeople = useLiveQuery(() => db.people.orderBy('name').toArray());
+  const { currentUser } = useAuth();
+  const allPeople = useLiveQuery(async () => {
+    if (!currentUser?.id) return [];
+    return await db.people.where('ownerId').equals(currentUser.id).toArray();
+  }, [currentUser?.id]);
   const existingPersonIds = new Set(existingRecords.map((r: any) => r.personId));
   const [isNewContact, setIsNewContact] = useState(false);
   
