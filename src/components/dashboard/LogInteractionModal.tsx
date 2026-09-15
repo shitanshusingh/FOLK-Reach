@@ -49,6 +49,35 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
         priorityScore: newPriority
       });
 
+      // Auto-schedule physical task pipeline
+      const existingTasks = await db.tasks.where('personId').equals(person.id as number).toArray();
+      for (const t of existingTasks) {
+        if (t.status === 'PENDING') {
+          await firestoreAPI.update('tasks', t.id as number, { status: 'COMPLETED' });
+        }
+      }
+
+      let threshold = 30;
+      if (newPriority >= 20) threshold = 2; // Hot
+      else if (newPriority >= 10) threshold = 4; // Warm
+      else if (newPriority > 0) threshold = 5; // Cold
+      else threshold = 10; // Dormant
+
+      const nextDate = new Date();
+      nextDate.setDate(nextDate.getDate() + threshold);
+      
+      const nextType = (type === 'MEETING' || type === 'PRASADAM' || type === 'BOOK') ? 'CALL' : 'MEETING';
+      const reason = nextType === 'MEETING' ? '1-to-1 / Prasadam / Topic' : 'Follow-up Call';
+
+      await db.tasks.add({
+        personId: person.id as number,
+        title: reason,
+        type: nextType,
+        status: "PENDING",
+        dueDate: nextDate,
+        notes: "Auto-scheduled"
+      });
+
       onSuccess(outcome);
     } catch (err) {
       console.error(err);

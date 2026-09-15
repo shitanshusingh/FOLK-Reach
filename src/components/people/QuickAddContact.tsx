@@ -94,6 +94,17 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
           tags: [],
           ownerId: currentUser?.id,
         });
+
+        // Physically create the initial follow-up task
+        await db.tasks.add({
+          personId: id as number,
+          title: "Initial Follow-up Call",
+          type: "CALL",
+          status: "PENDING",
+          dueDate: new Date(),
+          notes: "Auto-scheduled on creation"
+        });
+
         if (onSuccess) onSuccess(id as number);
       }
       onClose();

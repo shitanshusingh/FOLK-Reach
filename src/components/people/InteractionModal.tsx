@@ -56,10 +56,45 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
       });
       
       // Update person lastInteractionDate and maybe adjust priorityScore
+      const person = await db.people.get(personId);
+      
       await firestoreAPI.update('people', personId, {
         lastInteractionDate: new Date(),
         lastInteractionType: type
       });
+      
+      // Auto-schedule physical task pipeline
+      if (person) {
+        // Mark existing pending tasks as COMPLETED
+        const existingTasks = await db.tasks.where('personId').equals(personId).toArray();
+        for (const t of existingTasks) {
+          if (t.status === 'PENDING') {
+            await firestoreAPI.update('tasks', t.id as number, { status: 'COMPLETED' });
+          }
+        }
+
+        // Calculate next date based on priority score
+        let threshold = 30;
+        if (person.priorityScore >= 20) threshold = 2; // Hot
+        else if (person.priorityScore >= 10) threshold = 4; // Warm
+        else if (person.priorityScore > 0) threshold = 5; // Cold
+        else threshold = 10; // Dormant
+
+        const nextDate = new Date();
+        nextDate.setDate(nextDate.getDate() + threshold);
+        
+        const nextType = (type === 'MEETING' || type === 'PRASADAM' || type === 'BOOK') ? 'CALL' : 'MEETING';
+        const reason = nextType === 'MEETING' ? '1-to-1 / Prasadam / Topic' : 'Follow-up Call';
+
+        await db.tasks.add({
+          personId: personId,
+          title: reason,
+          type: nextType,
+          status: "PENDING",
+          dueDate: nextDate,
+          notes: "Auto-scheduled"
+        });
+      }
       
       onClose();
     } catch (error) {
