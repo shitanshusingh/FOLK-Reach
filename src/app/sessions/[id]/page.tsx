@@ -15,6 +15,12 @@ import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import clsx from "clsx";
 
+const safeDate = (d: any) => {
+  if (!d) return new Date();
+  if (typeof d.toDate === 'function') return d.toDate();
+  return new Date(d);
+};
+
 export default function SessionDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = React.use(params);
   const id = String(unwrappedParams.id);
@@ -85,7 +91,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
           <div className={styles.detailItem}>
             <span className={styles.detailLabel}>Date & Time</span>
             <span className={styles.detailValue}>
-              {format(new Date(session.date), "MMM d, yyyy h:mm a")}
+              {format(safeDate(session.date), "MMM d, yyyy h:mm a")}
             </span>
           </div>
           {session.location && (
@@ -145,7 +151,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                       {record.isNewContact ? '🆕 New Contact' : '🔄 Old Contact'}
                       {record.calledAt && (
                         <span style={{ marginLeft: 8, color: 'var(--color-success)' }}>
-                          ✅ Called at {format(new Date(record.calledAt), 'h:mm a')}
+                          ✅ Called at {format(safeDate(record.calledAt), 'h:mm a')}
                         </span>
                       )}
                     </div>

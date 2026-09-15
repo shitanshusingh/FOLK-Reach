@@ -8,6 +8,20 @@ import {
   DocumentData, getDocs, addDoc, updateDoc, deleteDoc, getDoc 
 } from 'firebase/firestore';
 
+function convertTimestamps(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj.toDate === 'function') return obj.toDate().toISOString();
+  if (Array.isArray(obj)) return obj.map(convertTimestamps);
+  if (typeof obj === 'object') {
+    const newObj: any = {};
+    for (const key in obj) {
+      newObj[key] = convertTimestamps(obj[key]);
+    }
+    return newObj;
+  }
+  return obj;
+}
+
 // Shared Hooks
 export function useFirestoreQuery<T>(
   collectionName: string, 
@@ -27,7 +41,7 @@ export function useFirestoreQuery<T>(
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const results = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...convertTimestamps(doc.data())
       })) as T[];
       setData(results);
     }, (error) => {
@@ -52,7 +66,7 @@ export function useFirestoreDoc<T>(collectionName: string, docId?: string | numb
     
     const unsubscribe = onSnapshot(doc(firebaseDb, collectionName, docId.toString()), (docSnap) => {
       if (docSnap.exists()) {
-        setData({ id: docSnap.id, ...docSnap.data() } as T);
+        setData({ id: docSnap.id, ...convertTimestamps(docSnap.data()) } as T);
       } else {
         setData(undefined);
       }
@@ -120,7 +134,7 @@ export const firestoreAPI = {
 
   async get(collectionName: string, id: string | number) {
     const docSnap = await getDoc(doc(firebaseDb, collectionName, id.toString()));
-    return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : undefined;
+    return docSnap.exists() ? { id: docSnap.id, ...convertTimestamps(docSnap.data()) } : undefined;
   },
 
   async query(collectionName: string, constraints: any[] = []) {
@@ -128,6 +142,6 @@ export const firestoreAPI = {
     const firestoreConstraints = constraints.map(c => where(c.field, c.op, c.value));
     const q = query(collection(firebaseDb, collectionName), ...firestoreConstraints);
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...convertTimestamps(doc.data()) }));
   }
 };

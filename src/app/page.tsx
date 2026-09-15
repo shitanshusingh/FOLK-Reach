@@ -12,6 +12,12 @@ import { where } from "firebase/firestore";
 import { Person, Task, Interaction } from "@/lib/db";;
 import { differenceInDays, isPast, startOfDay, endOfDay, isToday } from "date-fns";
 import { LogInteractionModal } from "@/components/dashboard/LogInteractionModal";
+
+const safeDate = (d: any) => {
+  if (!d) return new Date();
+  if (typeof d.toDate === 'function') return d.toDate();
+  return new Date(d);
+};
 import { useAuth } from "@/contexts/AuthContext";
 
 type ActionItem = {
@@ -44,7 +50,7 @@ export default function DashboardPage() {
   const start = startOfDay(new Date());
   const todayInteractions = useLiveQuery(async () => {
     if (!currentUser?.id) return [];
-    const interactions = await db.interactions.filter(i => new Date(i.date) >= start).toArray();
+    const interactions = await db.interactions.filter(i => safeDate(i.date) >= start).toArray();
     const userPersonIds = new Set((await db.people.where('ownerId').equals(currentUser.id).toArray()).map(p => p.id));
     return interactions.filter(i => userPersonIds.has(i.personId));
   }, [currentUser?.id]);
@@ -77,7 +83,7 @@ export default function DashboardPage() {
     const highPriorityPeople = sortedPeople.filter(p => p.priorityScore >= 20);
     const regularPeople = sortedPeople.filter(p => p.priorityScore < 20);
 
-    const sortedTasks = [...allTasks].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+    const sortedTasks = [...allTasks].sort((a, b) => safeDate(a.dueDate).getTime() - safeDate(b.dueDate).getTime());
     
     // We only count UNDONE items towards the limits (30 calls, 4 meetings)
     let undoneCallCount = 0;
@@ -119,7 +125,7 @@ export default function DashboardPage() {
       const person = allPeople.find(p => p.id === task.personId);
       if (!person) continue;
 
-      const dueDate = new Date(task.dueDate);
+      const dueDate = safeDate(task.dueDate);
       const isOverdue = dueDate < startOfToday;
       if (dueDate > endOfDay(now)) continue; // Future tasks not included here
 
@@ -146,7 +152,7 @@ export default function DashboardPage() {
       // Check birthdays
       let isBirthday = false;
       if (person.birthday) {
-        const bdayDate = new Date(person.birthday);
+        const bdayDate = safeDate(person.birthday);
         const nextBday = new Date(now.getFullYear(), bdayDate.getMonth(), bdayDate.getDate());
         if (nextBday < now) nextBday.setFullYear(now.getFullYear() + 1); 
         if (differenceInDays(nextBday, now) <= 3) isBirthday = true;
@@ -228,7 +234,7 @@ export default function DashboardPage() {
           <div style={{ marginTop: 4, color: 'var(--color-text-muted)' }}>
             Last Contacted: {
               item.person.lastInteractionDate 
-                ? `${differenceInDays(now, new Date(item.person.lastInteractionDate))} days ago` 
+                ? `${differenceInDays(now, safeDate(item.person.lastInteractionDate))} days ago` 
                 : 'Never'
             }
           </div>
@@ -257,8 +263,8 @@ export default function DashboardPage() {
 
   const renderPipelineCard = (person: Person, icon: React.ReactNode, type: 'HOT' | 'WARM' | 'COLD' | 'DORMANT') => {
     let daysSince = person.lastInteractionDate 
-      ? differenceInDays(now, new Date(person.lastInteractionDate))
-      : differenceInDays(now, new Date(person.firstContactDate));
+      ? differenceInDays(now, safeDate(person.lastInteractionDate))
+      : differenceInDays(now, safeDate(person.firstContactDate));
       
     return (
       <div key={person.id} className={`${styles.card} ${styles.pipelineCard}`}>

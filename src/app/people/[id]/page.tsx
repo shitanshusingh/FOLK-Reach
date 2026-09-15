@@ -14,6 +14,12 @@ import { format } from "date-fns";
 import clsx from "clsx";
 import React from "react";
 import { InteractionModal } from "@/components/people/InteractionModal";
+
+const safeDate = (d: any) => {
+  if (!d) return new Date();
+  if (typeof d.toDate === 'function') return d.toDate();
+  return new Date(d);
+};
 import { QuickAddContact } from "@/components/people/QuickAddContact";
 import { Interaction } from "@/lib/db";
 
@@ -147,7 +153,7 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
           {person.birthday && (
             <div className={styles.detailItem}>
               <span className={styles.detailLabel}>Birthday</span>
-              <span className={styles.detailValue}>{format(new Date(person.birthday), "MMM d")}</span>
+              <span className={styles.detailValue}>{format(safeDate(person.birthday), "MMM d")}</span>
             </div>
           )}
           {person.howMet && (
@@ -159,7 +165,7 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
           <div className={styles.detailItem}>
             <span className={styles.detailLabel}>First Contact</span>
             <span className={styles.detailValue}>
-              {format(new Date(person.firstContactDate), "MMM d, yyyy")}
+              {format(safeDate(person.firstContactDate), "MMM d, yyyy")}
             </span>
           </div>
         </div>
@@ -218,7 +224,7 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
                       {interaction.type} {interaction.outcome ? `- ${interaction.outcome}` : ''}
                     </span>
                     <span className={styles.timelineDate}>
-                      {format(new Date(interaction.date), "MMM d, yyyy h:mm a")}
+                      {format(safeDate(interaction.date), "MMM d, yyyy h:mm a")}
                     </span>
                   </div>
                   {interaction.purpose && (
