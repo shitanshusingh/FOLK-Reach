@@ -134,7 +134,14 @@ export default function DashboardPage() {
     }
 
     // Third: Intelligent Auto-Pipeline Fill
-    // Process all people who are not yet in the action plan
+    // We want to fill the dashboard with contacts based on URGENCY.
+    // URGENCY = daysSince / threshold. 
+    // If urgency >= 1, they are strictly DUE. 
+    // If urgency < 1, they are "Next Up" and we use them to fill the dashboard quotas.
+    
+    type Candidate = { person: Person; daysSince: number; threshold: number; urgency: number };
+    const candidates: Candidate[] = [];
+
     for (const person of sortedPeople) {
       if (inActionPlan.has(person.id!)) continue;
 
@@ -152,34 +159,46 @@ export default function DashboardPage() {
         continue;
       }
 
-      // Calculate days since last interaction
       const daysSince = differenceInDays(now, safeDate(person.lastInteractionDate || person.firstContactDate));
       
-      // Determine threshold based on exact user specification
       let threshold = 30; // default fallback
       if (person.priorityScore >= 20) threshold = 2; // Hot
       else if (person.priorityScore >= 10) threshold = 4; // Warm
       else if (person.priorityScore > 0) threshold = 5; // Cold
       else threshold = 10; // Dormant
 
-      if (daysSince >= threshold) {
-        // They are DUE for an interaction. Intelligently suggest the next step.
-        // If last interaction was a Meeting/Prasadam/Book, suggest a Call.
-        // If last interaction was a Call/Message/Other, suggest a Meeting/Prasadam.
-        const lastType = person.lastInteractionType || 'OTHER';
-        
-        let reason = "Follow-up Call";
-        let actionType: 'CALL' | 'MEETING' = 'CALL';
+      candidates.push({ person, daysSince, threshold, urgency: daysSince / threshold });
+    }
 
-        if (lastType === 'MEETING' || lastType === 'PRASADAM' || lastType === 'BOOK') {
-          reason = "Follow-up Call";
-          actionType = 'CALL';
-        } else {
-          reason = "1-to-1 / Prasadam / Topic";
-          actionType = 'MEETING';
+    // Sort candidates by urgency descending (most urgent first)
+    candidates.sort((a, b) => b.urgency - a.urgency);
+
+    for (const { person, daysSince, threshold, urgency } of candidates) {
+      const isDue = urgency >= 1;
+      
+      const lastType = person.lastInteractionType || 'OTHER';
+      let reason = isDue ? `Auto-Due (${daysSince}d)` : `Next Up (${daysSince}d since contact)`;
+      let actionType: 'CALL' | 'MEETING' = 'CALL';
+
+      if (lastType === 'MEETING' || lastType === 'PRASADAM' || lastType === 'BOOK') {
+        reason += ": Follow-up Call";
+        actionType = 'CALL';
+      } else {
+        reason += ": 1-to-1 / Prasadam / Topic";
+        actionType = 'MEETING';
+      }
+
+      if (isDue) {
+        // ALWAYS add if they are overdue/due
+        addToActionPlan(person, reason, true, actionType);
+      } else {
+        // If not due, only add if we have space in our quotas
+        // Let's say we want to constantly suggest up to 25 calls and 5 meetings total
+        if (actionType === 'MEETING' && undoneMeetingCount < 5) {
+          addToActionPlan(person, reason, false, actionType);
+        } else if (actionType === 'CALL' && undoneCallCount < 25) {
+          addToActionPlan(person, reason, false, actionType);
         }
-
-        addToActionPlan(person, `Auto-Due (${daysSince}d): ${reason}`, true, actionType);
       }
     }
 
