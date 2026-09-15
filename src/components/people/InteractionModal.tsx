@@ -57,7 +57,8 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
       
       // Update person lastInteractionDate and maybe adjust priorityScore
       await firestoreAPI.update('people', personId, {
-        lastInteractionDate: new Date()
+        lastInteractionDate: new Date(),
+        lastInteractionType: type
       });
       
       onClose();

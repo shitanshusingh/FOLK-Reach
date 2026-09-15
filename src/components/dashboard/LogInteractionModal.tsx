@@ -45,6 +45,7 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
 
       await firestoreAPI.update('people', person.id as number, {
         lastInteractionDate: new Date(),
+        lastInteractionType: type,
         priorityScore: newPriority
       });
 

@@ -115,12 +115,7 @@ export default function DashboardPage() {
       }
     };
 
-    // First: Populate calls with High Priority contacts
-    for (const person of highPriorityPeople) {
-      addToActionPlan(person, "High Priority Person", false, 'CALL');
-    }
-
-    // Second: Populate Action Plan with Tasks (Overdue & Today)
+    // First: Populate Action Plan with Tasks (Overdue & Today)
     for (const task of sortedTasks) {
       const person = allPeople.find(p => p.id === task.personId);
       if (!person) continue;
@@ -133,20 +128,14 @@ export default function DashboardPage() {
         person,
         isOverdue ? `Overdue: ${task.title}` : `Today: ${task.title}`,
         isOverdue,
-        task.type === 'MEETING' ? 'MEETING' : 'CALL',
+        task.type === 'MEETING' || task.type === 'PRASADAM' || task.type === 'BOOK' ? 'MEETING' : 'CALL',
         task
       );
     }
 
-    // Third: Fill remaining Meetings (up to 4 undone) with regular contacts
-    for (const person of regularPeople) {
-      if (undoneMeetingCount >= 4) break;
-      addToActionPlan(person, "New / Catch-up", false, 'MEETING');
-    }
-
-    // Fourth: Fill remaining Calls (up to 30 undone)
-    for (const person of regularPeople) {
-      if (undoneCallCount >= 30) break;
+    // Third: Intelligent Auto-Pipeline Fill
+    // Process all people who are not yet in the action plan
+    for (const person of sortedPeople) {
       if (inActionPlan.has(person.id!)) continue;
 
       // Check birthdays
@@ -160,8 +149,37 @@ export default function DashboardPage() {
 
       if (isBirthday) {
         addToActionPlan(person, "Birthday Coming Up!", true, 'CALL');
-      } else {
-        addToActionPlan(person, "Follow-up Call", false, 'CALL');
+        continue;
+      }
+
+      // Calculate days since last interaction
+      const daysSince = differenceInDays(now, safeDate(person.lastInteractionDate || person.firstContactDate));
+      
+      // Determine threshold based on exact user specification
+      let threshold = 30; // default fallback
+      if (person.priorityScore >= 20) threshold = 2; // Hot
+      else if (person.priorityScore >= 10) threshold = 4; // Warm
+      else if (person.priorityScore > 0) threshold = 5; // Cold
+      else threshold = 10; // Dormant
+
+      if (daysSince >= threshold) {
+        // They are DUE for an interaction. Intelligently suggest the next step.
+        // If last interaction was a Meeting/Prasadam/Book, suggest a Call.
+        // If last interaction was a Call/Message/Other, suggest a Meeting/Prasadam.
+        const lastType = person.lastInteractionType || 'OTHER';
+        
+        let reason = "Follow-up Call";
+        let actionType: 'CALL' | 'MEETING' = 'CALL';
+
+        if (lastType === 'MEETING' || lastType === 'PRASADAM' || lastType === 'BOOK') {
+          reason = "Follow-up Call";
+          actionType = 'CALL';
+        } else {
+          reason = "1-to-1 / Prasadam / Topic";
+          actionType = 'MEETING';
+        }
+
+        addToActionPlan(person, `Auto-Due (${daysSince}d): ${reason}`, true, actionType);
       }
     }
 

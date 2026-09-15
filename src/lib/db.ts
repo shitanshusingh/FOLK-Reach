@@ -53,6 +53,7 @@ export interface Person {
   
   priorityScore: number;
   lastInteractionDate?: Date | string;
+  lastInteractionType?: string;
   
   assignedUserId?: string | number; 
   ownerId?: string | number; 
