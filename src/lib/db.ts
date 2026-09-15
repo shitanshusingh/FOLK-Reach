@@ -146,10 +146,10 @@ function createCollectionProxy(collectionName: string) {
     // For manual queries that survived the regex:
     where: (field: string) => ({
       equals: (value: any) => ({
-        toArray: () => firestoreAPI.query(collectionName, []), // naive fallback
+        toArray: () => firestoreAPI.query(collectionName, [{ field, op: "==", value }]),
         first: async () => {
-          const res = await firestoreAPI.query(collectionName, []); // naive fallback for now
-          return res.find((r: any) => r[field] === value);
+          const res = await firestoreAPI.query(collectionName, [{ field, op: "==", value }]);
+          return res.length > 0 ? res[0] : undefined;
         }
       })
     }),

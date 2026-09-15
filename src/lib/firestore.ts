@@ -84,13 +84,11 @@ export function useLiveQuery<T>(querier: () => Promise<T> | T, dependencies: any
     
     fetchData();
     
-    // To mimic "live" updates for complex queries, we just poll every 5 seconds as a dirty fallback
-    // Since this is only for queries our regex missed, it's acceptable for now.
-    const interval = setInterval(fetchData, 5000);
+    // REMOVED dirty 5 second interval because it causes massive UI lag and infinite re-renders on complex pages.
+    // Data will just fetch once on mount for these legacy queries.
     
     return () => { 
       isMounted = false; 
-      clearInterval(interval);
     };
   }, dependencies);
   
@@ -99,14 +97,21 @@ export function useLiveQuery<T>(querier: () => Promise<T> | T, dependencies: any
 
 
 // Utility functions to replace db.table.add(), etc.
+
+// Firestore doesn't support undefined fields. We must strip them.
+function cleanData(data: any) {
+  if (!data) return data;
+  return Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
+}
+
 export const firestoreAPI = {
   async add(collectionName: string, data: any) {
-    const docRef = await addDoc(collection(firebaseDb, collectionName), data);
+    const docRef = await addDoc(collection(firebaseDb, collectionName), cleanData(data));
     return docRef.id;
   },
   
   async update(collectionName: string, id: string | number, data: any) {
-    await updateDoc(doc(firebaseDb, collectionName, id.toString()), data);
+    await updateDoc(doc(firebaseDb, collectionName, id.toString()), cleanData(data));
   },
   
   async delete(collectionName: string, id: string | number) {
@@ -118,8 +123,10 @@ export const firestoreAPI = {
     return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : undefined;
   },
 
-  async query(collectionName: string, constraints: QueryConstraint[] = []) {
-    const q = query(collection(firebaseDb, collectionName), ...constraints);
+  async query(collectionName: string, constraints: any[] = []) {
+    // constraints here are passed from our db.ts as [{ field, op, value }]
+    const firestoreConstraints = constraints.map(c => where(c.field, c.op, c.value));
+    const q = query(collection(firebaseDb, collectionName), ...firestoreConstraints);
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   }
