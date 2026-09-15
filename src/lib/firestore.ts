@@ -1,3 +1,4 @@
+"use client";
 // @ts-nocheck
 import { db } from "@/lib/db";
 import { useState, useEffect } from 'react';

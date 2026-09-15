@@ -1,7 +1,7 @@
+"use client";
 // @ts-nocheck
 import { useLiveQuery } from "@/lib/firestore";
 import { db } from "@/lib/db";
-"use client";
 
 import { useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";

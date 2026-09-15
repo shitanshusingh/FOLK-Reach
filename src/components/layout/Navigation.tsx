@@ -1,5 +1,5 @@
-// @ts-nocheck
 "use client";
+// @ts-nocheck
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';

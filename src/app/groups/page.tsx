@@ -1,7 +1,7 @@
+"use client";
 // @ts-nocheck
 import { useLiveQuery } from "@/lib/firestore";
 import { db } from "@/lib/db";
-"use client";
 
 import { firestoreAPI, useFirestoreQuery, useFirestoreDoc } from "@/lib/firestore";
 import { where } from "firebase/firestore";;

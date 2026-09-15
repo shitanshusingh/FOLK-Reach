@@ -1,6 +1,6 @@
+"use client";
 // @ts-nocheck
 import { db } from "@/lib/db";
-"use client";
 
 import { useEffect, useRef } from "react";
 import { firestoreAPI, useFirestoreQuery, useFirestoreDoc } from "@/lib/firestore";

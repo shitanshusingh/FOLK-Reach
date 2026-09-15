@@ -1,6 +1,5 @@
 // @ts-nocheck
-import { db } from "@/lib/db";
-import { db, seedTopicsIfEmpty, seedUsersIfEmpty, SessionAttendance } from "./db";
+import { db, seedTopicsIfEmpty, seedUsersIfEmpty, SessionAttendance } from "@/lib/db";
 import { subDays, addDays, subMonths } from "date-fns";
 
 // Helpers for random data generation
