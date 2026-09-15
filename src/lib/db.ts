@@ -138,22 +138,73 @@ export interface CustomGroup {
 // This allows legacy code doing `db.people.add()` to route to `firestoreAPI.add('people')`
 
 function createCollectionProxy(collectionName: string) {
+  const buildQueryChain = (constraints: any[], ops: any[]) => {
+    return {
+      equals: (value: any) => {
+        const lastWhere = [...ops].reverse().find(o => o.type === 'where');
+        const newConstraints = lastWhere ? [...constraints, { field: lastWhere.field, op: "==", value }] : constraints;
+        return buildQueryChain(newConstraints, ops);
+      },
+      where: (field: string) => {
+        return buildQueryChain(constraints, [...ops, { type: 'where', field }]);
+      },
+      filter: (predicate: any) => {
+        return buildQueryChain(constraints, [...ops, { type: 'filter', predicate }]);
+      },
+      reverse: () => {
+        return buildQueryChain(constraints, [...ops, { type: 'reverse' }]);
+      },
+      sortBy: (field: string) => {
+        return buildQueryChain(constraints, [...ops, { type: 'sortBy', field }]);
+      },
+      orderBy: (field: string) => {
+        return buildQueryChain(constraints, [...ops, { type: 'sortBy', field }]);
+      },
+      toArray: async () => {
+        let res = await firestoreAPI.query(collectionName, constraints);
+        for (const op of ops) {
+          if (op.type === 'filter') res = res.filter(op.predicate);
+          if (op.type === 'sortBy') res = res.sort((a, b) => {
+            if (a[op.field] == null) return 1;
+            if (b[op.field] == null) return -1;
+            return a[op.field] > b[op.field] ? 1 : -1;
+          });
+          if (op.type === 'reverse') res = res.reverse();
+        }
+        return res;
+      },
+      first: async () => {
+        let res = await firestoreAPI.query(collectionName, constraints);
+        for (const op of ops) {
+          if (op.type === 'filter') res = res.filter(op.predicate);
+          if (op.type === 'sortBy') res = res.sort((a, b) => {
+            if (a[op.field] == null) return 1;
+            if (b[op.field] == null) return -1;
+            return a[op.field] > b[op.field] ? 1 : -1;
+          });
+          if (op.type === 'reverse') res = res.reverse();
+        }
+        return res.length > 0 ? res[0] : undefined;
+      }
+    };
+  };
+
+  const baseChain = buildQueryChain([], []);
+
   return {
     add: (data: any) => firestoreAPI.add(collectionName, data),
     update: (id: string | number, data: any) => firestoreAPI.update(collectionName, id, data),
     delete: (id: string | number) => firestoreAPI.delete(collectionName, id),
     get: (id: string | number) => firestoreAPI.get(collectionName, id),
-    // For manual queries that survived the regex:
-    where: (field: string) => ({
-      equals: (value: any) => ({
-        toArray: () => firestoreAPI.query(collectionName, [{ field, op: "==", value }]),
-        first: async () => {
-          const res = await firestoreAPI.query(collectionName, [{ field, op: "==", value }]);
-          return res.length > 0 ? res[0] : undefined;
-        }
-      })
-    }),
-    toArray: () => firestoreAPI.query(collectionName, []),
+    bulkAdd: async (dataArr: any[]) => {
+      for (const data of dataArr) await firestoreAPI.add(collectionName, data);
+    },
+    where: baseChain.where,
+    filter: baseChain.filter,
+    reverse: baseChain.reverse,
+    sortBy: baseChain.sortBy,
+    orderBy: baseChain.orderBy,
+    toArray: baseChain.toArray,
     count: async () => {
         const docs = await firestoreAPI.query(collectionName, []);
         return docs.length;
