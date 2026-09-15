@@ -10,6 +10,7 @@ import {
 
 function convertTimestamps(obj: any): any {
   if (obj === null || obj === undefined) return obj;
+  if (obj instanceof Date) return obj.toISOString();
   if (typeof obj.toDate === 'function') return obj.toDate().toISOString();
   if (Array.isArray(obj)) return obj.map(convertTimestamps);
   if (typeof obj === 'object') {
