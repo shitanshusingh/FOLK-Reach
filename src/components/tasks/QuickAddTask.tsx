@@ -1,3 +1,4 @@
+"use client";
 // @ts-nocheck
 import { useLiveQuery } from "@/lib/firestore";
 import { db } from "@/lib/db";
@@ -56,7 +57,7 @@ export function QuickAddTask({
               value={personId.toString()} 
               onChange={val => setPersonId(Number(val))}
               placeholder="-- Choose someone --"
-              options={allPeople?.map(p => ({ value: p.id!.toString(), label: p.name })) || []}
+              options={allPeople?.map((p: any) => ({ value: p.id!.toString(), label: p.name })) || []}
             />
           </div>
 
