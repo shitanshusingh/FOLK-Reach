@@ -154,8 +154,9 @@ function createCollectionProxy(collectionName: string) {
       reverse: () => {
         return buildQueryChain(constraints, [...ops, { type: 'reverse' }]);
       },
-      sortBy: (field: string) => {
-        return buildQueryChain(constraints, [...ops, { type: 'sortBy', field }]);
+      sortBy: async (field: string) => {
+        const chain = buildQueryChain(constraints, [...ops, { type: 'sortBy', field }]);
+        return chain.toArray();
       },
       orderBy: (field: string) => {
         return buildQueryChain(constraints, [...ops, { type: 'sortBy', field }]);
