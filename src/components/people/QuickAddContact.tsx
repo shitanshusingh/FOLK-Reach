@@ -13,60 +13,89 @@ import { useAuth } from "@/contexts/AuthContext";
 interface QuickAddContactProps {
   onClose: () => void;
   onSuccess?: (id: number) => void;
+  personToEdit?: any;
 }
 
-export function QuickAddContact({ onClose, onSuccess }: QuickAddContactProps) {
-  const [showOptional, setShowOptional] = useState(false);
+export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddContactProps) {
+  const [showOptional, setShowOptional] = useState(!!personToEdit);
   
   // Required
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [priorityScore, setPriorityScore] = useState(5); // Default to Cold (5)
+  const [name, setName] = useState(personToEdit?.name || "");
+  const [phone, setPhone] = useState(personToEdit?.phone || "");
+  const [priorityScore, setPriorityScore] = useState(personToEdit?.priorityScore ?? 5); // Default to Cold (5)
   const { currentUser } = useAuth();
   
+  const formatBirthday = (date: any) => {
+    if (!date) return "";
+    try {
+      const d = new Date(date?.toDate ? date.toDate() : date);
+      return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : "";
+    } catch {
+      return "";
+    }
+  };
+
   // Optional
-  const [college, setCollege] = useState("");
-  const [branch, setBranch] = useState("");
-  const [company, setCompany] = useState("");
-  const [jobRole, setJobRole] = useState("");
-  const [nativePlace, setNativePlace] = useState("");
-  const [currentCity, setCurrentCity] = useState("");
-  const [birthday, setBirthday] = useState("");
-  const [howMet, setHowMet] = useState("");
-  const [notes, setNotes] = useState("");
+  const [college, setCollege] = useState(personToEdit?.college || "");
+  const [branch, setBranch] = useState(personToEdit?.branch || "");
+  const [company, setCompany] = useState(personToEdit?.company || "");
+  const [jobRole, setJobRole] = useState(personToEdit?.jobRole || "");
+  const [nativePlace, setNativePlace] = useState(personToEdit?.nativePlace || "");
+  const [currentCity, setCurrentCity] = useState(personToEdit?.currentCity || "");
+  const [birthday, setBirthday] = useState(formatBirthday(personToEdit?.birthday));
+  const [howMet, setHowMet] = useState(personToEdit?.howMet || "");
+  const [notes, setNotes] = useState(personToEdit?.notes || "");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !phone) return;
 
     try {
-      // Duplicate check
-      const existing = await db.people.where('phone').equals(phone).toArray();
-      if (existing.length > 0) {
-        const confirmMerge = window.confirm(
-          `Warning: A contact with phone ${phone} already exists (${existing[0].name}).\nDo you want to add anyway?`
-        );
-        if (!confirmMerge) return;
-      }
+      if (personToEdit?.id) {
+        await db.people.update(personToEdit.id, {
+          name,
+          phone,
+          college,
+          branch,
+          company,
+          jobRole,
+          nativePlace,
+          currentCity,
+          birthday: birthday ? new Date(birthday) : undefined,
+          howMet,
+          notes,
+          priorityScore: Number(priorityScore),
+        });
+        if (onSuccess) onSuccess(personToEdit.id as number);
+      } else {
+        // Duplicate check for NEW contacts
+        const existing = await db.people.where('phone').equals(phone).toArray();
+        if (existing.length > 0) {
+          const confirmMerge = window.confirm(
+            `Warning: A contact with phone ${phone} already exists (${existing[0].name}).\nDo you want to add anyway?`
+          );
+          if (!confirmMerge) return;
+        }
 
-      const id = await db.people.add({
-        name,
-        phone,
-        college,
-        branch,
-        company,
-        jobRole,
-        nativePlace,
-        currentCity,
-        birthday: birthday ? new Date(birthday) : undefined,
-        howMet,
-        notes,
-        firstContactDate: new Date(),
-        priorityScore: Number(priorityScore),
-        tags: [],
-        ownerId: currentUser?.id,
-      });
-      if (onSuccess) onSuccess(id as number);
+        const id = await db.people.add({
+          name,
+          phone,
+          college,
+          branch,
+          company,
+          jobRole,
+          nativePlace,
+          currentCity,
+          birthday: birthday ? new Date(birthday) : undefined,
+          howMet,
+          notes,
+          firstContactDate: new Date(),
+          priorityScore: Number(priorityScore),
+          tags: [],
+          ownerId: currentUser?.id,
+        });
+        if (onSuccess) onSuccess(id as number);
+      }
       onClose();
     } catch (error) {
       console.error("Failed to add person", error);
@@ -78,7 +107,7 @@ export function QuickAddContact({ onClose, onSuccess }: QuickAddContactProps) {
     <div className={styles.modalOverlay}>
       <div className={styles.modalContent}>
         <div className={styles.header}>
-          <h2 className={styles.title}>New Contact</h2>
+          <h2 className={styles.title}>{personToEdit ? "Edit Contact" : "New Contact"}</h2>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
             <X size={24} />
           </button>
@@ -243,7 +272,7 @@ export function QuickAddContact({ onClose, onSuccess }: QuickAddContactProps) {
               Cancel
             </button>
             <button type="submit" className={`${styles.btn} ${styles.btnSave}`} disabled={!name || !phone}>
-              Save Contact
+              {personToEdit ? "Update Contact" : "Save Contact"}
             </button>
           </div>
         </form>

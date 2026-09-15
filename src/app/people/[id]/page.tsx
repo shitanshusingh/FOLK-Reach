@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import clsx from "clsx";
 import React from "react";
 import { InteractionModal } from "@/components/people/InteractionModal";
+import { QuickAddContact } from "@/components/people/QuickAddContact";
 import { Interaction } from "@/lib/db";
 
 export default function PersonProfilePage({ params }: { params: Promise<{ id: string }> }) {
@@ -32,6 +33,7 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
   };
 
   const [showInteractionModal, setShowInteractionModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [interactionType, setInteractionType] = useState<Interaction['type']>('CALL');
 
   const handleOpenInteraction = (type: Interaction['type']) => {
@@ -86,6 +88,13 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
               {priorityText}
             </div>
           </div>
+          <button 
+            className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
+            onClick={() => setIsEditing(true)}
+            style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+          >
+            Edit Profile
+          </button>
         </div>
 
         <div className={styles.detailsGrid}>
@@ -232,6 +241,13 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
           personId={id} 
           initialType={interactionType}
           onClose={() => setShowInteractionModal(false)} 
+        />
+      )}
+
+      {isEditing && (
+        <QuickAddContact 
+          personToEdit={person}
+          onClose={() => setIsEditing(false)}
         />
       )}
     </div>
