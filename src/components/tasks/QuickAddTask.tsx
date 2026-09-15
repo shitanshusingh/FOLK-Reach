@@ -17,7 +17,7 @@ export function QuickAddTask({
   onClose: () => void, 
   defaultType?: 'CALL' | 'MEETING' | 'PRASADAM' | 'BOOK' | 'OTHER'
 }) {
-  const [personId, setPersonId] = useState<number | ''>('');
+  const [personId, setPersonId] = useState<string>('');
   const [title, setTitle] = useState('');
   const [type, setType] = useState(defaultType);
   const [dueDate, setDueDate] = useState(new Date().toISOString().split('T')[0]);
@@ -33,7 +33,7 @@ export function QuickAddTask({
     if (!personId || !title || !dueDate) return;
 
     await db.tasks.add({
-      personId: Number(personId),
+      personId: personId,
       title,
       type,
       status: 'PENDING',
@@ -59,7 +59,7 @@ export function QuickAddTask({
             <label className={styles.label}>Select Person</label>
             <GlassSelect 
               value={personId.toString()} 
-              onChange={val => setPersonId(Number(val))}
+              onChange={val => setPersonId(val)}
               placeholder="-- Choose someone --"
               options={allPeople?.map((p: any) => ({ value: p.id!.toString(), label: p.name })) || []}
             />
