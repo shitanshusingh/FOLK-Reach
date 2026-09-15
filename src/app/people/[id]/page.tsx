@@ -20,7 +20,7 @@ import { Interaction } from "@/lib/db";
 export default function PersonProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const unwrappedParams = React.use(params);
-  const id = Number(unwrappedParams.id);
+  const id = String(unwrappedParams.id);
   const searchParams = useSearchParams();
   const from = searchParams.get('from');
 

@@ -17,14 +17,14 @@ import clsx from "clsx";
 
 export default function SessionDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = React.use(params);
-  const id = Number(unwrappedParams.id);
+  const id = String(unwrappedParams.id);
 
   const [activeTab, setActiveTab] = useState<'CALLING' | 'ATTENDANCE' | 'ANALYTICS'>('CALLING');
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [activeCallModal, setActiveCallModal] = useState<number | null>(null);
   const { currentUser } = useAuth();
 
-  const session = useFirestoreDoc('sessions', Number(id));
+  const session = useFirestoreDoc('sessions', id);
   const allUsers = useLiveQuery(() => db.users.toArray(), []);
   
   const attendanceRecords = useLiveQuery(async () => {
