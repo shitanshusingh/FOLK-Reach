@@ -30,10 +30,8 @@ export default function DashboardPage() {
 
   const { currentUser } = useAuth();
 
-  const allPeople = useLiveQuery(async () => {
-    if (!currentUser?.id) return [];
-    return await db.people.where('ownerId').equals(currentUser.id).toArray();
-  }, [currentUser?.id]);
+  const allPeopleConstraints = currentUser?.id ? [where('ownerId', '==', currentUser.id)] : undefined;
+  const allPeople = useFirestoreQuery<Person>('people', allPeopleConstraints || [], [currentUser?.id]);
   
   const allTasks = useLiveQuery(async () => {
     if (!currentUser?.id) return [];
@@ -43,9 +41,9 @@ export default function DashboardPage() {
     return tasks.filter(t => userPersonIds.has(t.personId));
   }, [currentUser?.id]);
   
+  const start = startOfDay(new Date());
   const todayInteractions = useLiveQuery(async () => {
     if (!currentUser?.id) return [];
-    const start = startOfDay(new Date());
     const interactions = await db.interactions.filter(i => new Date(i.date) >= start).toArray();
     const userPersonIds = new Set((await db.people.where('ownerId').equals(currentUser.id).toArray()).map(p => p.id));
     return interactions.filter(i => userPersonIds.has(i.personId));
