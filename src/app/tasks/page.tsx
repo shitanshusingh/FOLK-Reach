@@ -14,9 +14,12 @@ import { format, isPast, isToday, isTomorrow, startOfDay, differenceInDays } fro
 import clsx from "clsx";
 import { useAuth } from "@/contexts/AuthContext";
 
+import { LogInteractionModal } from "@/components/dashboard/LogInteractionModal";
+
 export default function TasksPage() {
   const [filter, setFilter] = useState<'PENDING' | 'OVERDUE' | 'COMPLETED'>('PENDING');
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [activeCallPerson, setActiveCallPerson] = useState<any>(null);
 
   const { currentUser } = useAuth();
 
@@ -33,6 +36,7 @@ export default function TasksPage() {
         personName: person?.name || 'Unknown',
         personPhone: person?.phone || '',
         personPriority: person?.priorityScore || 0,
+        person: person, // Pass full person object for modal
         personLastContacted: person?.lastInteractionDate 
           ? differenceInDays(new Date(), new Date(person.lastInteractionDate))
           : (person?.firstContactDate ? differenceInDays(new Date(), new Date(person.firstContactDate)) : null)
@@ -55,6 +59,11 @@ export default function TasksPage() {
   const toggleTaskStatus = async (taskId: number, currentStatus: string) => {
     const newStatus = currentStatus === 'PENDING' ? 'COMPLETED' : 'PENDING';
     await firestoreAPI.update('tasks', taskId, { status: newStatus });
+  };
+
+  const handleCallClick = (task: any) => {
+    setActiveCallPerson(task.person);
+    window.location.href = `tel:${task.personPhone}`;
   };
 
   const getDueDateLabel = (date: Date) => {
@@ -115,11 +124,11 @@ export default function TasksPage() {
                   </div>
                   <div className={styles.taskDetails}>
                     <div className={styles.taskTitle}>
-                      {task.title}
+                      <Link href={`/people/${task.personId}?from=/tasks`} style={{ color: 'inherit', textDecoration: 'none' }}>{task.personName}</Link>
                     </div>
                     <div className={styles.taskMeta}>
                       <div className={styles.taskMetaRow}>
-                        <span>For: <Link href={`/people/${task.personId}?from=/tasks`} className={styles.personLink}>{task.personName}</Link></span>
+                        <span style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{task.title}</span>
                         {task.personPriority > 0 && (
                           <span className={styles.priorityBadge}>⭐ {task.personPriority}</span>
                         )}
@@ -144,9 +153,14 @@ export default function TasksPage() {
                 </div>
                 <div className={styles.cardActions}>
                   {task.personPhone && (
-                    <a href={`tel:${task.personPhone}`} className={styles.callBtn} aria-label={`Call ${task.personName}`}>
+                    <button 
+                      onClick={() => handleCallClick(task)} 
+                      className={styles.callBtn} 
+                      aria-label={`Call ${task.personName}`}
+                      style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 12 }}
+                    >
                       <Phone size={18} />
-                    </a>
+                    </button>
                   )}
                 </div>
               </div>
@@ -165,6 +179,15 @@ export default function TasksPage() {
 
       {showQuickAdd && (
         <QuickAddTask onClose={() => setShowQuickAdd(false)} defaultType="CALL" />
+      )}
+
+      {activeCallPerson && (
+        <LogInteractionModal 
+          person={activeCallPerson}
+          type="CALL"
+          onClose={() => setActiveCallPerson(null)}
+          onSuccess={() => setActiveCallPerson(null)}
+        />
       )}
     </div>
   );
