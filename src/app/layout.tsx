@@ -20,6 +20,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "FOLKReach - Relationship Management",
   description: "A platform to meet people, remember people, and follow up at the right time.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "FOLKReach",
+  },
 };
 
 export default function RootLayout({

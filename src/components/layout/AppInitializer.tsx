@@ -4,6 +4,8 @@
 import { useEffect, useState } from "react";
 
 
+import { PremiumSplash } from '../ui/PremiumSplash';
+
 export function AppInitializer({ children }: { children: React.ReactNode }) {
   const [isInitializing, setIsInitializing] = useState(true);
 
@@ -13,7 +15,7 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
   }, []);
 
   if (isInitializing) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: 'var(--color-background)', color: 'var(--color-primary)' }}>Loading FOLKReach Workspace...</div>;
+    return <PremiumSplash message="Loading Workspace..." />;
   }
 
   return <>{children}</>;
