@@ -11,6 +11,7 @@ import { firestoreAPI, useFirestoreQuery, useFirestoreDoc } from "@/lib/firestor
 import { where } from "firebase/firestore";;
 import { format } from "date-fns";
 import { GlassSelect } from "@/components/ui/GlassSelect";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SessionsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -19,8 +20,21 @@ export default function SessionsPage() {
   const [date, setDate] = useState("");
   const [location, setLocation] = useState("");
   const [autoAddCount, setAutoAddCount] = useState<number>(0);
+  const { currentUser } = useAuth();
 
-  const sessions = useLiveQuery(() => db.sessions.reverse().sortBy('date'));
+  const sessions = useLiveQuery(async () => {
+    if (!currentUser) return [];
+    
+    let all = [];
+    if (currentUser.teamId) {
+      all = await db.sessions.where('teamId').equals(currentUser.teamId).toArray();
+    } else {
+      all = await db.sessions.where('ownerId').equals(currentUser.id).toArray();
+    }
+    
+    all.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return all;
+  }, [currentUser]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,13 +46,21 @@ export default function SessionsPage() {
         type,
         date: new Date(date),
         location,
+        ownerId: currentUser?.id,
+        teamId: currentUser?.teamId,
       });
 
       if (autoAddCount > 0) {
-        const users = await db.users.toArray();
+        let teamUsers = [];
+        if (currentUser?.teamId) {
+          teamUsers = await db.users.where('teamId').equals(currentUser.teamId).toArray();
+        } else if (currentUser) {
+          teamUsers = [currentUser];
+        }
+
         const recordsToInsert = [];
 
-        for (const user of users) {
+        for (const user of teamUsers) {
           const userContacts = await db.people.where('ownerId').equals(user.id!).toArray();
           userContacts.sort((a, b) => b.priorityScore - a.priorityScore);
           
