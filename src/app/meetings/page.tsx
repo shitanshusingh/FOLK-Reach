@@ -12,23 +12,39 @@ import { firestoreAPI, useFirestoreQuery, useFirestoreDoc } from "@/lib/firestor
 import { where } from "firebase/firestore";;
 import { format, isPast, isFuture, differenceInDays } from "date-fns";
 import clsx from "clsx";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function MeetingsPage() {
-  const [filter, setFilter] = useState<'UPCOMING' | 'PAST'>('PAST');
+  const [filter, setFilter] = useState<'UPCOMING' | 'OVERDUE' | 'PAST'>('UPCOMING');
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const { currentUser } = useAuth();
 
   // We consider interactions of type MEETING as past meetings.
-  // And tasks of type MEETING as upcoming meetings.
+  // And tasks of type MEETING as upcoming/overdue meetings.
   
   const meetingsData = useLiveQuery(async () => {
+    if (!currentUser) return [];
+    
+    let teamUserIds = new Set([currentUser.id]);
+    if (currentUser.teamId) {
+      const teamUsers = await db.users.where('teamId').equals(currentUser.teamId).toArray();
+      teamUserIds = new Set(teamUsers.map(u => u.id));
+    }
+
     const topicsMap = new Map();
     const allTopics = await db.topics.toArray();
     allTopics.forEach(t => topicsMap.set(t.id, t.name));
 
     if (filter === 'PAST') {
-      const meetings = await db.interactions.where('type').equals('MEETING').reverse().sortBy('date');
-      return await Promise.all(meetings.map(async m => {
+      const allMeetings = await db.interactions.where('type').equals('MEETING').reverse().sortBy('date');
+      const resolved = await Promise.all(allMeetings.map(async m => {
         const person = await db.people.get(m.personId);
+        return { person, m };
+      }));
+      
+      const filtered = resolved.filter(res => res.person && teamUserIds.has(res.person.ownerId));
+
+      return filtered.map(({ person, m }) => {
         const resolvedTopics = m.topicsDiscussed?.map(id => topicsMap.get(id)).filter(Boolean) || [];
         return { 
           ...m, 
@@ -40,12 +56,24 @@ export default function MeetingsPage() {
             : (person?.firstContactDate ? differenceInDays(new Date(), new Date(person.firstContactDate)) : null),
           resolvedTopics 
         };
-      }));
+      });
     } else {
-      const upcoming = await db.tasks.where('type').equals('MEETING').toArray();
-      const filtered = upcoming.filter(t => t.status === 'PENDING');
-      return await Promise.all(filtered.map(async m => {
+      const allTasks = await db.tasks.where('type').equals('MEETING').toArray();
+      const resolved = await Promise.all(allTasks.map(async m => {
         const person = await db.people.get(m.personId);
+        return { person, m };
+      }));
+      
+      let filtered = resolved.filter(res => res.person && res.m.status === 'PENDING' && teamUserIds.has(res.person.ownerId));
+
+      const now = new Date();
+      if (filter === 'UPCOMING') {
+        filtered = filtered.filter(res => new Date(res.m.dueDate) >= new Date(now.setHours(0,0,0,0)));
+      } else if (filter === 'OVERDUE') {
+        filtered = filtered.filter(res => new Date(res.m.dueDate) < new Date(now.setHours(0,0,0,0)));
+      }
+
+      return filtered.map(({ person, m }) => {
         return { 
           ...m, 
           date: m.dueDate, 
@@ -57,9 +85,9 @@ export default function MeetingsPage() {
             : (person?.firstContactDate ? differenceInDays(new Date(), new Date(person.firstContactDate)) : null),
           resolvedTopics: [] 
         };
-      })).then(res => res.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+      }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }
-  }, [filter]);
+  }, [filter, currentUser]);
 
   return (
     <div className={styles.container}>
@@ -69,16 +97,22 @@ export default function MeetingsPage() {
 
       <div className={styles.filters}>
         <button 
+          className={clsx(styles.filterBtn, filter === 'UPCOMING' && styles.filterBtnActive)}
+          onClick={() => setFilter('UPCOMING')}
+        >
+          Upcoming Scheduled
+        </button>
+        <button 
           className={clsx(styles.filterBtn, filter === 'PAST' && styles.filterBtnActive)}
           onClick={() => setFilter('PAST')}
         >
           Past Meetings
         </button>
         <button 
-          className={clsx(styles.filterBtn, filter === 'UPCOMING' && styles.filterBtnActive)}
-          onClick={() => setFilter('UPCOMING')}
+          className={clsx(styles.filterBtn, filter === 'OVERDUE' && styles.filterBtnActive)}
+          onClick={() => setFilter('OVERDUE')}
         >
-          Upcoming Scheduled
+          Missed
         </button>
       </div>
 

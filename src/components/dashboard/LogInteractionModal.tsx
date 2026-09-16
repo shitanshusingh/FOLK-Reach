@@ -57,11 +57,11 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
         }
       }
 
-      let threshold = 30;
-      if (newPriority >= 20) threshold = 2; // Hot
-      else if (newPriority >= 10) threshold = 4; // Warm
-      else if (newPriority > 0) threshold = 5; // Cold
-      else threshold = 10; // Dormant
+      let threshold = 4;
+      if (newPriority >= 20) threshold = 1; // Hot: Tomorrow
+      else if (newPriority >= 10) threshold = 2; // Warm: 2 days
+      else if (newPriority > 0) threshold = 3; // Cold: 3 days
+      else threshold = 4; // Dormant: 4 days
 
       let nextType: 'CALL' | 'MEETING' = (type === 'MEETING' || type === 'PRASADAM' || type === 'BOOK') ? 'CALL' : 'MEETING';
       let reason = nextType === 'MEETING' ? '1-to-1 / Prasadam / Topic' : 'Follow-up Call';
