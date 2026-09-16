@@ -49,7 +49,13 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
       };
     }));
 
-    const filtered = joined.filter(r => r.personOwnerId === currentUser?.id);
+    let teamUserIds = new Set([currentUser?.id]);
+    if (currentUser?.teamId) {
+      const teamUsers = await db.users.where('teamId').equals(currentUser.teamId).toArray();
+      teamUserIds = new Set(teamUsers.map((u: any) => u.id));
+    }
+
+    const filtered = joined.filter(r => teamUserIds.has(r.personOwnerId));
 
     filtered.sort((a, b) => {
       // 1. Current user's assigned contacts bubble to the top
@@ -361,8 +367,22 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
   const { currentUser } = useAuth();
   const allPeople = useLiveQuery(async () => {
     if (!currentUser?.id) return [];
-    return await db.people.where('ownerId').equals(currentUser.id).toArray();
-  }, [currentUser?.id]);
+    
+    let teamUserIds = [currentUser.id];
+    if (currentUser.teamId) {
+      const teamUsers = await db.users.where('teamId').equals(currentUser.teamId).toArray();
+      teamUserIds = teamUsers.map((u: any) => u.id);
+    }
+    
+    // Fetch contacts for all team members
+    const allTeamContacts = [];
+    for (const uid of teamUserIds) {
+      const contacts = await db.people.where('ownerId').equals(uid).toArray();
+      allTeamContacts.push(...contacts);
+    }
+    
+    return allTeamContacts;
+  }, [currentUser?.id, currentUser?.teamId]);
   const existingPersonIds = new Set(existingRecords.map((r: any) => r.personId));
   const [isNewContact, setIsNewContact] = useState(false);
   
