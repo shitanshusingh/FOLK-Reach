@@ -168,6 +168,30 @@ export default function MeetingsPage() {
                 <div className={styles.meetingNotes}>{meeting.notes}</div>
               )}
               
+              {filter === 'UPCOMING' && (
+                <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
+                  <button 
+                    onClick={async () => {
+                      const tomorrow = new Date();
+                      tomorrow.setDate(tomorrow.getDate() + 1);
+                      await firestoreAPI.update('tasks', meeting.id, { dueDate: tomorrow });
+                    }}
+                    style={{ fontSize: '0.75rem', padding: '6px 12px', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface-hover)', cursor: 'pointer' }}
+                  >
+                    Reschedule to Tomorrow
+                  </button>
+                  <button 
+                    onClick={async () => {
+                      const today = new Date();
+                      await firestoreAPI.update('tasks', meeting.id, { dueDate: today });
+                    }}
+                    style={{ fontSize: '0.75rem', padding: '6px 12px', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-primary)', color: 'white', cursor: 'pointer' }}
+                  >
+                    Move to Today
+                  </button>
+                </div>
+              )}
+
               {meeting.resolvedTopics && meeting.resolvedTopics.length > 0 && (
                 <div className={styles.topicsList}>
                   {meeting.resolvedTopics.map((topic: string, i: number) => (
