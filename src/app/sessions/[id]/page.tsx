@@ -14,6 +14,7 @@ import styles from "./SessionDetails.module.css";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import clsx from "clsx";
+import { QuickAddContact } from "@/components/people/QuickAddContact";
 
 const safeDate = (d: any) => {
   if (!d) return new Date();
@@ -319,10 +320,18 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
       )}
 
       {showWalkInModal && (
-        <AddWalkInModal 
-          sessionId={id}
+        <QuickAddContact 
           onClose={() => setShowWalkInModal(false)}
-          onSuccess={() => setRefreshTrigger(prev => prev + 1)}
+          onSuccess={async (personId) => {
+            await db.sessionAttendance.add({
+              sessionId: id,
+              personId: personId as number,
+              status: 'ATTENDED',
+              isNewContact: true
+            });
+            setRefreshTrigger(prev => prev + 1);
+            setShowWalkInModal(false);
+          }}
         />
       )}
     </div>
@@ -524,80 +533,3 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
   );
 }
 
-function AddWalkInModal({ sessionId, onClose, onSuccess }: { sessionId: string, onClose: () => void, onSuccess: () => void }) {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const { currentUser } = useAuth();
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !phone || !currentUser?.id) return;
-
-    // 1. Create the new person in CRM
-    const personId = await db.people.add({
-      name,
-      phone,
-      ownerId: currentUser.id,
-      priorityScore: 10, // Default to Warm for walk-ins
-      firstContactDate: new Date(),
-      lastInteractionDate: new Date(),
-      lastInteractionType: 'SESSION',
-      tags: ['Walk-in']
-    });
-
-    // 2. Add them to this session's attendance automatically
-    await db.sessionAttendance.add({
-      sessionId,
-      personId: personId as number,
-      status: 'ATTENDED',
-      isNewContact: true
-    });
-
-    onSuccess();
-    onClose();
-  };
-
-  return (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modalContent}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-          <h2 className={styles.sectionTitle}>Add Walk-in Guest</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--color-text)' }}>✕</button>
-        </div>
-        
-        <form onSubmit={handleSave}>
-          <div className={styles.formGroup}>
-            <label className={styles.detailLabel}>Name</label>
-            <input 
-              type="text" 
-              className={styles.statusSelect} 
-              value={name} 
-              onChange={e => setName(e.target.value)} 
-              placeholder="Guest Name"
-              required
-            />
-          </div>
-          <div className={styles.formGroup}>
-            <label className={styles.detailLabel}>Phone Number</label>
-            <input 
-              type="tel" 
-              className={styles.statusSelect} 
-              value={phone} 
-              onChange={e => setPhone(e.target.value)} 
-              placeholder="e.g. 9876543210"
-              required
-            />
-          </div>
-          <div style={{ display: 'flex', gap: 12, marginTop: 24, justifyContent: 'flex-end' }}>
-            <button type="button" className={styles.btnAction} style={{ background: 'var(--color-surface)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }} onClick={onClose}>
-              Cancel
-            </button>
-            <button type="submit" className={styles.btnAction}>
-              Add Guest
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
