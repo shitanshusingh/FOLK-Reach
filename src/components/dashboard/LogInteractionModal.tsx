@@ -67,6 +67,11 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
       let reason = nextType === 'MEETING' ? '1-to-1 / Prasadam / Topic' : 'Follow-up Call';
       let shouldScheduleTask = true;
 
+      // Force 1-to-1 meetings to be scheduled immediately (tomorrow) 
+      if (nextType === 'MEETING') {
+        threshold = 1;
+      }
+
       // Dynamically adjust based on specific outcomes
       if (outcome === "Did Not Answer" || outcome === "Busy") {
         nextType = 'CALL';
