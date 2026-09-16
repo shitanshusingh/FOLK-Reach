@@ -175,7 +175,7 @@ export default function MeetingsPage() {
                 <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   <button 
                     onClick={() => setActiveMeetingPerson(meeting.person)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', padding: '8px 16px', borderRadius: '24px', border: 'none', background: 'var(--gradient-primary)', color: 'white', cursor: 'pointer', fontWeight: 500, boxShadow: '0 4px 12px rgba(100, 108, 255, 0.2)' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', padding: '8px 16px', borderRadius: '24px', border: 'none', background: 'var(--color-primary)', color: 'white', cursor: 'pointer', fontWeight: 500, boxShadow: '0 4px 12px rgba(100, 108, 255, 0.2)' }}
                   >
                     <CheckCircle size={14} /> Mark Completed
                   </button>
