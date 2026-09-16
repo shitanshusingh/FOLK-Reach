@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, UserPlus, Phone, CheckCircle, Clock } from "lucide-react";
+import { ArrowLeft, UserPlus, Phone, CheckCircle, Clock, Edit2, Trash2 } from "lucide-react";
 import { GlassSelect } from "@/components/ui/GlassSelect";
 import { firestoreAPI, useFirestoreQuery, useFirestoreDoc } from "@/lib/firestore";
 import { where } from "firebase/firestore";
@@ -28,6 +28,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
 
   const [activeTab, setActiveTab] = useState<'CALLING' | 'ATTENDANCE' | 'ANALYTICS'>('CALLING');
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [activeCallModal, setActiveCallModal] = useState<number | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showWalkInModal, setShowWalkInModal] = useState(false);
@@ -104,8 +105,33 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
       </Link>
 
       <div className={styles.sessionCard}>
-        <div className={styles.typeBadge}>{session.type}</div>
-        <h1 className={styles.title}>{session.name}</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <div className={styles.typeBadge}>{session.type}</div>
+            <h1 className={styles.title}>{session.name}</h1>
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button 
+              onClick={() => setShowEditModal(true)}
+              style={{ background: 'var(--color-surface-hover)', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '8px', color: 'var(--color-text)', cursor: 'pointer' }}
+              aria-label="Edit Session"
+            >
+              <Edit2 size={18} />
+            </button>
+            <button 
+              onClick={async () => {
+                if (window.confirm("Are you sure you want to delete this session? This action cannot be undone.")) {
+                  await firestoreAPI.delete('sessions', id);
+                  window.location.href = '/sessions';
+                }
+              }}
+              style={{ background: 'var(--color-danger-light)', border: '1px solid var(--color-danger)', borderRadius: '8px', padding: '8px', color: 'var(--color-danger)', cursor: 'pointer' }}
+              aria-label="Delete Session"
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
+        </div>
         
         <div className={styles.detailsGrid}>
           <div className={styles.detailItem}>
@@ -334,6 +360,17 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
           }}
         />
       )}
+
+      {showEditModal && (
+        <EditSessionModal 
+          session={session}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={() => {
+            setRefreshTrigger(prev => prev + 1);
+            setShowEditModal(false);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -341,6 +378,92 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
 // ----------------------------------------------------
 // Modals
 // ----------------------------------------------------
+
+function EditSessionModal({ session, onClose, onSuccess }: { session: any, onClose: () => void, onSuccess: () => void }) {
+  const [name, setName] = useState(session.name || "");
+  const [type, setType] = useState(session.type || "Weekly Session");
+  
+  // Format date correctly for datetime-local input
+  const initialDate = session.date ? new Date(session.date.toDate ? session.date.toDate() : session.date) : new Date();
+  const offset = initialDate.getTimezoneOffset() * 60000;
+  const localISOTime = (new Date(initialDate.getTime() - offset)).toISOString().slice(0,16);
+  
+  const [date, setDate] = useState(localISOTime);
+  const [location, setLocation] = useState(session.location || "");
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !date) return;
+    
+    await firestoreAPI.update('sessions', session.id, {
+      name,
+      type,
+      date: new Date(date),
+      location
+    });
+    
+    onSuccess();
+  };
+
+  return (
+    <div className={styles.modalOverlay}>
+      <div className={styles.modalContent}>
+        <div className={styles.modalHeader} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+          <h2 className={styles.sectionTitle}>Edit Session</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--color-text)' }}>✕</button>
+        </div>
+        <form onSubmit={handleSave}>
+          <div className={styles.formGroup}>
+            <label className={styles.detailLabel}>Session Name *</label>
+            <input 
+              type="text" 
+              className={styles.statusSelect} 
+              required 
+              value={name}
+              onChange={e => setName(e.target.value)}
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.detailLabel}>Type</label>
+            <GlassSelect 
+              value={type} 
+              onChange={val => setType(val)}
+              options={[
+                { value: "Weekly Session", label: "Weekly Session" },
+                { value: "Special Session", label: "Special Session" },
+                { value: "College Session", label: "College Session" },
+                { value: "Other", label: "Other" }
+              ]}
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.detailLabel}>Date & Time *</label>
+            <input 
+              type="datetime-local" 
+              className={styles.statusSelect} 
+              required 
+              value={date}
+              onChange={e => setDate(e.target.value)}
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.detailLabel}>Location</label>
+            <input 
+              type="text" 
+              className={styles.statusSelect} 
+              value={location}
+              onChange={e => setLocation(e.target.value)}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 12, marginTop: 24, justifyContent: 'flex-end' }}>
+            <button type="button" className={styles.btnAction} style={{ background: 'var(--color-surface)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }} onClick={onClose}>Cancel</button>
+            <button type="submit" className={styles.btnAction}>Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 function CallOutcomeModal({ recordId, onClose, onSuccess }: { recordId: number, onClose: () => void, onSuccess: () => void }) {
   const [status, setStatus] = useState<SessionAttendance['status']>('CONFIRMED');
