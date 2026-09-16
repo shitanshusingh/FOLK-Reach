@@ -29,10 +29,17 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [activeCallModal, setActiveCallModal] = useState<number | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [showWalkInModal, setShowWalkInModal] = useState(false);
   const { currentUser } = useAuth();
 
   const session = useFirestoreDoc('sessions', id);
-  const allUsers = useLiveQuery(() => db.users.toArray(), []);
+  const allUsers = useLiveQuery(async () => {
+    if (!currentUser?.id) return [];
+    if (currentUser.teamId) {
+      return await db.users.where('teamId').equals(currentUser.teamId).toArray();
+    }
+    return [currentUser];
+  }, [currentUser?.id, currentUser?.teamId]);
   
   const attendanceRecords = useLiveQuery(async () => {
     const records = await db.sessionAttendance.where("sessionId").equals(id).toArray();
@@ -178,17 +185,20 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                     options={allUsers?.map(u => ({ value: u.id!.toString(), label: u.name })) || []}
                   />
 
-                  <GlassSelect 
-                    value={record.status}
-                    onChange={(val) => handleStatusChange(record.id as number, val as any)}
-                    options={[
-                      { value: "PENDING_CALL", label: "Pending Call" },
-                      { value: "CONFIRMED", label: "Confirmed" },
-                      { value: "MAYBE", label: "Maybe" },
-                      { value: "DECLINED", label: "Declined" },
-                      { value: "DID_NOT_ANSWER", label: "Did Not Answer" }
-                    ]}
-                  />
+                  <div 
+                    onClick={() => setActiveCallModal(record.id as number)}
+                    style={{ padding: '6px 12px', borderRadius: '4px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', fontSize: '0.85rem', cursor: 'pointer', textAlign: 'center', flex: 1, fontWeight: 500 }}
+                  >
+                    {record.status === 'PENDING_CALL' && '⏳ Pending'}
+                    {record.status === 'CONFIRMED' && '✅ Confirmed'}
+                    {record.status === 'MAYBE' && '🤔 Maybe'}
+                    {record.status === 'NOT_COMING' && '❌ Not Coming'}
+                    {record.status === 'JOINING_NEXT_SESSION' && '⏭️ Next Session'}
+                    {record.status === 'DECLINED' && '🛑 Declined'}
+                    {record.status === 'DID_NOT_ANSWER' && '📵 No Answer'}
+                    {record.status === 'ATTENDED' && '✅ Attended'}
+                    {record.status === 'MISSED' && '❌ Missed'}
+                  </div>
                   
                   <button 
                     className={styles.logBtn}
@@ -249,16 +259,21 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
       {/* ATTENDANCE TAB */}
       {activeTab === 'ATTENDANCE' && (
         <div>
-          <h2 className={styles.sectionTitle} style={{ marginBottom: 16 }}>Mark Attendance</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Mark Attendance</h2>
+            <button className={styles.btnAction} onClick={() => setShowWalkInModal(true)}>
+              <UserPlus size={18} /> Add Walk-in
+            </button>
+          </div>
           <div className={styles.callList}>
-            {attendanceRecords.filter(r => r.status === 'CONFIRMED' || r.status === 'MAYBE' || r.status === 'ATTENDED' || r.status === 'MISSED').map(record => (
+            {attendanceRecords.filter(r => r.status === 'CONFIRMED' || r.status === 'MAYBE' || r.status === 'ATTENDED' || r.status === 'MISSED' || r.status === 'JOINING_NEXT_SESSION').map(record => (
               <div key={record.id} className={styles.callCard}>
                 <div className={styles.callCardHeader}>
                   <div className={styles.callerInfo}>
                     <div className={styles.callerName}>
                       {record.personName}
                       <span style={{ fontSize: '0.85rem', fontWeight: 400, marginLeft: 8 }}>
-                        ({record.status === 'CONFIRMED' ? '✅ Confirmed' : '⚠️ Maybe'})
+                        ({record.status === 'CONFIRMED' ? '✅ Confirmed' : record.status === 'JOINING_NEXT_SESSION' ? '⏭️ Next Session' : '⚠️ Maybe'})
                       </span>
                     </div>
                   </div>
@@ -270,9 +285,13 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                     options={[
                       { value: "CONFIRMED", label: "Expected" },
                       { value: "ATTENDED", label: "Attended" },
-                      { value: "MISSED", label: "Missed" }
+                      { value: "MISSED", label: "Missed" },
+                      { value: "JOINING_NEXT_SESSION", label: "Next Session" }
                     ]}
                   />
+                  <a href={`tel:${record.personPhone}`} className={styles.callActionBtn} aria-label="Call">
+                    <Phone size={18} />
+                  </a>
                 </div>
               </div>
             ))}
@@ -298,6 +317,14 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
           existingRecords={attendanceRecords}
         />
       )}
+
+      {showWalkInModal && (
+        <AddWalkInModal 
+          sessionId={id}
+          onClose={() => setShowWalkInModal(false)}
+          onSuccess={() => setRefreshTrigger(prev => prev + 1)}
+        />
+      )}
     </div>
   );
 }
@@ -311,11 +338,28 @@ function CallOutcomeModal({ recordId, onClose, onSuccess }: { recordId: number, 
   const [outcomeStr, setOutcomeStr] = useState("");
 
   const handleSave = async () => {
+    const record = await firestoreAPI.get('sessionAttendance', recordId);
+    
     await firestoreAPI.update('sessionAttendance', recordId, { 
       status, 
       callOutcome: outcomeStr, 
       calledAt: new Date() 
     });
+
+    if (status === 'JOINING_NEXT_SESSION' && record) {
+      // Auto-schedule a task for them for 5 days from now
+      const nextDate = new Date();
+      nextDate.setDate(nextDate.getDate() + 5);
+      await db.tasks.add({
+        personId: record.personId,
+        title: "Follow-up: Promised to join next session",
+        type: "CALL",
+        status: "PENDING",
+        dueDate: nextDate,
+        notes: outcomeStr
+      });
+    }
+
     onSuccess();
     onClose();
   };
@@ -331,10 +375,12 @@ function CallOutcomeModal({ recordId, onClose, onSuccess }: { recordId: number, 
             value={status} 
             onChange={val => setStatus(val as any)}
             options={[
-              { value: "CONFIRMED", label: "Will Come (Confirmed)" },
-              { value: "MAYBE", label: "Maybe / Not Sure" },
-              { value: "DECLINED", label: "Declined / Not Interested" },
-              { value: "DID_NOT_ANSWER", label: "Did Not Answer / Busy" }
+              { value: "CONFIRMED", label: "✅ Will Come (Confirmed)" },
+              { value: "MAYBE", label: "🤔 Maybe / Not Sure" },
+              { value: "JOINING_NEXT_SESSION", label: "⏭️ Will join for next session" },
+              { value: "NOT_COMING", label: "❌ Not Coming (This time)" },
+              { value: "DECLINED", label: "🛑 Declined / Not Interested" },
+              { value: "DID_NOT_ANSWER", label: "📵 Did Not Answer / Busy" }
             ]}
           />
         </div>
@@ -473,6 +519,84 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
             <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: 20 }}>Everyone is already in the campaign!</p>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function AddWalkInModal({ sessionId, onClose, onSuccess }: { sessionId: string, onClose: () => void, onSuccess: () => void }) {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const { currentUser } = useAuth();
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !phone || !currentUser?.id) return;
+
+    // 1. Create the new person in CRM
+    const personId = await db.people.add({
+      name,
+      phone,
+      ownerId: currentUser.id,
+      priorityScore: 10, // Default to Warm for walk-ins
+      firstContactDate: new Date(),
+      lastInteractionDate: new Date(),
+      lastInteractionType: 'SESSION',
+      tags: ['Walk-in']
+    });
+
+    // 2. Add them to this session's attendance automatically
+    await db.sessionAttendance.add({
+      sessionId,
+      personId: personId as number,
+      status: 'ATTENDED',
+      isNewContact: true
+    });
+
+    onSuccess();
+    onClose();
+  };
+
+  return (
+    <div className={styles.modalOverlay}>
+      <div className={styles.modalContent}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+          <h2 className={styles.sectionTitle}>Add Walk-in Guest</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--color-text)' }}>✕</button>
+        </div>
+        
+        <form onSubmit={handleSave}>
+          <div className={styles.formGroup}>
+            <label className={styles.detailLabel}>Name</label>
+            <input 
+              type="text" 
+              className={styles.statusSelect} 
+              value={name} 
+              onChange={e => setName(e.target.value)} 
+              placeholder="Guest Name"
+              required
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.detailLabel}>Phone Number</label>
+            <input 
+              type="tel" 
+              className={styles.statusSelect} 
+              value={phone} 
+              onChange={e => setPhone(e.target.value)} 
+              placeholder="e.g. 9876543210"
+              required
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 12, marginTop: 24, justifyContent: 'flex-end' }}>
+            <button type="button" className={styles.btnAction} style={{ background: 'var(--color-surface)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }} onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className={styles.btnAction}>
+              Add Guest
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

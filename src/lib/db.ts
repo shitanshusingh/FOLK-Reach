@@ -82,7 +82,7 @@ export interface SessionAttendance {
   id?: string | number;
   sessionId: string | number;
   personId: string | number;
-  status: 'ATTENDED' | 'ABSENT' | 'EXCUSED';
+  status: 'PENDING_CALL' | 'INVITED' | 'CONFIRMED' | 'MAYBE' | 'DECLINED' | 'ATTENDED' | 'MISSED' | 'DID_NOT_ANSWER' | 'NOT_COMING' | 'JOINING_NEXT_SESSION';
   assignedUserId?: string | number; 
 }
 
