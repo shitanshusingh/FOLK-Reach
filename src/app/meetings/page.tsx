@@ -5,9 +5,10 @@ import { db } from "@/lib/db";
 
 import { useState } from "react";
 import Link from "next/link";
-import { Calendar as CalendarIcon, Clock, Phone, Plus, CalendarDays, Zap } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Phone, Plus, CalendarDays, Zap, CheckCircle } from "lucide-react";
 import styles from "./Meetings.module.css";
 import { QuickAddTask } from "@/components/tasks/QuickAddTask";
+import { LogInteractionModal } from "@/components/dashboard/LogInteractionModal";
 import { firestoreAPI, useFirestoreQuery, useFirestoreDoc } from "@/lib/firestore";
 import { where } from "firebase/firestore";;
 import { format, isPast, isFuture, differenceInDays } from "date-fns";
@@ -17,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function MeetingsPage() {
   const [filter, setFilter] = useState<'UPCOMING' | 'OVERDUE' | 'PAST'>('UPCOMING');
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [activeMeetingPerson, setActiveMeetingPerson] = useState<any>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { currentUser } = useAuth();
 
@@ -172,25 +174,10 @@ export default function MeetingsPage() {
               {filter === 'UPCOMING' && (
                 <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   <button 
-                    onClick={async () => {
-                      const today = new Date();
-                      await firestoreAPI.update('tasks', meeting.id, { dueDate: today });
-                      setRefreshTrigger(prev => prev + 1);
-                    }}
+                    onClick={() => setActiveMeetingPerson(meeting.person)}
                     style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', padding: '8px 16px', borderRadius: '24px', border: 'none', background: 'var(--gradient-primary)', color: 'white', cursor: 'pointer', fontWeight: 500, boxShadow: '0 4px 12px rgba(100, 108, 255, 0.2)' }}
                   >
-                    <Zap size={14} /> Move to Today
-                  </button>
-                  <button 
-                    onClick={async () => {
-                      const tomorrow = new Date();
-                      tomorrow.setDate(tomorrow.getDate() + 1);
-                      await firestoreAPI.update('tasks', meeting.id, { dueDate: tomorrow });
-                      setRefreshTrigger(prev => prev + 1);
-                    }}
-                    style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', padding: '8px 16px', borderRadius: '24px', border: '1px solid var(--color-border)', background: 'var(--glass-bg)', color: 'var(--color-text)', cursor: 'pointer', fontWeight: 500 }}
-                  >
-                    <CalendarDays size={14} /> Reschedule to Tomorrow
+                    <CheckCircle size={14} /> Mark Completed
                   </button>
                 </div>
               )}
@@ -217,6 +204,18 @@ export default function MeetingsPage() {
 
       {showQuickAdd && (
         <QuickAddTask onClose={() => setShowQuickAdd(false)} defaultType="MEETING" />
+      )}
+
+      {activeMeetingPerson && (
+        <LogInteractionModal 
+          person={activeMeetingPerson}
+          type="MEETING"
+          onClose={() => setActiveMeetingPerson(null)}
+          onSuccess={() => {
+            setActiveMeetingPerson(null);
+            setRefreshTrigger(prev => prev + 1);
+          }}
+        />
       )}
     </div>
   );
