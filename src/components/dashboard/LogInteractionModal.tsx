@@ -63,20 +63,32 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
       else if (newPriority > 0) threshold = 5; // Cold
       else threshold = 10; // Dormant
 
-      const nextDate = new Date();
-      nextDate.setDate(nextDate.getDate() + threshold);
-      
-      const nextType = (type === 'MEETING' || type === 'PRASADAM' || type === 'BOOK') ? 'CALL' : 'MEETING';
-      const reason = nextType === 'MEETING' ? '1-to-1 / Prasadam / Topic' : 'Follow-up Call';
+      let nextType: 'CALL' | 'MEETING' = (type === 'MEETING' || type === 'PRASADAM' || type === 'BOOK') ? 'CALL' : 'MEETING';
+      let reason = nextType === 'MEETING' ? '1-to-1 / Prasadam / Topic' : 'Follow-up Call';
+      let shouldScheduleTask = true;
 
-      await db.tasks.add({
-        personId: person.id as number,
-        title: reason,
-        type: nextType,
-        status: "PENDING",
-        dueDate: nextDate,
-        notes: "Auto-scheduled"
-      });
+      // Dynamically adjust based on specific outcomes
+      if (outcome === "Did Not Answer" || outcome === "Busy") {
+        nextType = 'CALL';
+        reason = `Follow-up Call (${outcome})`;
+        threshold = 1; // Try again tomorrow
+      } else if (outcome === "Number Invalid" || outcome === "Not Interested") {
+        shouldScheduleTask = false; // Do not auto-schedule follow-ups for invalid/uninterested
+      }
+
+      if (shouldScheduleTask) {
+        const nextDate = new Date();
+        nextDate.setDate(nextDate.getDate() + threshold);
+
+        await db.tasks.add({
+          personId: person.id as number,
+          title: reason,
+          type: nextType,
+          status: "PENDING",
+          dueDate: nextDate,
+          notes: "Auto-scheduled"
+        });
+      }
 
       onSuccess(outcome);
     } catch (err) {
