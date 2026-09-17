@@ -98,7 +98,8 @@ export default function DashboardPage() {
       const outcome = interaction?.outcome;
       
       // If they already did something today, categorize them based on what they actually DID today
-      const resolvedType = isDone ? (interaction.type === 'MEETING' || interaction.type === 'PRASADAM' || interaction.type === 'BOOK' ? 'MEETING' : 'CALL') : type;
+      const isMeeting = interaction?.type === 'MEETING' || interaction?.type === 'PRASADAM' || interaction?.type === 'BOOK' || outcome === 'Meeting - Done';
+      const resolvedType = isDone ? (isMeeting ? 'MEETING' : 'CALL') : type;
 
       const item: ActionItem = { person, reason, isOverdue, type: resolvedType, task, isDone, outcome, doneDate: interaction?.date ? safeDate(interaction.date) : undefined };
 
@@ -393,6 +394,7 @@ export default function DashboardPage() {
           <Calendar size={24} /> 
           Top Meetings Today ({actionPlanMeetings.filter(m => m.isDone).length} / {actionPlanMeetings.length} completed)
         </h2>
+
         <div className={styles.priorityList}>
           {actionPlanMeetings.filter(m => !m.isDone).length === 0 ? (
             <div className={styles.emptyState}>No meetings left to do today.</div>
@@ -400,6 +402,7 @@ export default function DashboardPage() {
             actionPlanMeetings.filter(m => !m.isDone).map(renderActionCard)
           )}
         </div>
+        
         {actionPlanMeetings.filter(m => m.isDone).length > 0 && (
           <div className={styles.doneScrollArea}>
             {actionPlanMeetings.filter(m => m.isDone).map(renderDoneAvatar)}
@@ -413,6 +416,7 @@ export default function DashboardPage() {
           <Phone size={24} /> 
           Top Calls Today ({actionPlanCalls.filter(c => c.isDone).length} / {actionPlanCalls.length} completed)
         </h2>
+
         <div className={styles.priorityList}>
           {actionPlanCalls.filter(c => !c.isDone).length === 0 ? (
             <div className={styles.emptyState}>No calls left to do today.</div>
@@ -420,6 +424,7 @@ export default function DashboardPage() {
             actionPlanCalls.filter(c => !c.isDone).map(renderActionCard)
           )}
         </div>
+
         {actionPlanCalls.filter(c => c.isDone).length > 0 && (
           <div className={styles.doneScrollArea}>
             {actionPlanCalls.filter(c => c.isDone).map(renderDoneAvatar)}
