@@ -205,12 +205,12 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
             <div className={styles.formGroup}>
               <label className={styles.label}>Assigned To</label>
               <GlassSelect
-                value={assignedUserId || ""}
+                value={assignedUserId ? String(assignedUserId) : ""}
                 onChange={(val) => setAssignedUserId(val)}
                 options={[
-                  { value: currentUser?.id || "", label: "Me" },
-                  ...(teamUsers?.filter((u: any) => u.id !== currentUser?.id).map((u: any) => ({
-                    value: u.id,
+                  { value: currentUser?.id ? String(currentUser.id) : "", label: "Me" },
+                  ...(teamUsers?.filter((u: any) => String(u.id) !== String(currentUser?.id)).map((u: any) => ({
+                    value: String(u.id),
                     label: u.name
                   })) || [])
                 ]}
@@ -222,7 +222,7 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
             <div className={styles.formGroup}>
               <label className={styles.label}>Assigned To</label>
               <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', color: 'var(--color-text-muted)', border: '1px solid var(--color-border)' }}>
-                {assignedUserId === currentUser?.id ? 'Me' : teamUsers?.find((u: any) => u.id === assignedUserId)?.name || 'Unknown'}
+                {String(assignedUserId) === String(currentUser?.id) ? 'Me' : teamUsers?.find((u: any) => String(u.id) === String(assignedUserId))?.name || 'Unknown'}
               </div>
             </div>
           )}
