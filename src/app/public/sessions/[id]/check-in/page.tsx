@@ -144,7 +144,8 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
           priorityScore: 0,
           tags: [],
           firstContactDate: new Date(),
-          ownerId: ownerId
+          ownerId: ownerId,
+          assignedUserId: ownerId
         });
       }
 

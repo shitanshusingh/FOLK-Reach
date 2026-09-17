@@ -24,6 +24,12 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
   const [phone, setPhone] = useState(personToEdit?.phone || "");
   const [priorityScore, setPriorityScore] = useState(personToEdit?.priorityScore ?? 5); // Default to Cold (5)
   const { currentUser } = useAuth();
+  const [assignedUserId, setAssignedUserId] = useState(personToEdit?.assignedUserId || currentUser?.id);
+  
+  const teamUsers = useLiveQuery(async () => {
+    if (!currentUser?.teamId) return [];
+    return await db.users.where('teamId').equals(currentUser.teamId).toArray();
+  }, [currentUser?.teamId]);
   
   const formatBirthday = (date: any) => {
     if (!date) return "";
@@ -91,6 +97,7 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
           notes,
           priorityScore: Number(priorityScore),
           customFields: customFieldsObj,
+          assignedUserId: assignedUserId || currentUser?.id,
         });
         if (onSuccess) onSuccess(personToEdit.id as number);
       } else {
@@ -119,6 +126,7 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
           priorityScore: Number(priorityScore),
           tags: [],
           ownerId: currentUser?.id,
+          assignedUserId: assignedUserId || currentUser?.id,
           customFields: customFieldsObj,
         });
 
@@ -192,6 +200,32 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
               ]}
             />
           </div>
+
+          {['FOLK_LEADER', 'LEADER', 'SUPER_ADMIN', 'FOLK_GUIDE'].includes(currentUser?.role || '') && (
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Assigned To</label>
+              <GlassSelect
+                value={assignedUserId || ""}
+                onChange={(val) => setAssignedUserId(val)}
+                options={[
+                  { value: currentUser?.id || "", label: "Me" },
+                  ...(teamUsers?.filter((u: any) => u.id !== currentUser?.id).map((u: any) => ({
+                    value: u.id,
+                    label: u.name
+                  })) || [])
+                ]}
+              />
+            </div>
+          )}
+
+          {!['FOLK_LEADER', 'LEADER', 'SUPER_ADMIN', 'FOLK_GUIDE'].includes(currentUser?.role || '') && (
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Assigned To</label>
+              <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', color: 'var(--color-text-muted)', border: '1px solid var(--color-border)' }}>
+                {assignedUserId === currentUser?.id ? 'Me' : teamUsers?.find((u: any) => u.id === assignedUserId)?.name || 'Unknown'}
+              </div>
+            </div>
+          )}
 
           {!showOptional ? (
             <button 

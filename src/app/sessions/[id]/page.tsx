@@ -70,9 +70,12 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
     const filtered = joined.filter(r => teamUserIds.has(r.personOwnerId));
 
     filtered.sort((a, b) => {
-      // 1. Current user's assigned contacts bubble to the top
-      if (a.assignedUserId === currentUser?.id && b.assignedUserId !== currentUser?.id) return -1;
-      if (a.assignedUserId !== currentUser?.id && b.assignedUserId === currentUser?.id) return 1;
+      // 1. Current user's assigned/owned contacts bubble to the top
+      const aIsMine = a.assignedUserId === currentUser?.id || a.personOwnerId === currentUser?.id;
+      const bIsMine = b.assignedUserId === currentUser?.id || b.personOwnerId === currentUser?.id;
+      
+      if (aIsMine && !bIsMine) return -1;
+      if (!aIsMine && bIsMine) return 1;
       
       // 2. Then sort by priority
       return b.personPriority - a.personPriority;
@@ -101,6 +104,8 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
   const newContacts = attendanceRecords.filter(r => r.isNewContact).length;
   const oldContacts = totalInvited - newContacts;
 
+  const isSessionAdmin = ['SUPER_ADMIN', 'FOLK_GUIDE', 'FOLK_LEADER', 'LEADER'].includes(currentUser?.role || '') || session?.ownerId === currentUser?.id;
+
   return (
     <div className={styles.container}>
       <Link href="/sessions" className={styles.backBtn}>
@@ -121,25 +126,29 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
             >
               <QrCode size={18} />
             </button>
-            <button 
-              onClick={() => setShowEditModal(true)}
-              style={{ background: 'var(--color-surface-hover)', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '8px', color: 'var(--color-text)', cursor: 'pointer' }}
-              aria-label="Edit Session"
-            >
-              <Edit2 size={18} />
-            </button>
-            <button 
-              onClick={async () => {
-                if (window.confirm("Are you sure you want to delete this session? This action cannot be undone.")) {
-                  await firestoreAPI.delete('sessions', id);
-                  window.location.href = '/sessions';
-                }
-              }}
-              style={{ background: 'var(--color-danger-light)', border: '1px solid var(--color-danger)', borderRadius: '8px', padding: '8px', color: 'var(--color-danger)', cursor: 'pointer' }}
-              aria-label="Delete Session"
-            >
-              <Trash2 size={18} />
-            </button>
+            {isSessionAdmin && (
+              <>
+                <button 
+                  onClick={() => setShowEditModal(true)}
+                  style={{ background: 'var(--color-surface-hover)', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '8px', color: 'var(--color-text)', cursor: 'pointer' }}
+                  aria-label="Edit Session"
+                >
+                  <Edit2 size={18} />
+                </button>
+                <button 
+                  onClick={async () => {
+                    if (window.confirm("Are you sure you want to delete this session? This action cannot be undone.")) {
+                      await firestoreAPI.delete('sessions', id);
+                      window.location.href = '/sessions';
+                    }
+                  }}
+                  style={{ background: 'var(--color-danger-light)', border: '1px solid var(--color-danger)', borderRadius: '8px', padding: '8px', color: 'var(--color-danger)', cursor: 'pointer' }}
+                  aria-label="Delete Session"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </>
+            )}
           </div>
         </div>
         
@@ -215,12 +224,18 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                 </div>
                 
                 <div className={styles.callCardActions}>
-                  <GlassSelect 
-                    value={record.assignedUserId ? record.assignedUserId.toString() : ""}
-                    onChange={(val) => handleAssignCaller(record.id as number, val)}
-                    placeholder="Unassigned"
-                    options={allUsers?.map(u => ({ value: u.id!.toString(), label: u.name })) || []}
-                  />
+                  {['FOLK_LEADER', 'LEADER', 'SUPER_ADMIN', 'FOLK_GUIDE'].includes(currentUser?.role || '') ? (
+                    <GlassSelect 
+                      value={record.assignedUserId ? record.assignedUserId.toString() : ""}
+                      onChange={(val) => handleAssignCaller(record.id as number, val)}
+                      placeholder="Unassigned"
+                      options={allUsers?.map(u => ({ value: u.id!.toString(), label: u.name })) || []}
+                    />
+                  ) : (
+                    <div style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-border)', fontSize: '0.85rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center' }}>
+                      {record.assignedUserId === currentUser?.id ? 'Me' : allUsers?.find(u => u.id === record.assignedUserId)?.name || 'Unassigned'}
+                    </div>
+                  )}
 
                   <div 
                     onClick={() => setActiveCallModal(record.id as number)}

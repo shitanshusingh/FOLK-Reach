@@ -26,8 +26,9 @@ export default function PeoplePage() {
   const people = useLiveQuery(
     async () => {
       if (!currentUser?.id) return [];
+      
       let queryResult = await db.people.where('ownerId').equals(currentUser.id).toArray();
-      // Sort by priorityScore descending instead of alphabetical
+      // Sort by priorityScore descending
       queryResult.sort((a, b) => b.priorityScore - a.priorityScore);
 
       if (searchQuery.trim().length > 0) {
