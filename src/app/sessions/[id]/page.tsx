@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, UserPlus, Phone, CheckCircle, Clock, Edit2, Trash2 } from "lucide-react";
+import { ArrowLeft, UserPlus, Phone, CheckCircle, Clock, Edit2, Trash2, QrCode } from "lucide-react";
 import { GlassSelect } from "@/components/ui/GlassSelect";
 import { firestoreAPI, useFirestoreQuery, useFirestoreDoc } from "@/lib/firestore";
 import { where } from "firebase/firestore";
@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import clsx from "clsx";
 import { QuickAddContact } from "@/components/people/QuickAddContact";
+import { QRCodeSVG } from 'qrcode.react';
 
 const safeDate = (d: any) => {
   if (!d) return new Date();
@@ -32,6 +33,8 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
   const [activeCallModal, setActiveCallModal] = useState<number | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showWalkInModal, setShowWalkInModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showQRModal, setShowQRModal] = useState(false);
   const { currentUser } = useAuth();
 
   const session = useFirestoreDoc('sessions', id);
@@ -111,6 +114,13 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
             <h1 className={styles.title}>{session.name}</h1>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
+            <button 
+              onClick={() => setShowQRModal(true)}
+              style={{ background: 'var(--color-surface-hover)', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '8px', color: 'var(--color-text)', cursor: 'pointer' }}
+              aria-label="Show QR Code"
+            >
+              <QrCode size={18} />
+            </button>
             <button 
               onClick={() => setShowEditModal(true)}
               style={{ background: 'var(--color-surface-hover)', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '8px', color: 'var(--color-text)', cursor: 'pointer' }}
@@ -292,8 +302,18 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
               <UserPlus size={18} /> Add Walk-in
             </button>
           </div>
+          <input
+            type="text"
+            placeholder="Search by name or phone..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-border)', marginBottom: '16px', background: 'var(--color-surface)', color: 'var(--color-text)' }}
+          />
           <div className={styles.callList}>
-            {attendanceRecords.filter(r => r.status === 'CONFIRMED' || r.status === 'MAYBE' || r.status === 'ATTENDED' || r.status === 'MISSED' || r.status === 'JOINING_NEXT_SESSION').map(record => (
+            {attendanceRecords
+              .filter(r => r.status === 'CONFIRMED' || r.status === 'MAYBE' || r.status === 'ATTENDED' || r.status === 'MISSED' || r.status === 'JOINING_NEXT_SESSION')
+              .filter(r => r.personName.toLowerCase().includes(searchQuery.toLowerCase()) || r.personPhone.includes(searchQuery))
+              .map(record => (
               <div key={record.id} className={styles.callCard}>
                 <div className={styles.callCardHeader}>
                   <div className={styles.callerInfo}>
@@ -370,6 +390,24 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
             setShowEditModal(false);
           }}
         />
+      )}
+
+      {showQRModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowQRModal(false)}>
+          <div className={styles.modalContent} style={{ maxWidth: 400, textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h2 className={styles.sectionTitle}>Session QR Code</h2>
+              <button onClick={() => setShowQRModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--color-text)' }}>✕</button>
+            </div>
+            <p style={{ color: 'var(--color-text-muted)', marginBottom: 24, fontSize: '0.9rem' }}>Guests can scan this code to check in and register.</p>
+            <div style={{ display: 'inline-flex', justifyContent: 'center', background: 'white', padding: 24, borderRadius: 16, marginBottom: 24 }}>
+              <QRCodeSVG value={`${window.location.origin}/public/sessions/${id}/check-in`} size={200} />
+            </div>
+            <button className={styles.btnAction} style={{ width: '100%' }} onClick={() => window.open(`/public/sessions/${id}/check-in`, '_blank')}>
+              Open Registration Page
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

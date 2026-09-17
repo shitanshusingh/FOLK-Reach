@@ -19,6 +19,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (pathname.startsWith('/public')) return; // Allow public routes
+
     if (!isLoading && !currentUser && pathname !== '/login') {
       router.replace('/login');
     } else if (!isLoading && currentUser && pathname === '/login') {
@@ -30,9 +32,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     return <PremiumSplash message="Authenticating..." />;
   }
 
-  // If we are on the login page, just render children without Navigation
-  if (pathname === '/login') {
-    if (currentUser) return null; // Wait for redirect to complete
+  // If we are on the login page or a public page, just render children without Navigation
+  if (pathname === '/login' || pathname.startsWith('/public')) {
+    if (pathname === '/login' && currentUser) return null; // Wait for redirect to complete
     return <>{children}</>;
   }
 

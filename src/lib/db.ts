@@ -42,6 +42,8 @@ export interface Person {
   university?: string;
   branch?: string;
   year?: string;
+  hostel?: string;
+  
   
   company?: string;
   jobRole?: string;
