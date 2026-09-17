@@ -168,11 +168,11 @@ export default function DashboardPage() {
 
       const daysSince = differenceInDays(now, safeDate(person.lastInteractionDate || person.firstContactDate));
       
-      let threshold = 30; // default fallback
-      if (person.priorityScore >= 20) threshold = 2; // Hot
-      else if (person.priorityScore >= 10) threshold = 4; // Warm
-      else if (person.priorityScore > 0) threshold = 5; // Cold
-      else threshold = 10; // Dormant
+      let threshold = 4; // default fallback
+      if (person.priorityScore >= 20) threshold = 1; // Hot: every 1 day
+      else if (person.priorityScore >= 10) threshold = 2; // Warm: every 2 days
+      else if (person.priorityScore > 0) threshold = 3; // Cold: every 3 days
+      else threshold = 4; // Dormant: every 4 days
 
       const candidate = { person, daysSince, threshold, urgency: daysSince / threshold };
       
