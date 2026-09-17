@@ -260,34 +260,30 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
 
       {/* ANALYTICS TAB */}
       {activeTab === 'ANALYTICS' && (
-        <div>
-          <h2 className={styles.sectionTitle} style={{ marginBottom: 16 }}>Campaign Metrics</h2>
+        <div style={{ animation: 'var(--animate-fade-in)' }}>
+          <h2 className={styles.sectionTitle} style={{ marginBottom: 24, fontSize: '1.5rem', fontWeight: 800 }}>Campaign Performance</h2>
           <div className={styles.analyticsGrid}>
-            <div className={styles.metricCard}>
-              <div className={styles.metricLabel}>Total Assigned for Call</div>
-              <div className={styles.metricValue}>{totalInvited}</div>
+            <div className={styles.metricCard} style={{ background: 'var(--gradient-primary)', color: 'white', border: 'none', transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(100, 108, 255, 0.25)' }}>
+              <div className={styles.metricLabel} style={{ color: 'rgba(255,255,255,0.8)' }}>Total Assigned</div>
+              <div className={styles.metricValue} style={{ color: 'white' }}>{totalInvited}</div>
             </div>
-            <div className={styles.metricCard}>
-              <div className={styles.metricLabel}>Calls Executed</div>
-              <div className={styles.metricValue}>{callsMade}</div>
-              <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                {totalInvited > 0 ? Math.round((callsMade/totalInvited)*100) : 0}% completion
-              </div>
-            </div>
-            <div className={styles.metricCard}>
-              <div className={styles.metricLabel}>Confirmed Attendees</div>
-              <div className={styles.metricValue} style={{ color: 'var(--color-success)' }}>{confirmedCount}</div>
+            <div className={styles.metricCard} style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', border: 'none', transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(16, 185, 129, 0.25)' }}>
+              <div className={styles.metricLabel} style={{ color: 'rgba(255,255,255,0.8)' }}>Confirmed Attendees</div>
+              <div className={styles.metricValue} style={{ color: 'white' }}>{confirmedCount}</div>
             </div>
           </div>
 
           <div className={styles.analyticsGrid}>
-            <div className={styles.metricCard}>
-              <div className={styles.metricLabel}>New Contacts (This Session)</div>
-              <div className={styles.metricValue} style={{ color: 'var(--color-secondary)' }}>{newContacts}</div>
+            <div className={styles.metricCard} style={{ borderLeft: '4px solid var(--color-primary)' }}>
+              <div className={styles.metricLabel}>Calls Executed</div>
+              <div className={styles.metricValue}>{callsMade} <span style={{ fontSize: '1rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>/ {totalInvited}</span></div>
+              <div style={{ marginTop: 8, height: 6, background: 'var(--color-surface-hover)', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ height: '100%', background: 'var(--color-primary)', width: `${totalInvited > 0 ? Math.round((callsMade/totalInvited)*100) : 0}%`, transition: 'width 1s ease-in-out' }} />
+              </div>
             </div>
             <div className={styles.metricCard}>
-              <div className={styles.metricLabel}>Old Contacts (Follow-ups)</div>
-              <div className={styles.metricValue}>{oldContacts}</div>
+              <div className={styles.metricLabel}>New Walk-ins</div>
+              <div className={styles.metricValue} style={{ color: 'var(--color-secondary)' }}>{newContacts}</div>
             </div>
           </div>
         </div>
@@ -325,17 +321,19 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                     </div>
                   </div>
                 </div>
-                <div className={styles.callCardActions}>
-                  <GlassSelect 
-                    value={record.status}
-                    onChange={(val) => handleStatusChange(record.id as number, val as any)}
-                    options={[
-                      { value: "CONFIRMED", label: "Expected" },
-                      { value: "ATTENDED", label: "Attended" },
-                      { value: "MISSED", label: "Missed" },
-                      { value: "JOINING_NEXT_SESSION", label: "Next Session" }
-                    ]}
-                  />
+                <div className={styles.callCardActions} style={{ display: 'flex', flexWrap: 'nowrap', gap: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <GlassSelect 
+                      value={record.status}
+                      onChange={(val) => handleStatusChange(record.id as number, val as any)}
+                      options={[
+                        { value: "CONFIRMED", label: "Expected" },
+                        { value: "ATTENDED", label: "Attended" },
+                        { value: "MISSED", label: "Missed" },
+                        { value: "JOINING_NEXT_SESSION", label: "Next Session" }
+                      ]}
+                    />
+                  </div>
                   <a href={`tel:${record.personPhone}`} className={styles.callActionBtn} aria-label="Call">
                     <Phone size={18} />
                   </a>
@@ -516,18 +514,43 @@ function CallOutcomeModal({ recordId, onClose, onSuccess }: { recordId: number, 
       calledAt: new Date() 
     });
 
-    if (status === 'JOINING_NEXT_SESSION' && record) {
-      // Auto-schedule a task for them for 5 days from now
-      const nextDate = new Date();
-      nextDate.setDate(nextDate.getDate() + 5);
-      await db.tasks.add({
+    if (record) {
+      // 1. Create a fully recognized interaction in the main CRM timeline
+      await db.interactions.add({
         personId: record.personId,
-        title: "Follow-up: Promised to join next session",
-        type: "CALL",
-        status: "PENDING",
-        dueDate: nextDate,
-        notes: outcomeStr
+        type: 'SESSION',
+        date: new Date(),
+        outcome: `Session Call (${status}): ${outcomeStr}`,
+        notes: `Logged from Session Call Campaign`
       });
+
+      // 2. Update the contact's last interaction date
+      await firestoreAPI.update('people', record.personId, {
+        lastInteractionDate: new Date(),
+        lastInteractionType: 'SESSION'
+      });
+
+      // 3. Mark any pending follow-up calls as completed (since we just called them!)
+      const existingTasks = await db.tasks.where('personId').equals(record.personId).toArray();
+      for (const t of existingTasks) {
+        if (t.status === 'PENDING') {
+          await firestoreAPI.update('tasks', t.id as number, { status: 'COMPLETED' });
+        }
+      }
+
+      // 4. Auto-schedule next step if they promised to join next time
+      if (status === 'JOINING_NEXT_SESSION') {
+        const nextDate = new Date();
+        nextDate.setDate(nextDate.getDate() + 5);
+        await db.tasks.add({
+          personId: record.personId,
+          title: "Follow-up: Promised to join next session",
+          type: "CALL",
+          status: "PENDING",
+          dueDate: nextDate,
+          notes: outcomeStr
+        });
+      }
     }
 
     onSuccess();
