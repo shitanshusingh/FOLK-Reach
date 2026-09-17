@@ -92,10 +92,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Fetch user role to determine redirect
       const userDoc = await getDoc(doc(db, 'users', userCred.user.uid));
       if (userDoc.exists()) {
-        const role = userDoc.data().role;
+        const data = userDoc.data();
+        const role = data.role;
+        
+        setCurrentUser({ id: userCred.user.uid, ...data } as User);
+
         if (role === 'SUPER_ADMIN') {
           router.push('/admin');
         } else if (role === 'FOLK_GUIDE') {
@@ -104,13 +107,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           router.push('/');
         }
       } else {
-        router.push('/');
+        await signOut(auth);
+        throw new Error("Your account was found, but your profile is missing from the database. This happens if the account was created manually in the Firebase Console instead of through the app. Please ask the Super Admin to delete the account from Firebase and sign up properly through the app.");
       }
     } catch (error: any) {
-      // Auto-create the Super Admin account if it doesn't exist yet and they are trying to log in
       if (email === 'admin@folk.in') {
         try {
-          await createUserWithEmailAndPassword(auth, email, password);
+          const userCred = await createUserWithEmailAndPassword(auth, email, password);
+          const adminData = { name: 'Super Admin', email: 'admin@folk.in', role: 'SUPER_ADMIN' };
+          await setDoc(doc(db, 'users', userCred.user.uid), adminData);
+          setCurrentUser({ id: userCred.user.uid, ...adminData } as User);
           router.push('/admin');
           return;
         } catch (createErr: any) {
@@ -130,16 +136,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      // Save additional user info to Firestore
-      await setDoc(doc(db, 'users', user.uid), {
+      const userData = {
         name,
         email,
         role,
         teamId,
         guideId
-      });
+      };
       
-      // Auto login happens via onAuthStateChanged
+      // Save additional user info to Firestore
+      await setDoc(doc(db, 'users', user.uid), userData);
+      
+      setCurrentUser({ id: user.uid, ...userData } as User);
       router.push('/');
     } catch (error: any) {
       console.error(error);

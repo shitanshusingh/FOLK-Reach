@@ -26,8 +26,27 @@ export default function SessionsPage() {
     if (!currentUser) return [];
     
     let all = [];
-    if (currentUser.teamId) {
-      all = await db.sessions.where('teamId').equals(currentUser.teamId).toArray();
+    if (currentUser.role === 'SUPER_ADMIN') {
+      all = await db.sessions.toArray();
+    } else if (currentUser.role === 'FOLK_GUIDE') {
+      const residences = await db.teams.where('guideId').equals(currentUser.id).toArray();
+      const residenceIds = residences.map(r => String(r.id));
+      const allSessions = await db.sessions.toArray();
+      all = allSessions.filter(s => residenceIds.includes(String(s.teamId)) || String(s.ownerId) === String(currentUser.id));
+    } else if (currentUser.teamId) {
+      const teamSessions = await db.sessions.where('teamId').equals(currentUser.teamId).toArray();
+      const ownedSessions = await db.sessions.where('ownerId').equals(currentUser.id).toArray();
+      
+      // Combine and deduplicate
+      const combined = [...teamSessions, ...ownedSessions];
+      const uniqueIds = new Set();
+      all = [];
+      for (const s of combined) {
+        if (!uniqueIds.has(s.id)) {
+          uniqueIds.add(s.id);
+          all.push(s);
+        }
+      }
     } else {
       all = await db.sessions.where('ownerId').equals(currentUser.id).toArray();
     }

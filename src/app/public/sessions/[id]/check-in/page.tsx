@@ -113,9 +113,11 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
     setIsSubmitting(true);
     try {
       // 1. DEDUPLICATION CHECK
-      const existingMatch = allPeople?.find(p => p.phone === phone);
+      const existingMatches = await db.people.where('phone').equals(phone).toArray();
+      const existingMatch = existingMatches.length > 0 ? existingMatches[0] : null;
       
       let finalPersonId = null;
+      let ownerId = assignedUserId;
 
       if (existingMatch) {
         // Merge Data
@@ -127,9 +129,11 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
           gender: gender || existingMatch.gender
         });
         finalPersonId = existingMatch.id;
+        // If they were already in the DB but UNASSIGNED previously, keep ownerId as their existing one unless we are forcing an assignment?
+        // Let's just respect the newly chosen ownerId if they selected one, otherwise keep their existing one.
+        if (ownerId === 'UNASSIGNED') ownerId = existingMatch.ownerId || ownerId;
       } else {
         // Assign to Leader if unassigned
-        let ownerId = assignedUserId;
         if (ownerId === 'UNASSIGNED') {
           ownerId = team?.leaderId || (allUsers && allUsers.length > 0 ? allUsers.find((u:any)=>u.role==='FOLK_LEADER' || u.role==='LEADER')?.id || allUsers[0].id : '');
         }
@@ -150,7 +154,7 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
         personId: finalPersonId,
         status: 'ATTENDED',
         isNewContact: !existingMatch,
-        assignedUserId: assignedUserId === 'UNASSIGNED' ? team?.leaderId : assignedUserId
+        assignedUserId: ownerId
       });
 
       setStep('SUCCESS');
