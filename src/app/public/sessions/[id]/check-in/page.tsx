@@ -36,8 +36,24 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
   }, []);
 
   const allUsers = useLiveQuery(async () => {
-    return await db.users.toArray();
-  }, []);
+    let users = await db.users.toArray();
+    
+    // Filter out SUPER_ADMIN
+    users = users.filter(u => u.role !== 'SUPER_ADMIN');
+    
+    // Filter out Hrishikesh Prabhu
+    users = users.filter(u => !u.name.toLowerCase().includes('hrishikesh'));
+    
+    // Only show users belonging to this session's team to make the dropdown cleaner
+    if (session?.teamId) {
+      users = users.filter(u => String(u.teamId) === String(session.teamId));
+    }
+    
+    // Sort alphabetically for elegance
+    users.sort((a, b) => a.name.localeCompare(b.name));
+    
+    return users;
+  }, [session?.teamId]);
 
   const filteredPeople = useMemo(() => {
     if (!allPeople || searchQuery.length < 2) return [];
