@@ -81,6 +81,12 @@ export function useFirestoreDoc<T>(collectionName: string, docId?: string | numb
   return data;
 }
 
+// Global mutation event for legacy Dexie mock
+const mutationEvent = new EventTarget();
+function notifyMutation() {
+  mutationEvent.dispatchEvent(new Event('mutate'));
+}
+
 // MOCK FOR useLiveQuery to support legacy Dexie code that wasn't regex replaced
 export function useLiveQuery<T>(querier: () => Promise<T> | T, dependencies: any[] = []): T | undefined {
   const [data, setData] = useState<T | undefined>(undefined);
@@ -99,11 +105,15 @@ export function useLiveQuery<T>(querier: () => Promise<T> | T, dependencies: any
     
     fetchData();
     
-    // REMOVED dirty 5 second interval because it causes massive UI lag and infinite re-renders on complex pages.
-    // Data will just fetch once on mount for these legacy queries.
+    const onMutate = () => {
+      fetchData();
+    };
+    
+    mutationEvent.addEventListener('mutate', onMutate);
     
     return () => { 
       isMounted = false; 
+      mutationEvent.removeEventListener('mutate', onMutate);
     };
   }, dependencies);
   
@@ -122,15 +132,18 @@ function cleanData(data: any) {
 export const firestoreAPI = {
   async add(collectionName: string, data: any) {
     const docRef = await addDoc(collection(firebaseDb, collectionName), cleanData(data));
+    notifyMutation();
     return docRef.id;
   },
   
   async update(collectionName: string, id: string | number, data: any) {
     await updateDoc(doc(firebaseDb, collectionName, id.toString()), cleanData(data));
+    notifyMutation();
   },
   
   async delete(collectionName: string, id: string | number) {
     await deleteDoc(doc(firebaseDb, collectionName, id.toString()));
+    notifyMutation();
   },
 
   async get(collectionName: string, id: string | number) {

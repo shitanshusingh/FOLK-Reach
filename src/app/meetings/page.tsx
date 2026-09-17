@@ -80,6 +80,7 @@ export default function MeetingsPage() {
         return { 
           ...m, 
           date: m.dueDate, 
+          person, // FIX: Attach the full person object so we can pass it to the modal
           personName: person?.name || 'Unknown', 
           personPhone: person?.phone || '',
           personPriority: person?.priorityScore || 0,

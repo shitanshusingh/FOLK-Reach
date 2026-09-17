@@ -20,6 +20,7 @@ interface LogInteractionModalProps {
 export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInteractionModalProps) {
   const [outcome, setOutcome] = useState("Connected - Good Interaction");
   const [notes, setNotes] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState<number | "">("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +32,8 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
         type: type,
         date: new Date(),
         outcome: outcome,
-        notes: notes
+        notes: notes,
+        ...(type === 'CALL' && typeof durationMinutes === 'number' ? { durationMinutes } : {})
       });
 
       // Update person last contacted date
@@ -131,6 +133,20 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
               ]}
             />
           </div>
+
+          {type === 'CALL' && (
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Call Duration (minutes)</label>
+              <input 
+                type="number"
+                min="0"
+                className={styles.input} 
+                value={durationMinutes}
+                onChange={e => setDurationMinutes(e.target.value ? Number(e.target.value) : "")}
+                placeholder="e.g. 5"
+              />
+            </div>
+          )}
 
           <div className={styles.formGroup}>
             <label className={styles.label}>Notes (Optional)</label>

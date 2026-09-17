@@ -182,6 +182,12 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
               {format(safeDate(person.firstContactDate), "MMM d, yyyy")}
             </span>
           </div>
+          {person.customFields && Object.entries(person.customFields).map(([key, value]) => (
+            <div className={styles.detailItem} key={key}>
+              <span className={styles.detailLabel}>{key}</span>
+              <span className={styles.detailValue}>{value as string}</span>
+            </div>
+          ))}
         </div>
 
         <div className={styles.quickActions}>

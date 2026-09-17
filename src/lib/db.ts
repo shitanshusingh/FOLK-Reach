@@ -59,6 +59,7 @@ export interface Person {
   
   assignedUserId?: string | number; 
   ownerId?: string | number; 
+  customFields?: Record<string, any>;
 }
 
 export interface Interaction {
@@ -67,7 +68,7 @@ export interface Interaction {
   type: 'CALL' | 'MEETING' | 'MESSAGE' | 'SESSION' | 'OTHER';
   date: Date | string;
   notes: string;
-  duration?: number; 
+  durationMinutes?: number; 
 }
 
 export interface Session {
@@ -189,6 +190,19 @@ function createCollectionProxy(collectionName: string) {
           if (op.type === 'reverse') res = res.reverse();
         }
         return res.length > 0 ? res[0] : undefined;
+      },
+      count: async () => {
+        let res = await firestoreAPI.query(collectionName, constraints);
+        for (const op of ops) {
+          if (op.type === 'filter') res = res.filter(op.predicate);
+          if (op.type === 'sortBy') res = res.sort((a, b) => {
+            if (a[op.field] == null) return 1;
+            if (b[op.field] == null) return -1;
+            return a[op.field] > b[op.field] ? 1 : -1;
+          });
+          if (op.type === 'reverse') res = res.reverse();
+        }
+        return res.length;
       }
     };
   };

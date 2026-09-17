@@ -46,9 +46,34 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
   const [howMet, setHowMet] = useState(personToEdit?.howMet || "");
   const [notes, setNotes] = useState(personToEdit?.notes || "");
 
+  // Dynamic Custom Fields specific to this person only
+  const [customFieldsList, setCustomFieldsList] = useState<{key: string, value: string}[]>(
+    Object.entries(personToEdit?.customFields || {}).map(([k, v]) => ({ key: k, value: v as string }))
+  );
+
+  const handleAddCustomField = () => {
+    setCustomFieldsList([...customFieldsList, { key: "", value: "" }]);
+  };
+
+  const updateCustomField = (index: number, field: 'key'|'value', val: string) => {
+    const newList = [...customFieldsList];
+    newList[index][field] = val;
+    setCustomFieldsList(newList);
+  };
+
+  const removeCustomField = (index: number) => {
+    setCustomFieldsList(customFieldsList.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !phone) return;
+
+    // Convert list back to object
+    const customFieldsObj: Record<string, string> = {};
+    for (const f of customFieldsList) {
+      if (f.key.trim()) customFieldsObj[f.key.trim()] = f.value;
+    }
 
     try {
       if (personToEdit?.id) {
@@ -65,6 +90,7 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
           howMet,
           notes,
           priorityScore: Number(priorityScore),
+          customFields: customFieldsObj,
         });
         if (onSuccess) onSuccess(personToEdit.id as number);
       } else {
@@ -93,6 +119,7 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
           priorityScore: Number(priorityScore),
           tags: [],
           ownerId: currentUser?.id,
+          customFields: customFieldsObj,
         });
 
         // Physically create the initial follow-up task
@@ -274,6 +301,34 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
                   value={notes} 
                   onChange={e => setNotes(e.target.value)}
                 />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginTop: 24, borderTop: '1px solid var(--color-border)', paddingTop: 16 }}>
+                <label className={styles.label}>Custom Fields (Only for this person)</label>
+                {customFieldsList.map((cf, idx) => (
+                  <div key={idx} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                    <input 
+                      className={styles.input} 
+                      placeholder="Field Name (e.g. Favorite Topic)"
+                      value={cf.key}
+                      onChange={e => updateCustomField(idx, 'key', e.target.value)}
+                      style={{ flex: 1 }}
+                    />
+                    <input 
+                      className={styles.input} 
+                      placeholder="Value"
+                      value={cf.value}
+                      onChange={e => updateCustomField(idx, 'value', e.target.value)}
+                      style={{ flex: 1 }}
+                    />
+                    <button type="button" onClick={() => removeCustomField(idx)} style={{ background: 'var(--color-danger-light)', color: 'var(--color-danger)', border: 'none', borderRadius: 4, padding: '0 12px', cursor: 'pointer' }}>
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+                <button type="button" onClick={handleAddCustomField} style={{ background: 'var(--color-surface)', color: 'var(--color-primary)', border: '1px dashed var(--color-primary)', borderRadius: 8, padding: '8px', cursor: 'pointer', marginTop: 8, width: '100%', display: 'block' }}>
+                  + Add Custom Field
+                </button>
               </div>
             </>
           )}

@@ -5,7 +5,8 @@ import { db } from "@/lib/db";
 
 import styles from "./Analytics.module.css";
 import { firestoreAPI, useFirestoreQuery, useFirestoreDoc } from "@/lib/firestore";
-import { where } from "firebase/firestore";;
+import { where } from "firebase/firestore";
+import { startOfWeek, endOfWeek } from "date-fns";
 
 export default function AnalyticsPage() {
   const analyticsData = useLiveQuery(async () => {
@@ -13,6 +14,17 @@ export default function AnalyticsPage() {
     const interactions = await db.interactions.toArray();
     const sessions = await db.sessions.toArray();
     const tasks = await db.tasks.toArray();
+
+    const now = new Date();
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday start
+    const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+
+    const weeklyCalls = interactions.filter(i => {
+      const d = i.date instanceof Date ? i.date : (typeof i.date === 'string' ? new Date(i.date) : i.date?.toDate?.());
+      return i.type === 'CALL' && d >= weekStart && d <= weekEnd;
+    });
+
+    const weeklyCallDuration = weeklyCalls.reduce((total, call) => total + (call.durationMinutes || 0), 0);
 
     return {
       totalPeople: people.length,
@@ -24,6 +36,8 @@ export default function AnalyticsPage() {
       sessionsConducted: sessions.length,
       tasksCompleted: tasks.filter(t => t.status === 'COMPLETED').length,
       pendingTasks: tasks.filter(t => t.status === 'PENDING').length,
+      weeklyCallsCount: weeklyCalls.length,
+      weeklyCallDuration
     };
   });
 
@@ -70,6 +84,22 @@ export default function AnalyticsPage() {
         </div>
       ) : (
         <p>Loading analytics...</p>
+      )}
+
+      {analyticsData && (
+        <section className={styles.section} style={{ marginTop: '48px' }}>
+          <h2 className={styles.sectionTitle}>This Week's Performance</h2>
+          <div className={styles.metricsGrid}>
+            <div className={styles.metricCard} style={{ background: 'var(--color-primary-light)', borderColor: 'var(--color-primary)' }}>
+              <span className={styles.metricLabel} style={{ color: 'var(--color-primary)' }}>Calls Made This Week</span>
+              <span className={styles.metricValue} style={{ color: 'var(--color-primary)' }}>{analyticsData.weeklyCallsCount}</span>
+            </div>
+            <div className={styles.metricCard} style={{ background: 'var(--color-primary-light)', borderColor: 'var(--color-primary)' }}>
+              <span className={styles.metricLabel} style={{ color: 'var(--color-primary)' }}>Total Call Duration</span>
+              <span className={styles.metricValue} style={{ color: 'var(--color-primary)' }}>{analyticsData.weeklyCallDuration} mins</span>
+            </div>
+          </div>
+        </section>
       )}
     </div>
   );

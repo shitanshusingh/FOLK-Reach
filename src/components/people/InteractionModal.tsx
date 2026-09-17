@@ -21,6 +21,7 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
   const [outcome, setOutcome] = useState("");
   const [purpose, setPurpose] = useState("");
   const [notes, setNotes] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState<number | "">("");
   const [selectedTopics, setSelectedTopics] = useState<number[]>([]);
   
   // Book specific
@@ -52,7 +53,8 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
         purpose,
         outcome,
         notes: finalNotes,
-        topicsDiscussed: selectedTopics.length > 0 ? selectedTopics : undefined
+        topicsDiscussed: selectedTopics.length > 0 ? selectedTopics : undefined,
+        ...(type === 'CALL' && typeof durationMinutes === 'number' ? { durationMinutes } : {})
       });
       
       // Update person lastInteractionDate and maybe adjust priorityScore
@@ -161,6 +163,20 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
                   onChange={e => setPurpose(e.target.value)}
                 />
               </div>
+
+              {type === 'CALL' && (
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Call Duration (minutes)</label>
+                  <input 
+                    type="number" 
+                    min="0"
+                    className={styles.input} 
+                    placeholder="e.g. 5"
+                    value={durationMinutes}
+                    onChange={e => setDurationMinutes(e.target.value ? Number(e.target.value) : "")}
+                  />
+                </div>
+              )}
             </>
           )}
 

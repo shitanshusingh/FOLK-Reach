@@ -86,7 +86,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
     setRefreshTrigger(prev => prev + 1);
   };
 
-  const handleAssignCaller = async (recordId: number, userId: number) => {
+  const handleAssignCaller = async (recordId: number, userId: string | number) => {
     await firestoreAPI.update('sessionAttendance', recordId, { assignedUserId: userId });
     setRefreshTrigger(prev => prev + 1);
   };
@@ -216,8 +216,8 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                 
                 <div className={styles.callCardActions}>
                   <GlassSelect 
-                    value={record.assignedUserId?.toString() || ""}
-                    onChange={(val) => handleAssignCaller(record.id as number, Number(val))}
+                    value={record.assignedUserId ? record.assignedUserId.toString() : ""}
+                    onChange={(val) => handleAssignCaller(record.id as number, val)}
                     placeholder="Unassigned"
                     options={allUsers?.map(u => ({ value: u.id!.toString(), label: u.name })) || []}
                   />
@@ -504,6 +504,7 @@ function EditSessionModal({ session, onClose, onSuccess }: { session: any, onClo
 function CallOutcomeModal({ recordId, onClose, onSuccess }: { recordId: number, onClose: () => void, onSuccess: () => void }) {
   const [status, setStatus] = useState<SessionAttendance['status']>('CONFIRMED');
   const [outcomeStr, setOutcomeStr] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState<number | "">("");
 
   const handleSave = async () => {
     const record = await firestoreAPI.get('sessionAttendance', recordId);
@@ -521,7 +522,8 @@ function CallOutcomeModal({ recordId, onClose, onSuccess }: { recordId: number, 
         type: 'SESSION',
         date: new Date(),
         outcome: `Session Call (${status}): ${outcomeStr}`,
-        notes: `Logged from Session Call Campaign`
+        notes: `Logged from Session Call Campaign`,
+        ...(typeof durationMinutes === 'number' ? { durationMinutes } : {})
       });
 
       // 2. Update the contact's last interaction date
@@ -586,6 +588,18 @@ function CallOutcomeModal({ recordId, onClose, onSuccess }: { recordId: number, 
             value={outcomeStr} 
             onChange={e => setOutcomeStr(e.target.value)} 
             placeholder="e.g. He is bringing 2 friends..."
+          />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.detailLabel}>Call Duration (minutes)</label>
+          <input 
+            type="number" 
+            min="0"
+            className={styles.statusSelect} 
+            value={durationMinutes} 
+            onChange={e => setDurationMinutes(e.target.value ? Number(e.target.value) : "")} 
+            placeholder="e.g. 5"
           />
         </div>
 
