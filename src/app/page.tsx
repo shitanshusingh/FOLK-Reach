@@ -144,7 +144,10 @@ export default function DashboardPage() {
     // If urgency < 1, they are "Next Up" and we use them to fill the dashboard quotas.
     
     type Candidate = { person: Person; daysSince: number; threshold: number; urgency: number };
-    const candidates: Candidate[] = [];
+    const hotCandidates: Candidate[] = [];
+    const warmCandidates: Candidate[] = [];
+    const coldCandidates: Candidate[] = [];
+    const dormantCandidates: Candidate[] = [];
 
     for (const person of sortedPeople) {
       if (inActionPlan.has(person.id!)) continue;
@@ -171,13 +174,37 @@ export default function DashboardPage() {
       else if (person.priorityScore > 0) threshold = 5; // Cold
       else threshold = 10; // Dormant
 
-      candidates.push({ person, daysSince, threshold, urgency: daysSince / threshold });
+      const candidate = { person, daysSince, threshold, urgency: daysSince / threshold };
+      
+      if (person.priorityScore >= 20) hotCandidates.push(candidate);
+      else if (person.priorityScore >= 10) warmCandidates.push(candidate);
+      else if (person.priorityScore > 0) coldCandidates.push(candidate);
+      else dormantCandidates.push(candidate);
     }
 
-    // Sort candidates by urgency descending (most urgent first)
-    candidates.sort((a, b) => b.urgency - a.urgency);
+    // Sort each tier by urgency descending
+    const sortByUrgency = (a: Candidate, b: Candidate) => b.urgency - a.urgency;
+    hotCandidates.sort(sortByUrgency);
+    warmCandidates.sort(sortByUrgency);
+    coldCandidates.sort(sortByUrgency);
+    dormantCandidates.sort(sortByUrgency);
 
-    for (const { person, daysSince, threshold, urgency } of candidates) {
+    const mixedCandidates: Candidate[] = [];
+    const queues = [hotCandidates, warmCandidates, coldCandidates, dormantCandidates];
+    
+    // Round-robin pull from each tier to ensure a healthy mixture of all contact types
+    let activeQueues = queues.length;
+    while(activeQueues > 0) {
+      activeQueues = 0;
+      for (const queue of queues) {
+        if (queue.length > 0) {
+          mixedCandidates.push(queue.shift()!);
+          activeQueues++;
+        }
+      }
+    }
+
+    for (const { person, daysSince, threshold, urgency } of mixedCandidates) {
       const isDue = urgency >= 1;
       
       const lastType = person.lastInteractionType || 'OTHER';
@@ -192,18 +219,8 @@ export default function DashboardPage() {
         actionType = 'MEETING';
       }
 
-      if (isDue) {
-        // ALWAYS add if they are overdue/due
-        addToActionPlan(person, reason, true, actionType);
-      } else {
-        // If not due, only add if we have space in our quotas
-        // Let's say we want to constantly suggest up to 10 calls and 4 meetings total
-        if (actionType === 'MEETING' && undoneMeetingCount < 4) {
-          addToActionPlan(person, reason, false, actionType);
-        } else if (actionType === 'CALL' && undoneCallCount < 10) {
-          addToActionPlan(person, reason, false, actionType);
-        }
-      }
+      // addToActionPlan already strictly enforces the quota limits (10 calls, 4 meetings)
+      addToActionPlan(person, reason, isDue, actionType);
     }
 
     // 5. Put remainder in Pipelines
