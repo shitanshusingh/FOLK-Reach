@@ -1,10 +1,10 @@
 "use client";
 // @ts-nocheck
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import styles from "./Login.module.css";
-import { LogIn, ArrowRight } from "lucide-react";
+import { LogIn, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 
@@ -18,11 +18,32 @@ export default function LoginPage() {
   // Form State
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   
   const [name, setName] = useState("");
-  const [teamType, setTeamType] = useState<'create' | 'join'>('create');
-  const [teamName, setTeamName] = useState("");
-  const [inviteCode, setInviteCode] = useState("");
+  const [guides, setGuides] = useState<any[]>([]);
+  const [residences, setResidences] = useState<any[]>([]);
+  
+  const [selectedGuideId, setSelectedGuideId] = useState("");
+  const [selectedResidenceId, setSelectedResidenceId] = useState("");
+
+
+
+  useEffect(() => {
+    // Fetch guides and residences once on mount for the signup form
+    const fetchSignupData = async () => {
+      try {
+        const guidesSnap = await getDocs(query(collection(db, 'users'), where('role', '==', 'FOLK_GUIDE')));
+        setGuides(guidesSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        
+        const residencesSnap = await getDocs(collection(db, 'teams')); // teams = Folk Residences
+        setResidences(residencesSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+      } catch (err) {
+        console.error("Error fetching signup data:", err);
+      }
+    };
+    fetchSignupData();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,40 +63,16 @@ export default function LoginPage() {
     setIsSubmitting(true);
     setError(null);
     try {
-      let assignedTeamId = "";
-
-      // Firebase team handling
-      if (teamType === 'create') {
-        if (!teamName) throw new Error("Team Name is required.");
-        const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-        
-        // Create team in Firestore
-        const teamRef = await addDoc(collection(db, 'teams'), {
-          name: teamName,
-          inviteCode: code,
-          // leaderId will be updated later if needed, but for now we rely on user role
-        });
-        assignedTeamId = teamRef.id;
-      } else {
-        if (!inviteCode) throw new Error("Invite Code is required.");
-        
-        // Find team by invite code in Firestore
-        const q = query(collection(db, 'teams'), where('inviteCode', '==', inviteCode));
-        const querySnapshot = await getDocs(q);
-        
-        if (querySnapshot.empty) {
-          throw new Error("Invalid Invite Code. Team not found.");
-        }
-        
-        assignedTeamId = querySnapshot.docs[0].id;
-      }
+      if (!selectedGuideId) throw new Error("Please select a Folk Guide.");
+      if (!selectedResidenceId) throw new Error("Please select a Folk Residence.");
 
       await signup(
         email, 
         password, 
         name, 
-        teamType === 'create' ? 'LEADER' : 'MEMBER', 
-        assignedTeamId
+        'RESIDENT', 
+        selectedResidenceId,
+        selectedGuideId
       );
 
     } catch (err: any) {
@@ -118,13 +115,26 @@ export default function LoginPage() {
             </div>
             <div className={styles.formGroup}>
               <label className={styles.label}>Password</label>
-              <input 
-                type="password" 
-                className={styles.input} 
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-              />
+              <div style={{ position: 'relative', width: '100%' }}>
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  className={styles.input} 
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  style={{ width: '100%', paddingRight: '40px' }}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)'
+                  }}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
             <button type="submit" className={styles.btnPrimary} disabled={isSubmitting}>
               {isSubmitting ? "Logging in..." : <><LogIn size={18} /> Log In</>}
@@ -154,52 +164,68 @@ export default function LoginPage() {
             </div>
             <div className={styles.formGroup}>
               <label className={styles.label}>Password</label>
-              <input 
-                type="password" 
-                className={styles.input} 
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
+              <div style={{ position: 'relative', width: '100%' }}>
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  className={styles.input} 
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  style={{ width: '100%', paddingRight: '40px' }}
+                  required
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)'
+                  }}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <div className={styles.formGroup} style={{ marginTop: 12 }}>
-              <label className={styles.label}>Are you creating a team or joining one?</label>
+              <label className={styles.label}>Select Folk Guide</label>
               <select 
                 className={styles.input}
-                value={teamType}
-                onChange={(e) => setTeamType(e.target.value as 'create' | 'join')}
+                value={selectedGuideId}
+                onChange={(e) => {
+                  setSelectedGuideId(e.target.value);
+                  setSelectedResidenceId(""); // Reset residence when guide changes
+                }}
+                required
                 style={{ cursor: 'pointer', appearance: 'auto' }}
               >
-                <option value="create">Create a New Team (Become Leader)</option>
-                <option value="join">Join Existing Team (Become Member)</option>
+                <option value="">-- Choose a Folk Guide --</option>
+                {guides.map(g => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
               </select>
             </div>
 
-            {teamType === 'create' ? (
+            {selectedGuideId && (
               <div className={styles.formGroup}>
-                <label className={styles.label}>New Team Name</label>
-                <input 
-                  type="text" 
-                  className={styles.input} 
-                  value={teamName}
-                  onChange={e => setTeamName(e.target.value)}
-                  placeholder="e.g. Downtown Outreach"
-                  required={teamType === 'create'}
-                />
-              </div>
-            ) : (
-              <div className={styles.formGroup}>
-                <label className={styles.label}>Team Invite Code</label>
-                <input 
-                  type="text" 
-                  className={styles.input} 
-                  value={inviteCode}
-                  onChange={e => setInviteCode(e.target.value.toUpperCase())}
-                  placeholder="e.g. FOLK123"
-                  required={teamType === 'join'}
-                />
+                <label className={styles.label}>Select Folk Residence</label>
+                <select 
+                  className={styles.input}
+                  value={selectedResidenceId}
+                  onChange={(e) => setSelectedResidenceId(e.target.value)}
+                  required
+                  style={{ cursor: 'pointer', appearance: 'auto' }}
+                >
+                  <option value="">-- Choose a Residence --</option>
+                  {residences.filter(r => r.guideId === selectedGuideId).map(r => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
+                </select>
+                {residences.filter(r => r.guideId === selectedGuideId).length === 0 && (
+                  <p style={{ fontSize: '0.8rem', color: 'var(--color-warning)', marginTop: 4 }}>
+                    This guide has no active residences yet.
+                  </p>
+                )}
               </div>
             )}
 

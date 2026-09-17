@@ -194,6 +194,8 @@
     flex-direction: column;
     padding: 16px 12px;
     gap: 8px;
+    flex: 1;
+    overflow-y: auto;
   }
 
   .sidebarItem {

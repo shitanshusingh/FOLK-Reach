@@ -27,7 +27,7 @@ export default function ProfilePage() {
     <div className={styles.container}>
       <header className={styles.header}>
         <h1 className={styles.title}>My Profile</h1>
-        <p className={styles.subtitle}>View your account details and team information</p>
+        <p className={styles.subtitle}>View your account details and Folk Residence information</p>
       </header>
 
       <div className={styles.card}>
@@ -36,10 +36,14 @@ export default function ProfilePage() {
           <div className={styles.nameInfo}>
             <div className={styles.name}>{currentUser.name}</div>
             <div className={styles.roleBadge}>
-              {currentUser.role === 'LEADER' ? (
-                <><ShieldCheck size={16} /> Team Leader</>
+              {currentUser.role === 'SUPER_ADMIN' ? (
+                <><ShieldCheck size={16} /> Super Admin</>
+              ) : currentUser.role === 'FOLK_GUIDE' ? (
+                <><ShieldCheck size={16} /> Folk Guide</>
+              ) : currentUser.role === 'FOLK_LEADER' || currentUser.role === 'LEADER' ? (
+                <><ShieldCheck size={16} /> Folk Leader</>
               ) : (
-                <><UserIcon size={16} /> Team Member</>
+                <><UserIcon size={16} /> Resident</>
               )}
             </div>
           </div>
@@ -55,18 +59,18 @@ export default function ProfilePage() {
           </div>
 
           <div className={styles.detailItem}>
-            <span className={styles.detailLabel}>Assigned Team</span>
+            <span className={styles.detailLabel}>Assigned Residence</span>
             <span className={styles.detailValue}>
               <Users size={18} style={{ color: 'var(--color-text-muted)' }} />
-              {team?.name || 'Loading team...'}
+              {team?.name || 'Not assigned to a residence'}
             </span>
           </div>
 
-          {currentUser.role === 'LEADER' && team?.inviteCode && (
+          {(currentUser.role === 'FOLK_LEADER' || currentUser.role === 'LEADER') && team?.inviteCode && (
             <div className={styles.detailItem}>
-              <span className={styles.detailLabel}>Team Invite Code</span>
+              <span className={styles.detailLabel}>Residence Invite Code</span>
               <span className={styles.detailValue} style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-                <span style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Share this code with your members so they can join your team:</span>
+                <span style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Legacy invite code for members:</span>
                 <span className={styles.codeBox}>{team.inviteCode}</span>
               </span>
             </div>

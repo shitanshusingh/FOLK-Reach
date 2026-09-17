@@ -13,15 +13,17 @@ export interface User {
   name: string;
   email: string;
   password?: string;
-  role: 'ADMIN' | 'LEADER' | 'MEMBER';
-  teamId?: string | number;
+  role: 'SUPER_ADMIN' | 'FOLK_GUIDE' | 'FOLK_LEADER' | 'RESIDENT' | 'ADMIN' | 'LEADER' | 'MEMBER'; // Keeping old roles temporarily for backwards compatibility during migration
+  teamId?: string | number; // This acts as Folk Residence ID
+  guideId?: string | number; // The Folk Guide this user is under
 }
 
 export interface Team {
   id?: string | number;
   name: string;
   inviteCode?: string;
-  leaderId?: string | number;
+  leaderId?: string | number; // Folk Leader ID
+  guideId?: string | number; // Folk Guide ID who created this residency
 }
 
 export interface Person {

@@ -131,7 +131,7 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
         // Assign to Leader if unassigned
         let ownerId = assignedUserId;
         if (ownerId === 'UNASSIGNED') {
-          ownerId = team?.leaderId || (allUsers && allUsers.length > 0 ? allUsers.find((u:any)=>u.role==='LEADER')?.id || allUsers[0].id : '');
+          ownerId = team?.leaderId || (allUsers && allUsers.length > 0 ? allUsers.find((u:any)=>u.role==='FOLK_LEADER' || u.role==='LEADER')?.id || allUsers[0].id : '');
         }
 
         // Create New Person

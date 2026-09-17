@@ -17,14 +17,15 @@ export interface User {
   id: string; // Firebase UID
   name: string;
   email: string;
-  role: 'ADMIN' | 'LEADER' | 'MEMBER';
+  role: 'SUPER_ADMIN' | 'FOLK_GUIDE' | 'FOLK_LEADER' | 'RESIDENT' | 'ADMIN' | 'LEADER' | 'MEMBER';
   teamId?: string;
+  guideId?: string;
 }
 
 interface AuthContextType {
   currentUser: User | null;
   login: (email: string, password?: string) => Promise<void>;
-  signup: (email: string, password: string,name: string, role: 'LEADER' | 'MEMBER', teamId: string) => Promise<void>;
+  signup: (email: string, password: string, name: string, role: 'FOLK_LEADER' | 'RESIDENT', teamId: string, guideId: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -42,11 +43,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Fetch custom user data from Firestore
         try {
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          
           if (userDoc.exists()) {
-            setCurrentUser({ id: firebaseUser.uid, ...userDoc.data() } as User);
+            let data = userDoc.data();
+            
+            // Auto-elevate admin@folk.in to SUPER_ADMIN
+            if (data.email === 'admin@folk.in' && data.role !== 'SUPER_ADMIN') {
+              data.role = 'SUPER_ADMIN';
+              await setDoc(doc(db, 'users', firebaseUser.uid), { role: 'SUPER_ADMIN' }, { merge: true });
+            }
+            
+            setCurrentUser({ id: firebaseUser.uid, ...data } as User);
           } else {
             console.error("User document not found in Firestore!");
-            setCurrentUser(null);
+            // Check if it's the admin trying to log in for the first time
+            if (firebaseUser.email === 'admin@folk.in') {
+              const adminData = {
+                name: 'Super Admin',
+                email: 'admin@folk.in',
+                role: 'SUPER_ADMIN'
+              };
+              await setDoc(doc(db, 'users', firebaseUser.uid), adminData);
+              setCurrentUser({ id: firebaseUser.uid, ...adminData } as User);
+            } else {
+              setCurrentUser(null);
+            }
           }
         } catch (err) {
           console.error("Error fetching user data:", err);
@@ -64,15 +85,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password?: string) => {
     if (!password) throw new Error("Password is required for Firebase auth");
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push('/');
+      const userCred = await signInWithEmailAndPassword(auth, email, password);
+      
+      if (email === 'admin@folk.in') {
+        router.push('/admin');
+        return;
+      }
+
+      // Fetch user role to determine redirect
+      const userDoc = await getDoc(doc(db, 'users', userCred.user.uid));
+      if (userDoc.exists()) {
+        const role = userDoc.data().role;
+        if (role === 'SUPER_ADMIN') {
+          router.push('/admin');
+        } else if (role === 'FOLK_GUIDE') {
+          router.push('/guide');
+        } else {
+          router.push('/');
+        }
+      } else {
+        router.push('/');
+      }
     } catch (error: any) {
+      // Auto-create the Super Admin account if it doesn't exist yet and they are trying to log in
+      if (email === 'admin@folk.in') {
+        try {
+          await createUserWithEmailAndPassword(auth, email, password);
+          router.push('/admin');
+          return;
+        } catch (createErr: any) {
+          if (createErr.code === 'auth/weak-password') {
+            throw new Error("For security, please use a password of at least 6 characters.");
+          }
+          console.error("Failed to auto-create admin:", createErr);
+        }
+      }
       console.error(error);
       throw new Error("Invalid credentials");
     }
   };
 
-  const signup = async (email: string, password: string, name: string, role: 'LEADER' | 'MEMBER', teamId: string) => {
+  const signup = async (email: string, password: string, name: string, role: 'FOLK_LEADER' | 'RESIDENT', teamId: string, guideId: string) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -82,7 +135,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name,
         email,
         role,
-        teamId
+        teamId,
+        guideId
       });
       
       // Auto login happens via onAuthStateChanged

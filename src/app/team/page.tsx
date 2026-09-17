@@ -5,23 +5,34 @@ import { db } from "@/lib/db";
 
 import styles from "./Team.module.css";
 import { firestoreAPI, useFirestoreQuery, useFirestoreDoc } from "@/lib/firestore";
-import { where } from "firebase/firestore";;
+import { useAuth } from "@/contexts/AuthContext";
+import { where } from "firebase/firestore";
 
 export default function TeamPage() {
+  const { currentUser } = useAuth();
+
   const teamData = useLiveQuery(async () => {
-    const users = await db.users.toArray();
-    const people = await db.people.toArray();
+    if (!currentUser?.teamId) return null;
+
+    const allUsers = await db.users.where('teamId').equals(currentUser.teamId).toArray();
+    
+    // We only want contacts owned by users in this residence
+    const userIds = new Set(allUsers.map(u => u.id));
+    const allPeople = await db.people.toArray();
+    const people = allPeople.filter(p => userIds.has(String(p.ownerId)));
+    
     const tasks = await db.tasks.toArray();
     
     const stats = {
       totalPeople: people.length,
       highPriority: people.filter(p => p.priorityScore > 10).length,
-      pendingTasks: tasks.filter(t => t.status === 'PENDING').length
+      pendingTasks: tasks.filter(t => t.status === 'PENDING' && userIds.has(String(t.assignedToUserId))).length
     };
 
-    const userMetrics = users.map(user => {
-      const assignedPeople = people.filter(p => p.assignedUserId === user.id);
-      const assignedTasks = tasks.filter(t => t.assignedToUserId === user.id && t.status === 'PENDING');
+    const userMetrics = allUsers.map(user => {
+      // In the current schema, person.ownerId determines who it belongs to.
+      const assignedPeople = people.filter(p => String(p.ownerId) === String(user.id));
+      const assignedTasks = tasks.filter(t => String(t.assignedToUserId) === String(user.id) && t.status === 'PENDING');
       
       return {
         ...user,
@@ -36,7 +47,7 @@ export default function TeamPage() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Team Dashboard</h1>
+        <h1 className={styles.title}>Folk Residence Dashboard</h1>
       </header>
 
       {teamData ? (

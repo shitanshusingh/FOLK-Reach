@@ -21,7 +21,9 @@ import {
   Moon,
   LogOut,
   User as UserIcon,
-  Gift
+  Gift,
+  ShieldCheck,
+  Compass
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useState, useEffect } from 'react';
@@ -31,7 +33,7 @@ import { NotificationsTray } from '../notifications/NotificationsTray';
 import { BirthdayChecker } from '../notifications/BirthdayChecker';
 import { QuickAddContact } from '../people/QuickAddContact';
 
-const navItems = [
+const baseNavItems = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'People', href: '/people', icon: Users },
   { name: 'Sessions', href: '/sessions', icon: Calendar },
@@ -40,16 +42,18 @@ const navItems = [
   { name: 'Birthdays', href: '/birthdays', icon: Gift },
   { name: 'Groups', href: '/groups', icon: FolderOpen },
   { name: 'Topics', href: '/topics', icon: BookOpen },
-  { name: 'Team', href: '/team', icon: Users },
+  { name: 'Residence', href: '/team', icon: Users, roles: ['FOLK_LEADER', 'RESIDENT', 'ADMIN', 'LEADER', 'MEMBER'] },
   { name: 'Timeline', href: '/timeline', icon: Clock },
   { name: 'Analytics', href: '/analytics', icon: BarChart },
+  { name: 'Super Admin', href: '/admin', icon: ShieldCheck, roles: ['SUPER_ADMIN'] },
+  { name: 'Folk Guide', href: '/guide', icon: Compass, roles: ['FOLK_GUIDE'] },
   { name: 'Profile', href: '/profile', icon: UserIcon },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export function Navigation({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { logout, currentUser } = useAuth();
   const [showGlobalQuickAdd, setShowGlobalQuickAdd] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -69,6 +73,15 @@ export function Navigation({ children }: { children: React.ReactNode }) {
     localStorage.setItem('app-theme', newTheme);
     document.documentElement.setAttribute('data-theme', newTheme);
   };
+
+  // Filter nav items based on user role
+  const currentUserRole = currentUser?.role || 'RESIDENT';
+  const navItems = baseNavItems.filter(item => {
+    if (item.roles) {
+      return item.roles.includes(currentUserRole);
+    }
+    return true;
+  });
 
   // Top 4 for mobile
   const mobileNavTop = navItems.slice(0, 4);

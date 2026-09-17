@@ -519,7 +519,7 @@ function CallOutcomeModal({ recordId, onClose, onSuccess }: { recordId: number, 
       // 1. Create a fully recognized interaction in the main CRM timeline
       await db.interactions.add({
         personId: record.personId,
-        type: 'SESSION',
+        type: 'CALL',
         date: new Date(),
         outcome: `Session Call (${status}): ${outcomeStr}`,
         notes: `Logged from Session Call Campaign`,

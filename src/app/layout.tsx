@@ -6,6 +6,7 @@ import { Navigation } from "@/components/layout/Navigation";
 import { AppInitializer } from "@/components/layout/AppInitializer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthGuard } from "@/components/layout/AuthGuard";
+import { MigrationModal } from "@/components/ui/MigrationModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +41,7 @@ export default function RootLayout({
           <AppInitializer>
             <AuthGuard>
               {children}
+              <MigrationModal />
             </AuthGuard>
           </AppInitializer>
         </AuthProvider>

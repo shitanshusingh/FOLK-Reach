@@ -7,13 +7,50 @@ import styles from "./Analytics.module.css";
 import { firestoreAPI, useFirestoreQuery, useFirestoreDoc } from "@/lib/firestore";
 import { where } from "firebase/firestore";
 import { startOfWeek, endOfWeek } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function AnalyticsPage() {
+  const { currentUser } = useAuth();
+  
   const analyticsData = useLiveQuery(async () => {
-    const people = await db.people.toArray();
-    const interactions = await db.interactions.toArray();
-    const sessions = await db.sessions.toArray();
-    const tasks = await db.tasks.toArray();
+    if (!currentUser) return null;
+
+    let people = await db.people.toArray();
+    let interactions = await db.interactions.toArray();
+    let sessions = await db.sessions.toArray();
+    let tasks = await db.tasks.toArray();
+
+    let title = "Global Analytics";
+
+    if (currentUser.role === 'SUPER_ADMIN') {
+      // Show everything
+    } else if (currentUser.role === 'FOLK_GUIDE') {
+      title = "Analytics for Your Residences";
+      const users = await db.users.where('guideId').equals(currentUser.id).toArray();
+      const userIds = [String(currentUser.id), ...users.map(u => String(u.id))];
+      people = people.filter(p => userIds.includes(String(p.assignedUserId)) || userIds.includes(String(p.ownerId)));
+      
+      const peopleIds = people.map(p => String(p.id));
+      interactions = interactions.filter(i => peopleIds.includes(String(i.personId)));
+      tasks = tasks.filter(t => peopleIds.includes(String(t.personId)));
+    } else if (currentUser.role === 'FOLK_LEADER') {
+      title = "Residence Analytics";
+      const users = await db.users.where('teamId').equals(currentUser.teamId).toArray();
+      const userIds = [String(currentUser.id), ...users.map(u => String(u.id))];
+      people = people.filter(p => userIds.includes(String(p.assignedUserId)) || userIds.includes(String(p.ownerId)));
+      
+      const peopleIds = people.map(p => String(p.id));
+      interactions = interactions.filter(i => peopleIds.includes(String(i.personId)));
+      tasks = tasks.filter(t => peopleIds.includes(String(t.personId)));
+    } else {
+      title = "Your Personal Analytics";
+      const userIds = [String(currentUser.id)];
+      people = people.filter(p => userIds.includes(String(p.assignedUserId)) || userIds.includes(String(p.ownerId)));
+      
+      const peopleIds = people.map(p => String(p.id));
+      interactions = interactions.filter(i => peopleIds.includes(String(i.personId)));
+      tasks = tasks.filter(t => peopleIds.includes(String(t.personId)));
+    }
 
     const now = new Date();
     const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday start
@@ -21,7 +58,7 @@ export default function AnalyticsPage() {
 
     const weeklyCalls = interactions.filter(i => {
       const d = i.date instanceof Date ? i.date : (typeof i.date === 'string' ? new Date(i.date) : i.date?.toDate?.());
-      return i.type === 'CALL' && d >= weekStart && d <= weekEnd;
+      return (i.type === 'CALL' || i.type === 'SESSION') && d >= weekStart && d <= weekEnd;
     });
 
     const weeklyCallDuration = weeklyCalls.reduce((total, call) => total + (call.durationMinutes || 0), 0);
@@ -37,14 +74,15 @@ export default function AnalyticsPage() {
       tasksCompleted: tasks.filter(t => t.status === 'COMPLETED').length,
       pendingTasks: tasks.filter(t => t.status === 'PENDING').length,
       weeklyCallsCount: weeklyCalls.length,
-      weeklyCallDuration
+      weeklyCallDuration,
+      title
     };
-  });
+  }, [currentUser?.id, currentUser?.role]);
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Analytics & Reports</h1>
+        <h1 className={styles.title}>{analyticsData?.title || 'Analytics & Reports'}</h1>
       </header>
 
       {analyticsData ? (

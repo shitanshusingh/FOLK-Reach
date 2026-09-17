@@ -6,6 +6,7 @@ import { useState } from "react";
 import styles from "./Settings.module.css";
 import { Download, Upload, Database, RefreshCw } from "lucide-react";
 import { CustomFieldsConfig } from "@/components/settings/CustomFieldsConfig";
+import { SyncDataBtn } from "@/components/settings/SyncDataBtn";
 
 export default function SettingsPage() {
   const [status, setStatus] = useState<string | null>(null);
@@ -22,7 +23,7 @@ export default function SettingsPage() {
         <div className={styles.statusMessage}>{status}</div>
       )}
 
-
+      <SyncDataBtn />
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Custom Fields</h2>
