@@ -265,7 +265,14 @@ export default function DashboardPage() {
   };
 
   const renderDoneAvatar = (item: ActionItem, index: number) => {
-    const isSuccess = item.outcome?.includes("Success") || item.outcome?.includes("Good Interaction") || item.outcome?.includes("Meeting - Done");
+    const out = item.outcome || "";
+    const isSuccess = out.includes("Success") || 
+                      out.includes("Good Interaction") || 
+                      out.includes("Connected") ||
+                      out.includes("Meeting - Done") ||
+                      out.includes("CONFIRMED") ||
+                      out.includes("JOINING_NEXT_SESSION");
+                      
     const firstName = item.person.name.split(' ')[0];
     const initial = firstName.charAt(0).toUpperCase();
 
