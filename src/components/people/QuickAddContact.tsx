@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { useState } from "react";
 import { X } from "lucide-react";
 import styles from "./QuickAddContact.module.css";
-import { firestoreAPI, useFirestoreQuery, useFirestoreDoc } from "@/lib/firestore";
+import { firestoreAPI, useFirestoreQuery, useFirestoreDoc, useLiveQuery } from "@/lib/firestore";
 import { where } from "firebase/firestore";;
 import { GlassSelect } from "@/components/ui/GlassSelect";
 import { useAuth } from "@/contexts/AuthContext";
