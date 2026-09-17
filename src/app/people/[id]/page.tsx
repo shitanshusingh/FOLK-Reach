@@ -94,13 +94,27 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
               {priorityText}
             </div>
           </div>
-          <button 
-            className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
-            onClick={() => setIsEditing(true)}
-            style={{ padding: '8px 16px', fontSize: '0.85rem' }}
-          >
-            Edit Profile
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button 
+              className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
+              onClick={() => setIsEditing(true)}
+              style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+            >
+              Edit Profile
+            </button>
+            <button 
+              className={`${styles.actionBtn}`}
+              onClick={async () => {
+                if (window.confirm("Are you sure you want to delete this contact? This action cannot be undone.")) {
+                  await firestoreAPI.delete('people', id);
+                  router.push('/people');
+                }
+              }}
+              style={{ padding: '8px 16px', fontSize: '0.85rem', background: 'var(--color-danger-light)', color: 'var(--color-danger)', border: '1px solid var(--color-danger)' }}
+            >
+              Delete
+            </button>
+          </div>
         </div>
 
         <div className={styles.detailsGrid}>

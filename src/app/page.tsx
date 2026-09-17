@@ -28,6 +28,7 @@ type ActionItem = {
   task?: Task;
   isDone?: boolean;
   outcome?: string;
+  doneDate?: Date;
 };
 
 export default function DashboardPage() {
@@ -95,10 +96,13 @@ export default function DashboardPage() {
       const interaction = doneToday.get(person.id!);
       const isDone = !!interaction;
       const outcome = interaction?.outcome;
+      
+      // If they already did something today, categorize them based on what they actually DID today
+      const resolvedType = isDone ? (interaction.type === 'MEETING' || interaction.type === 'PRASADAM' || interaction.type === 'BOOK' ? 'MEETING' : 'CALL') : type;
 
-      const item: ActionItem = { person, reason, isOverdue, type, task, isDone, outcome };
+      const item: ActionItem = { person, reason, isOverdue, type: resolvedType, task, isDone, outcome, doneDate: interaction?.date ? safeDate(interaction.date) : undefined };
 
-      if (type === 'MEETING') {
+      if (resolvedType === 'MEETING') {
         if (!isDone) {
           if (undoneMeetingCount >= 4) return;
           undoneMeetingCount++;
@@ -107,7 +111,7 @@ export default function DashboardPage() {
         inActionPlan.add(person.id!);
       } else {
         if (!isDone) {
-          if (undoneCallCount >= 30) return;
+          if (undoneCallCount >= 10) return; // Changed from 30 to 10 as requested
           undoneCallCount++;
         }
         actionPlanCalls.push(item);
@@ -193,10 +197,10 @@ export default function DashboardPage() {
         addToActionPlan(person, reason, true, actionType);
       } else {
         // If not due, only add if we have space in our quotas
-        // Let's say we want to constantly suggest up to 25 calls and 5 meetings total
-        if (actionType === 'MEETING' && undoneMeetingCount < 5) {
+        // Let's say we want to constantly suggest up to 10 calls and 4 meetings total
+        if (actionType === 'MEETING' && undoneMeetingCount < 4) {
           addToActionPlan(person, reason, false, actionType);
-        } else if (actionType === 'CALL' && undoneCallCount < 25) {
+        } else if (actionType === 'CALL' && undoneCallCount < 10) {
           addToActionPlan(person, reason, false, actionType);
         }
       }
@@ -217,9 +221,20 @@ export default function DashboardPage() {
       }
     }
 
-    // Sort action plans: undone first, done last
-    actionPlanMeetings.sort((a, b) => (a.isDone === b.isDone) ? 0 : a.isDone ? 1 : -1);
-    actionPlanCalls.sort((a, b) => (a.isDone === b.isDone) ? 0 : a.isDone ? 1 : -1);
+    // Sort action plans: undone first, done last.
+    // Within 'done', sort by doneDate descending (newest done first, on the left)
+    const sortFn = (a: ActionItem, b: ActionItem) => {
+      if (a.isDone === b.isDone) {
+        if (a.isDone) {
+          return (b.doneDate?.getTime() || 0) - (a.doneDate?.getTime() || 0);
+        }
+        return 0; // Undone preserve their original priority sort order
+      }
+      return a.isDone ? 1 : -1;
+    };
+    
+    actionPlanMeetings.sort(sortFn);
+    actionPlanCalls.sort(sortFn);
   }
 
   const handleActionClick = (person: Person, type: 'CALL' | 'MEETING') => {
