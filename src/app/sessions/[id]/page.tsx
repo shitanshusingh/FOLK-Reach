@@ -34,6 +34,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [callingSearchQuery, setCallingSearchQuery] = useState("");
   const [showQRModal, setShowQRModal] = useState(false);
   const { currentUser } = useAuth();
 
@@ -199,8 +200,18 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
             </button>
           </div>
 
+          <input
+            type="text"
+            placeholder="Search campaign by name or phone..."
+            value={callingSearchQuery}
+            onChange={e => setCallingSearchQuery(e.target.value)}
+            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-border)', marginBottom: '16px', background: 'var(--color-surface)', color: 'var(--color-text)' }}
+          />
+
           <div className={styles.callList}>
-            {attendanceRecords.map(record => (
+            {attendanceRecords
+              .filter(r => r.personName.toLowerCase().includes(callingSearchQuery.toLowerCase()) || r.personPhone.includes(callingSearchQuery))
+              .map(record => (
               <div key={record.id} className={styles.callCard}>
                 <div className={styles.callCardHeader}>
                   <div className={styles.callerInfo}>
