@@ -89,16 +89,29 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
 
       if (record) {
         await firestoreAPI.update('sessionAttendance', record.id, {
-          status: 'ATTENDED'
+          status: 'ATTENDED',
+          checkedInAt: new Date()
         });
       } else {
         await firestoreAPI.add('sessionAttendance', {
           sessionId,
           personId,
           status: 'ATTENDED',
-          isNewContact: false
+          isNewContact: false,
+          checkedInAt: new Date()
         });
       }
+      const person = await firestoreAPI.get('people', personId as string | number);
+      if (person) {
+        await firestoreAPI.update('people', person.id as number, { priorityScore: (person.priorityScore || 0) + 5 });
+      }
+      await db.interactions.add({
+        personId: personId as number,
+        type: 'SESSION',
+        date: new Date(),
+        outcome: `Attended Session: ${sessionData?.name || sessionData?.title || 'Session'}`,
+        notes: `Checked in via public registration page at ${format(new Date(), "h:mm a")}`
+      });
       setStep('SUCCESS');
     } catch (err) {
       console.error(err);
@@ -171,7 +184,21 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
         personId: finalPersonId,
         status: 'ATTENDED',
         isNewContact: !existingMatch,
-        assignedUserId: ownerId
+        assignedUserId: ownerId,
+        checkedInAt: new Date()
+      });
+      
+      if (existingMatch) {
+        await firestoreAPI.update('people', finalPersonId as number, { priorityScore: (existingMatch.priorityScore || 0) + 5 });
+      } else {
+        await firestoreAPI.update('people', finalPersonId as number, { priorityScore: 5 });
+      }
+      await db.interactions.add({
+        personId: finalPersonId as number,
+        type: 'SESSION',
+        date: new Date(),
+        outcome: `Attended Session: ${sessionData?.name || sessionData?.title || 'Session'}`,
+        notes: `Registered and checked in via public registration page at ${format(new Date(), "h:mm a")}`
       });
 
       setStep('SUCCESS');

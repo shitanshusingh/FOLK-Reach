@@ -28,6 +28,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
   const id = String(unwrappedParams.id);
 
   const [activeTab, setActiveTab] = useState<'CALLING' | 'ATTENDANCE' | 'ANALYTICS'>('CALLING');
+  const [attendanceSubTab, setAttendanceSubTab] = useState<'EXPECTED' | 'CHECKED_IN' | 'MISSED'>('EXPECTED');
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [activeCallModal, setActiveCallModal] = useState<number | null>(null);
@@ -52,23 +53,23 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
     const joined = await Promise.all(records.map(async record => {
       const person = await db.people.get(record.personId);
       const user = record.assignedUserId ? await db.users.get(record.assignedUserId) : null;
+      
+      // Fetch latest call interaction to recover lost statuses
+      const interactions = await db.interactions.where('personId').equals(record.personId).toArray();
+      const lastCall = interactions.filter(i => i.type === 'CALL').sort((a,b) => new Date(safeDate(b.date)).getTime() - new Date(safeDate(a.date)).getTime())[0];
+
       return { 
         ...record, 
         personName: person?.name || "Unknown",
         personPhone: person?.phone || "",
         personPriority: person?.priorityScore || 0,
         personOwnerId: person?.ownerId,
-        callerName: user?.name || "Unassigned"
+        callerName: user?.name || "Unassigned",
+        lastCallOutcome: lastCall ? lastCall.outcome : null
       };
     }));
 
-    let teamUserIds = new Set([currentUser?.id]);
-    if (currentUser?.teamId) {
-      const teamUsers = await db.users.where('teamId').equals(currentUser.teamId).toArray();
-      teamUserIds = new Set(teamUsers.map((u: any) => u.id));
-    }
-
-    const filtered = joined.filter(r => teamUserIds.has(r.personOwnerId));
+    const filtered = joined;
 
     filtered.sort((a, b) => {
       // 1. Current user's assigned/owned contacts bubble to the top
@@ -95,15 +96,53 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
     setRefreshTrigger(prev => prev + 1);
   };
 
+  const repeatedAudience = useLiveQuery(async () => {
+    if (!attendanceRecords) return 0;
+    const attendees = attendanceRecords.filter(r => r.status === 'ATTENDED');
+    let count = 0;
+    for (const a of attendees) {
+      const pastRecords = await db.sessionAttendance.where('personId').equals(a.personId).toArray();
+      if (pastRecords.some((r: any) => String(r.sessionId) !== id && r.status === 'ATTENDED')) {
+        count++;
+      }
+    }
+    return count;
+  }, [id, refreshTrigger, attendanceRecords]) || 0;
+
   if (session === undefined || attendanceRecords === undefined) return <div className={styles.container}>Loading...</div>;
   if (session === null) return <div className={styles.container}>Session not found</div>;
 
   // Analytics Metrics
   const totalInvited = attendanceRecords.length;
   const callsMade = attendanceRecords.filter(r => r.status !== 'PENDING_CALL' && r.status !== 'INVITED').length;
-  const confirmedCount = attendanceRecords.filter(r => r.status === 'CONFIRMED' || r.status === 'ATTENDED').length;
+  const confirmedCount = attendanceRecords.filter(r => r.status === 'CONFIRMED' || r.status === 'JOINING_NEXT_SESSION').length;
+  const attendedCount = attendanceRecords.filter(r => r.status === 'ATTENDED').length;
   const newContacts = attendanceRecords.filter(r => r.isNewContact).length;
   const oldContacts = totalInvited - newContacts;
+  const followUpCalls = attendanceRecords.filter(r => (r.callCount || 0) > 1).reduce((acc, r) => acc + (r.callCount! - 1), 0);
+  
+
+
+  const downloadCSV = () => {
+    const headers = ["Name", "Phone", "Status", "Priority", "Checked In At", "Call Count", "Is Walk-in"];
+    const rows = attendanceRecords.map(r => [
+      `"${r.personName}"`,
+      `"${r.personPhone}"`,
+      r.status,
+      r.personPriority,
+      r.checkedInAt ? format(safeDate(r.checkedInAt), "MMM d yyyy h:mm a") : "N/A",
+      r.callCount || 0,
+      r.isNewContact ? "Yes" : "No"
+    ]);
+    const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Session_Report_${session?.name || id}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   const isSessionAdmin = ['SUPER_ADMIN', 'FOLK_GUIDE', 'FOLK_LEADER', 'LEADER'].includes(currentUser?.role || '') || session?.ownerId === currentUser?.id;
 
@@ -287,29 +326,50 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
       {/* ANALYTICS TAB */}
       {activeTab === 'ANALYTICS' && (
         <div style={{ animation: 'var(--animate-fade-in)' }}>
-          <h2 className={styles.sectionTitle} style={{ marginBottom: 24, fontSize: '1.5rem', fontWeight: 800 }}>Campaign Performance</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+            <h2 className={styles.sectionTitle} style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>Campaign & Attendance Summary</h2>
+            <button 
+              className={styles.btnAction} 
+              style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+              onClick={downloadCSV}
+            >
+              ⬇️ Download Report (CSV)
+            </button>
+          </div>
+
           <div className={styles.analyticsGrid}>
             <div className={styles.metricCard} style={{ background: 'var(--gradient-primary)', color: 'white', border: 'none', transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(100, 108, 255, 0.25)' }}>
-              <div className={styles.metricLabel} style={{ color: 'rgba(255,255,255,0.8)' }}>Total Assigned</div>
-              <div className={styles.metricValue} style={{ color: 'white' }}>{totalInvited}</div>
+              <div className={styles.metricLabel} style={{ color: 'rgba(255,255,255,0.8)' }}>Remaining Expected</div>
+              <div className={styles.metricValue} style={{ color: 'white' }}>{confirmedCount} <span style={{ fontSize: '0.9rem', fontWeight: 400 }}>people</span></div>
             </div>
             <div className={styles.metricCard} style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', border: 'none', transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(16, 185, 129, 0.25)' }}>
-              <div className={styles.metricLabel} style={{ color: 'rgba(255,255,255,0.8)' }}>Confirmed Attendees</div>
-              <div className={styles.metricValue} style={{ color: 'white' }}>{confirmedCount}</div>
+              <div className={styles.metricLabel} style={{ color: 'rgba(255,255,255,0.8)' }}>Total Checked In</div>
+              <div className={styles.metricValue} style={{ color: 'white' }}>{attendedCount} <span style={{ fontSize: '0.9rem', fontWeight: 400 }}>people</span></div>
             </div>
           </div>
 
           <div className={styles.analyticsGrid}>
             <div className={styles.metricCard} style={{ borderLeft: '4px solid var(--color-primary)' }}>
               <div className={styles.metricLabel}>Calls Executed</div>
-              <div className={styles.metricValue}>{callsMade} <span style={{ fontSize: '1rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>/ {totalInvited}</span></div>
+              <div className={styles.metricValue}>{callsMade} <span style={{ fontSize: '1rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>/ {totalInvited} assigned</span></div>
               <div style={{ marginTop: 8, height: 6, background: 'var(--color-surface-hover)', borderRadius: 3, overflow: 'hidden' }}>
                 <div style={{ height: '100%', background: 'var(--color-primary)', width: `${totalInvited > 0 ? Math.round((callsMade/totalInvited)*100) : 0}%`, transition: 'width 1s ease-in-out' }} />
               </div>
             </div>
+            <div className={styles.metricCard} style={{ borderLeft: '4px solid var(--color-secondary)' }}>
+              <div className={styles.metricLabel}>Follow-up Calls</div>
+              <div className={styles.metricValue} style={{ color: 'var(--color-text)' }}>{followUpCalls} <span style={{ fontSize: '1rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>repeats</span></div>
+            </div>
+          </div>
+
+          <div className={styles.analyticsGrid}>
             <div className={styles.metricCard}>
-              <div className={styles.metricLabel}>New Walk-ins</div>
-              <div className={styles.metricValue} style={{ color: 'var(--color-secondary)' }}>{newContacts}</div>
+              <div className={styles.metricLabel}>Repeated Audience</div>
+              <div className={styles.metricValue} style={{ color: 'var(--color-primary)' }}>{repeatedAudience} <span style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', fontWeight: 400 }}>from past sessions</span></div>
+            </div>
+            <div className={styles.metricCard}>
+              <div className={styles.metricLabel}>New Walk-ins (Not Registered)</div>
+              <div className={styles.metricValue} style={{ color: 'var(--color-secondary)' }}>{newContacts} <span style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', fontWeight: 400 }}>scanned at door</span></div>
             </div>
           </div>
         </div>
@@ -324,42 +384,161 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
               <UserPlus size={18} /> Add Walk-in
             </button>
           </div>
-          <input
-            type="text"
-            placeholder="Search by name or phone..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-border)', marginBottom: '16px', background: 'var(--color-surface)', color: 'var(--color-text)' }}
-          />
+          
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
+            <button 
+              onClick={() => setAttendanceSubTab('EXPECTED')}
+              style={{ padding: '8px 16px', borderRadius: '20px', border: 'none', background: attendanceSubTab === 'EXPECTED' ? 'var(--color-primary)' : 'var(--color-surface)', color: attendanceSubTab === 'EXPECTED' ? 'white' : 'var(--color-text)', cursor: 'pointer', fontWeight: 600, whiteSpace: 'nowrap' }}
+            >
+              Expected ({attendanceRecords.filter(r => r.status === 'CONFIRMED' || r.status === 'MAYBE' || r.status === 'JOINING_NEXT_SESSION').length})
+            </button>
+            <button 
+              onClick={() => setAttendanceSubTab('CHECKED_IN')}
+              style={{ padding: '8px 16px', borderRadius: '20px', border: 'none', background: attendanceSubTab === 'CHECKED_IN' ? 'var(--color-success)' : 'var(--color-surface)', color: attendanceSubTab === 'CHECKED_IN' ? 'white' : 'var(--color-text)', cursor: 'pointer', fontWeight: 600, whiteSpace: 'nowrap' }}
+            >
+              Checked In ({attendanceRecords.filter(r => r.status === 'ATTENDED').length})
+            </button>
+            <button 
+              onClick={() => setAttendanceSubTab('MISSED')}
+              style={{ padding: '8px 16px', borderRadius: '20px', border: 'none', background: attendanceSubTab === 'MISSED' ? 'var(--color-danger)' : 'var(--color-surface)', color: attendanceSubTab === 'MISSED' ? 'white' : 'var(--color-text)', cursor: 'pointer', fontWeight: 600, whiteSpace: 'nowrap' }}
+            >
+              Missed ({attendanceRecords.filter(r => r.status === 'MISSED').length})
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', gap: 12, marginBottom: '16px' }}>
+            <input
+              type="text"
+              placeholder="Search by name or phone..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)' }}
+            />
+            {attendanceSubTab === 'EXPECTED' && (
+              <button 
+                onClick={async () => {
+                  if (window.confirm("Mark everyone remaining in the Expected list as Missed?")) {
+                    const expected = attendanceRecords.filter(r => r.status === 'CONFIRMED' || r.status === 'MAYBE' || r.status === 'JOINING_NEXT_SESSION');
+                    for (const r of expected) {
+                      await firestoreAPI.update('sessionAttendance', r.id as number, { status: 'MISSED', previousStatus: r.status });
+                    }
+                    setRefreshTrigger(prev => prev + 1);
+                  }
+                }}
+                style={{ padding: '0 16px', borderRadius: '8px', border: '1px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer', fontWeight: 500, whiteSpace: 'nowrap' }}
+              >
+                End Session (Mark Missed)
+              </button>
+            )}
+          </div>
           <div className={styles.callList}>
             {attendanceRecords
-              .filter(r => r.status === 'CONFIRMED' || r.status === 'MAYBE' || r.status === 'ATTENDED' || r.status === 'MISSED' || r.status === 'JOINING_NEXT_SESSION')
+              .filter(r => {
+                if (attendanceSubTab === 'EXPECTED') return r.status === 'CONFIRMED' || r.status === 'MAYBE' || r.status === 'JOINING_NEXT_SESSION';
+                if (attendanceSubTab === 'CHECKED_IN') return r.status === 'ATTENDED';
+                if (attendanceSubTab === 'MISSED') return r.status === 'MISSED';
+                return false;
+              })
               .filter(r => r.personName.toLowerCase().includes(searchQuery.toLowerCase()) || r.personPhone.includes(searchQuery))
+              .sort((a, b) => {
+                if (attendanceSubTab === 'CHECKED_IN') {
+                  const timeA = a.checkedInAt ? new Date(safeDate(a.checkedInAt)).getTime() : 0;
+                  const timeB = b.checkedInAt ? new Date(safeDate(b.checkedInAt)).getTime() : 0;
+                  return timeB - timeA; // Latest first
+                }
+                // Alphabetical for others
+                return a.personName.localeCompare(b.personName);
+              })
               .map(record => (
               <div key={record.id} className={styles.callCard}>
                 <div className={styles.callCardHeader}>
                   <div className={styles.callerInfo}>
                     <div className={styles.callerName}>
                       {record.personName}
-                      <span style={{ fontSize: '0.85rem', fontWeight: 400, marginLeft: 8 }}>
-                        ({record.status === 'CONFIRMED' ? '✅ Confirmed' : record.status === 'JOINING_NEXT_SESSION' ? '⏭️ Next Session' : '⚠️ Maybe'})
-                      </span>
+                      {attendanceSubTab === 'CHECKED_IN' && record.checkedInAt && (
+                        <span style={{ fontSize: '0.85rem', fontWeight: 500, marginLeft: 8, color: 'var(--color-success)' }}>
+                          • {format(safeDate(record.checkedInAt), "h:mm a")}
+                        </span>
+                      )}
                     </div>
+                    {attendanceSubTab === 'EXPECTED' && (
+                      <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                        Current Status: {record.status === 'CONFIRMED' ? 'Expected (Confirmed)' : record.status === 'JOINING_NEXT_SESSION' ? 'Next Session' : 'Maybe'}
+                      </div>
+                    )}
+                    {(attendanceSubTab === 'MISSED' || attendanceSubTab === 'EXPECTED') && record.callOutcome && (
+                      <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: 4 }}>
+                        <span style={{ fontWeight: 600 }}>Notes:</span> {record.callOutcome}
+                      </div>
+                    )}
+                    {attendanceSubTab === 'MISSED' && (
+                      <div style={{ fontSize: '0.8rem', color: 'var(--color-warning)', marginTop: 4 }}>
+                        {record.previousStatus ? (
+                          <>Was originally: {record.previousStatus === 'CONFIRMED' ? 'Confirmed' : record.previousStatus === 'JOINING_NEXT_SESSION' ? 'Joining Next Session' : 'Maybe'}</>
+                        ) : record.lastCallOutcome ? (
+                          <>Last Call: {record.lastCallOutcome}</>
+                        ) : null}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className={styles.callCardActions} style={{ display: 'flex', flexWrap: 'nowrap', gap: 12 }}>
-                  <div style={{ flex: 1 }}>
-                    <GlassSelect 
-                      value={record.status}
-                      onChange={(val) => handleStatusChange(record.id as number, val as any)}
-                      options={[
-                        { value: "CONFIRMED", label: "Expected" },
-                        { value: "ATTENDED", label: "Attended" },
-                        { value: "MISSED", label: "Missed" },
-                        { value: "JOINING_NEXT_SESSION", label: "Next Session" }
-                      ]}
-                    />
-                  </div>
+                  {attendanceSubTab === 'EXPECTED' ? (
+                    <button 
+                      onClick={async () => {
+                        await firestoreAPI.update('sessionAttendance', record.id as number, { 
+                          status: 'ATTENDED',
+                          checkedInAt: new Date()
+                        });
+                        const person = await firestoreAPI.get('people', record.personId as string | number);
+                        if (person) {
+                          await firestoreAPI.update('people', person.id as number, { priorityScore: (person.priorityScore || 0) + 5 });
+                        }
+                        await db.interactions.add({
+                          personId: record.personId as number,
+                          type: 'SESSION',
+                          date: new Date(),
+                          outcome: `Attended Session: ${session?.title || session?.name || 'Session'}`,
+                          notes: `Checked in via Quick Check-In at ${format(new Date(), "h:mm a")}`
+                        });
+                        setRefreshTrigger(prev => prev + 1);
+                      }}
+                      style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', background: 'var(--color-success)', color: 'white', cursor: 'pointer', fontWeight: 600, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}
+                    >
+                      <CheckCircle size={18} /> Quick Check In
+                    </button>
+                  ) : (
+                    <div style={{ flex: 1 }}>
+                      <GlassSelect 
+                        value={record.status}
+                        onChange={async (val) => {
+                          const updateData: any = { status: val };
+                          if (val === 'ATTENDED' && !record.checkedInAt) {
+                            updateData.checkedInAt = new Date();
+                            const person = await firestoreAPI.get('people', record.personId as string | number);
+                            if (person) {
+                              await firestoreAPI.update('people', person.id as number, { priorityScore: (person.priorityScore || 0) + 5 });
+                            }
+                            await db.interactions.add({
+                              personId: record.personId as number,
+                              type: 'SESSION',
+                              date: new Date(),
+                              outcome: `Attended Session: ${session?.title || session?.name || 'Session'}`,
+                              notes: `Checked in manually via dropdown at ${format(new Date(), "h:mm a")}`
+                            });
+                          }
+                          await firestoreAPI.update('sessionAttendance', record.id as number, updateData);
+                          setRefreshTrigger(prev => prev + 1);
+                        }}
+                        options={[
+                          { value: "CONFIRMED", label: "Expected" },
+                          { value: "ATTENDED", label: "Attended" },
+                          { value: "MISSED", label: "Missed" },
+                          { value: "JOINING_NEXT_SESSION", label: "Next Session" }
+                        ]}
+                      />
+                    </div>
+                  )}
                   <a href={`tel:${record.personPhone}`} className={styles.callActionBtn} aria-label="Call">
                     <Phone size={18} />
                   </a>
@@ -397,7 +576,19 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
               sessionId: id,
               personId: personId as number,
               status: 'ATTENDED',
-              isNewContact: true
+              isNewContact: true,
+              checkedInAt: new Date()
+            });
+            const person = await firestoreAPI.get('people', personId as string | number);
+            if (person) {
+              await firestoreAPI.update('people', person.id as number, { priorityScore: (person.priorityScore || 0) + 5 });
+            }
+            await db.interactions.add({
+              personId: personId as number,
+              type: 'SESSION',
+              date: new Date(),
+              outcome: `Attended Session: ${session?.title || session?.name || 'Session'}`,
+              notes: `Checked in as a new walk-in at ${format(new Date(), "h:mm a")}`
             });
             setRefreshTrigger(prev => prev + 1);
             setShowWalkInModal(false);
@@ -538,7 +729,8 @@ function CallOutcomeModal({ recordId, onClose, onSuccess }: { recordId: number, 
     await firestoreAPI.update('sessionAttendance', recordId, { 
       status, 
       callOutcome: outcomeStr, 
-      calledAt: new Date() 
+      calledAt: new Date(),
+      callCount: (record?.callCount || 0) + 1
     });
 
     if (record) {

@@ -89,6 +89,10 @@ export interface SessionAttendance {
   personId: string | number;
   status: 'PENDING_CALL' | 'INVITED' | 'CONFIRMED' | 'MAYBE' | 'DECLINED' | 'ATTENDED' | 'MISSED' | 'DID_NOT_ANSWER' | 'NOT_COMING' | 'JOINING_NEXT_SESSION';
   assignedUserId?: string | number; 
+  checkedInAt?: Date | string;
+  callCount?: number;
+  callOutcome?: string;
+  previousStatus?: string;
 }
 
 export interface Topic {
