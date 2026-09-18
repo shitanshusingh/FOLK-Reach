@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, UserPlus, Phone, CheckCircle, Clock, Edit2, Trash2, QrCode } from "lucide-react";
+import { ArrowLeft, UserPlus, Phone, CheckCircle, Clock, Edit2, Trash2, QrCode, XCircle } from "lucide-react";
 import { GlassSelect } from "@/components/ui/GlassSelect";
 import { firestoreAPI, useFirestoreQuery, useFirestoreDoc } from "@/lib/firestore";
 import { where } from "firebase/firestore";
@@ -53,10 +53,15 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
     const joined = await Promise.all(records.map(async record => {
       const person = await db.people.get(record.personId);
       const user = record.assignedUserId ? await db.users.get(record.assignedUserId) : null;
+      const owner = person?.ownerId ? await db.users.get(person.ownerId) : null;
       
       // Fetch latest call interaction to recover lost statuses
       const interactions = await db.interactions.where('personId').equals(record.personId).toArray();
       const lastCall = interactions.filter(i => i.type === 'CALL').sort((a,b) => new Date(safeDate(b.date)).getTime() - new Date(safeDate(a.date)).getTime())[0];
+      const callsMadeForSession = interactions.filter(i => i.type === 'CALL' && String(i.outcome).includes('Session Call')).length;
+
+      const allSessionsForPerson = await db.sessionAttendance.where('personId').equals(record.personId).toArray();
+      const pastSessionsAttended = allSessionsForPerson.filter(s => s.status === 'ATTENDED').length;
 
       return { 
         ...record, 
@@ -64,8 +69,11 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
         personPhone: person?.phone || "",
         personPriority: person?.priorityScore || 0,
         personOwnerId: person?.ownerId,
-        callerName: user?.name || "Unassigned",
-        lastCallOutcome: lastCall ? lastCall.outcome : null
+        callerName: user?.name || owner?.name || "Unassigned",
+        ownerName: owner?.name || "Unassigned",
+        lastCallOutcome: lastCall ? lastCall.outcome : null,
+        callsMadeForSession,
+        pastSessionsAttended
       };
     }));
 
@@ -96,18 +104,8 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
     setRefreshTrigger(prev => prev + 1);
   };
 
-  const repeatedAudience = useLiveQuery(async () => {
-    if (!attendanceRecords) return 0;
-    const attendees = attendanceRecords.filter(r => r.status === 'ATTENDED');
-    let count = 0;
-    for (const a of attendees) {
-      const pastRecords = await db.sessionAttendance.where('personId').equals(a.personId).toArray();
-      if (pastRecords.some((r: any) => String(r.sessionId) !== id && r.status === 'ATTENDED')) {
-        count++;
-      }
-    }
-    return count;
-  }, [id, refreshTrigger, attendanceRecords]) || 0;
+  const repeatedAudience = attendanceRecords?.filter(r => r.status === 'ATTENDED' && (r.pastSessionsAttended || 0) > 1).length || 0;
+  const oldContactsFirstTime = attendanceRecords?.filter(r => r.status === 'ATTENDED' && (r.pastSessionsAttended || 0) === 1 && !r.isNewContact).length || 0;
 
   if (session === undefined || attendanceRecords === undefined) return <div className={styles.container}>Loading...</div>;
   if (session === null) return <div className={styles.container}>Session not found</div>;
@@ -372,6 +370,84 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
               <div className={styles.metricValue} style={{ color: 'var(--color-secondary)' }}>{newContacts} <span style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', fontWeight: 400 }}>scanned at door</span></div>
             </div>
           </div>
+          
+          <div style={{ marginTop: '32px' }}>
+            <h3 style={{ fontSize: '1.1rem', color: 'var(--color-text)', marginBottom: '16px' }}>Attendance by Assigned Member</h3>
+            <div style={{ background: 'var(--color-surface)', borderRadius: '12px', padding: '16px', border: '1px solid var(--color-border)' }}>
+              {Array.from(new Set((attendanceRecords || []).map(r => r.callerName))).sort().map(callerName => {
+                const ownerRecords = (attendanceRecords || []).filter(r => r.callerName === callerName);
+                const attended = ownerRecords.filter(r => r.status === 'ATTENDED').length;
+                const expected = ownerRecords.filter(r => r.status === 'CONFIRMED' || r.status === 'JOINING_NEXT_SESSION').length;
+                const missed = ownerRecords.filter(r => r.status === 'MISSED').length;
+                const total = ownerRecords.length;
+                const callsMade = ownerRecords.reduce((sum, r) => sum + (r.callsMadeForSession || 0), 0);
+                
+                return (
+                  <div key={callerName} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--color-border)' }}>
+                    <div style={{ fontWeight: 500, color: 'var(--color-text)' }}>{callerName}</div>
+                    <div style={{ display: 'flex', gap: '16px', fontSize: '0.85rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                        <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Calls Made</span>
+                        <span style={{ color: 'var(--color-warning)', fontWeight: 600, fontSize: '1rem' }}>{callsMade}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                        <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Checked In</span>
+                        <span style={{ color: 'var(--color-success)', fontWeight: 600, fontSize: '1rem' }}>{attended}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                        <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Expected</span>
+                        <span style={{ color: 'var(--color-primary)', fontWeight: 600, fontSize: '1rem' }}>{expected}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                        <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Assigned</span>
+                        <span style={{ color: 'var(--color-text)', fontWeight: 600, fontSize: '1rem' }}>{total}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          
+          <div style={{ marginTop: '32px' }}>
+            <h3 style={{ fontSize: '1.1rem', color: 'var(--color-text)', marginBottom: '16px' }}>Old Contacts (First Session) ({oldContactsFirstTime})</h3>
+            <div style={{ background: 'var(--color-surface)', borderRadius: '12px', padding: '16px', border: '1px solid var(--color-border)' }}>
+              {(attendanceRecords || [])
+                .filter(r => r.status === 'ATTENDED' && !r.isNewContact && (r.pastSessionsAttended || 0) === 1)
+                .map(r => (
+                  <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--color-border)' }}>
+                    <div style={{ fontWeight: 500, color: 'var(--color-text)' }}>{r.personName}</div>
+                    <div style={{ color: 'var(--color-success)', fontSize: '0.85rem', fontWeight: 600 }}>First Session</div>
+                  </div>
+              ))}
+              {oldContactsFirstTime === 0 && (
+                <div style={{ color: 'var(--color-text-muted)', textAlign: 'center', padding: '16px' }}>No old contacts attended for the first time.</div>
+              )}
+            </div>
+          </div>
+
+          <div style={{ marginTop: '32px' }}>
+            <h3 style={{ fontSize: '1.1rem', color: 'var(--color-text)', marginBottom: '16px' }}>Repeated Audience ({repeatedAudience})</h3>
+            <div style={{ background: 'var(--color-surface)', borderRadius: '12px', padding: '16px', border: '1px solid var(--color-border)' }}>
+              {(attendanceRecords || [])
+                .filter(r => r.status === 'ATTENDED' && (r.pastSessionsAttended || 0) > 1)
+                .sort((a,b) => (b.pastSessionsAttended || 0) - (a.pastSessionsAttended || 0))
+                .map(r => (
+                  <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--color-border)' }}>
+                    <div style={{ fontWeight: 500, color: 'var(--color-text)' }}>{r.personName}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>Sessions Attended:</span>
+                      <span style={{ background: 'var(--color-surface-hover)', padding: '4px 10px', borderRadius: '12px', fontWeight: 600, color: 'var(--color-text)' }}>
+                        {r.pastSessionsAttended}
+                      </span>
+                    </div>
+                  </div>
+              ))}
+              {repeatedAudience === 0 && (
+                <div style={{ color: 'var(--color-text-muted)', textAlign: 'center', padding: '16px' }}>No repeated audience yet.</div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -406,15 +482,8 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
             </button>
           </div>
 
-          <div style={{ display: 'flex', gap: 12, marginBottom: '16px' }}>
-            <input
-              type="text"
-              placeholder="Search by name or phone..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)' }}
-            />
-            {attendanceSubTab === 'EXPECTED' && (
+          {attendanceSubTab === 'EXPECTED' && (
+            <div style={{ marginBottom: '12px' }}>
               <button 
                 onClick={async () => {
                   if (window.confirm("Mark everyone remaining in the Expected list as Missed?")) {
@@ -425,11 +494,32 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                     setRefreshTrigger(prev => prev + 1);
                   }
                 }}
-                style={{ padding: '0 16px', borderRadius: '8px', border: '1px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer', fontWeight: 500, whiteSpace: 'nowrap' }}
+                style={{ 
+                  display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px',
+                  width: '100%',
+                  padding: '12px 16px', 
+                  borderRadius: '12px', 
+                  border: '1px solid rgba(239, 68, 68, 0.3)', 
+                  background: 'rgba(239, 68, 68, 0.05)', 
+                  color: 'var(--color-danger)', 
+                  cursor: 'pointer', 
+                  fontWeight: 600, 
+                  fontSize: '0.9rem' 
+                }}
               >
-                End Session (Mark Missed)
+                <XCircle size={18} /> Mark Remaining Missed
               </button>
-            )}
+            </div>
+          )}
+
+          <div style={{ marginBottom: '16px' }}>
+            <input
+              type="text"
+              placeholder="Search by name or phone..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)' }}
+            />
           </div>
           <div className={styles.callList}>
             {attendanceRecords
@@ -455,6 +545,16 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                   <div className={styles.callerInfo}>
                     <div className={styles.callerName}>
                       {record.personName}
+                      {record.isNewContact && (
+                        <span style={{ fontSize: '0.7rem', background: 'var(--color-primary)', color: 'white', padding: '2px 6px', borderRadius: '4px', marginLeft: 8, fontWeight: 700, verticalAlign: 'middle' }}>
+                          NEW
+                        </span>
+                      )}
+                      {record.callerName && record.callerName !== 'Unassigned' && record.callerName.trim() !== '' && (
+                        <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginLeft: 8, fontWeight: 400 }}>
+                          (under {record.callerName})
+                        </span>
+                      )}
                       {attendanceSubTab === 'CHECKED_IN' && record.checkedInAt && (
                         <span style={{ fontSize: '0.85rem', fontWeight: 500, marginLeft: 8, color: 'var(--color-success)' }}>
                           • {format(safeDate(record.checkedInAt), "h:mm a")}

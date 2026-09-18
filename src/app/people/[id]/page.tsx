@@ -191,7 +191,7 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
         </div>
 
         <div className={styles.quickActions}>
-          <a href={`tel:${person.phone}`} className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}>
+          <a href={`tel:${person.phone}`} className={`${styles.actionBtn} ${styles.actionBtnPrimary}`} style={{ gridColumn: 'span 2' }}>
             <Phone size={18} /> Call
           </a>
           <button 

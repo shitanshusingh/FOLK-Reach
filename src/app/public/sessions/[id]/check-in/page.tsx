@@ -158,15 +158,19 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
           gender: gender || existingMatch.gender
         });
         finalPersonId = existingMatch.id;
-        // If they were already in the DB but UNASSIGNED previously, keep ownerId as their existing one unless we are forcing an assignment?
-        // Let's just respect the newly chosen ownerId if they selected one, otherwise keep their existing one.
-        if (ownerId === 'UNASSIGNED') ownerId = existingMatch.ownerId || ownerId;
-      } else {
-        // Assign to Leader if unassigned
-        if (ownerId === 'UNASSIGNED') {
-          ownerId = team?.leaderId || (allUsers && allUsers.length > 0 ? allUsers.find((u:any)=>u.role==='FOLK_LEADER' || u.role==='LEADER')?.id || allUsers[0].id : '');
+        
+        // STRICTLY preserve their existing owner if they are already in the database
+        if (existingMatch.ownerId) {
+          ownerId = existingMatch.ownerId;
         }
+      } 
+      
+      // If still unassigned (new person, or existing person with no owner)
+      if (ownerId === 'UNASSIGNED') {
+        ownerId = team?.leaderId || (allUsers && allUsers.length > 0 ? allUsers.find((u:any)=>u.role==='FOLK_LEADER' || u.role==='LEADER')?.id || allUsers[0].id : '');
+      }
 
+      if (!existingMatch) {
         // Create New Person
         finalPersonId = await firestoreAPI.add('people', {
           name, phone, college, branch, hostel, gender,

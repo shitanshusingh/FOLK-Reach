@@ -65,6 +65,11 @@
   filter: drop-shadow(0 0 5px var(--color-primary));
 }
 
+.navItem span {
+  white-space: nowrap;
+  font-size: 0.65rem;
+}
+
 .globalFab {
   position: fixed;
   bottom: 100px; /* comfortably above the floating island */
