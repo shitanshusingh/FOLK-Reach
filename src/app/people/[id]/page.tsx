@@ -360,8 +360,8 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
 
       {showInteractionModal && (
         <InteractionModal 
-          person={person} 
-          defaultType={interactionType}
+          personId={id as unknown as number} 
+          initialType={interactionType}
           onClose={() => setShowInteractionModal(false)} 
         />
       )}
