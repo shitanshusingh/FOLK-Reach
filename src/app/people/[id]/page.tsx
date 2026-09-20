@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Phone, MessageCircle, Calendar, PlusCircle, Book, Coffee } from "lucide-react";
+import { ArrowLeft, Phone, MessageCircle, Calendar, PlusCircle, Book, Coffee, Users } from "lucide-react";
 import { firestoreAPI, useFirestoreQuery, useFirestoreDoc } from "@/lib/firestore";
 import { where } from "firebase/firestore";;
 import styles from "./PersonProfile.module.css";
@@ -14,6 +14,8 @@ import { format } from "date-fns";
 import clsx from "clsx";
 import React from "react";
 import { InteractionModal } from "@/components/people/InteractionModal";
+import { ReferToGuideModal } from "@/components/people/ReferToGuideModal";
+import { TransferModal } from "@/components/people/TransferModal";
 
 const safeDate = (d: any) => {
   if (!d) return new Date();
@@ -22,6 +24,8 @@ const safeDate = (d: any) => {
 };
 import { QuickAddContact } from "@/components/people/QuickAddContact";
 import { Interaction } from "@/lib/db";
+import { useAuth } from "@/contexts/AuthContext";
+import { GlassSelect } from "@/components/ui/GlassSelect";
 
 export default function PersonProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -38,9 +42,19 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
     }
   };
 
+  const { currentUser } = useAuth();
+  const teamUsers = useLiveQuery(async () => {
+    if (!currentUser?.teamId) return [];
+    const users = await db.users.where('teamId').equals(currentUser.teamId).toArray();
+    return users.filter((u: any) => String(u.id) !== String(currentUser.id));
+  }, [currentUser?.teamId]);
+
   const [showInteractionModal, setShowInteractionModal] = useState(false);
+  const [showReferModal, setShowReferModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [interactionType, setInteractionType] = useState<Interaction['type']>('CALL');
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferTargetId, setTransferTargetId] = useState('');
 
   const handleOpenInteraction = (type: Interaction['type']) => {
     setInteractionType(type);
@@ -48,9 +62,44 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
   };
 
   const person = useFirestoreDoc('people', id);
-  const interactions = useLiveQuery(() => 
-    db.interactions.where("personId").equals(id).reverse().sortBy("date"), 
-  [id]);
+  const timelineEvents = useLiveQuery(async () => {
+    const interactions = await db.interactions.where("personId").equals(id).toArray();
+    const attendances = await db.sessionAttendance.where("personId").equals(id).toArray();
+    
+    const attendedSessions = attendances.filter(a => ['ATTENDED', 'CONFIRMED', 'JOINING_NEXT_SESSION'].includes(a.status));
+    
+    const sessionPromises = attendedSessions.map(async (a) => {
+      const session = await db.sessions.get(a.sessionId);
+      let outcome = `Registered for: ${session?.name || 'Session'}`;
+      if (a.status === 'ATTENDED') outcome = `Attended: ${session?.name || 'Session'}`;
+      
+      return {
+        id: `attendance-${a.id}`,
+        type: 'SESSION_ATTENDANCE' as any,
+        date: a.checkedInAt || session?.date || new Date(),
+        outcome: outcome,
+        notes: a.status === 'ATTENDED' ? 'Checked in successfully' : `Status: ${a.status}`,
+      };
+    });
+
+    const sessionEvents = await Promise.all(sessionPromises);
+    const merged = [...interactions, ...sessionEvents];
+    
+    // Deduplicate: remove identical events logged within 60 seconds of each other
+    const uniqueMerged = merged.reduce((acc, current) => {
+      const isDuplicate = acc.some(item => 
+        item.type === current.type && 
+        item.outcome === current.outcome && 
+        Math.abs(new Date(safeDate(item.date)).getTime() - new Date(safeDate(current.date)).getTime()) < 60000
+      );
+      if (!isDuplicate) {
+        acc.push(current);
+      }
+      return acc;
+    }, [] as any[]);
+
+    return uniqueMerged.sort((a, b) => new Date(safeDate(b.date)).getTime() - new Date(safeDate(a.date)).getTime());
+  }, [id]);
 
   if (person === undefined) {
     return <div className={styles.container}>Loading profile...</div>;
@@ -81,7 +130,7 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
   }
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} style={{ paddingBottom: '90px' }}>
       <button onClick={handleBack} className={styles.backBtn}>
         <ArrowLeft size={20} /> Back
       </button>
@@ -94,14 +143,32 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
               {priorityText}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+        </div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginBottom: '24px' }}>
             <button 
               className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
               onClick={() => setIsEditing(true)}
-              style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+              style={{ padding: '10px 16px', fontSize: '0.85rem' }}
             >
               Edit Profile
             </button>
+            <button 
+              className={`${styles.actionBtn}`}
+              onClick={() => setShowReferModal(true)}
+              style={{ padding: '10px 16px', fontSize: '0.85rem', background: 'rgba(139, 92, 246, 0.1)', color: 'rgb(167, 139, 250)', border: '1px solid rgba(139, 92, 246, 0.3)' }}
+            >
+              Refer to Guide
+            </button>
+            {String(person.ownerId) === String(currentUser?.id) ? (
+              <button 
+                className={`${styles.actionBtn}`}
+                onClick={() => setShowTransferModal(true)}
+                style={{ padding: '10px 16px', fontSize: '0.85rem', background: 'rgba(59, 130, 246, 0.1)', color: 'rgb(96, 165, 250)', border: '1px solid rgba(59, 130, 246, 0.3)' }}
+              >
+                Transfer
+              </button>
+            ) : <div />}
             <button 
               className={`${styles.actionBtn}`}
               onClick={async () => {
@@ -110,11 +177,43 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
                   router.push('/people');
                 }
               }}
-              style={{ padding: '8px 16px', fontSize: '0.85rem', background: 'var(--color-danger-light)', color: 'var(--color-danger)', border: '1px solid var(--color-danger)' }}
+              style={{ padding: '10px 16px', fontSize: '0.85rem', background: 'var(--color-danger-light)', color: 'var(--color-danger)', border: '1px solid var(--color-danger)' }}
             >
               Delete
             </button>
-          </div>
+        </div>
+
+        <div className={styles.quickActions} style={{ marginBottom: '24px', borderTop: 'none', paddingTop: 0 }}>
+          <a href={`tel:${person.phone}`} className={`${styles.actionBtn} ${styles.actionBtnPrimary}`} style={{ gridColumn: 'span 2' }}>
+            <Phone size={18} /> Call
+          </a>
+          <button 
+            className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
+            onClick={() => handleOpenInteraction('CALL')}
+          >
+            <PlusCircle size={18} /> Log Interaction
+          </button>
+          <button 
+            className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
+            onClick={() => handleOpenInteraction('MEETING')}
+          >
+            <Calendar size={18} /> Schedule 1-to-1
+          </button>
+          <button 
+            className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
+            onClick={() => handleOpenInteraction('PRASADAM')}
+          >
+            <Coffee size={18} /> Prasadam
+          </button>
+          <button 
+            className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
+            onClick={() => handleOpenInteraction('BOOK')}
+          >
+            <Book size={18} /> Book Reading
+          </button>
+          <a href={`https://wa.me/${person.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className={`${styles.actionBtn} ${styles.actionBtnSecondary}`} style={{ gridColumn: 'span 2' }}>
+            <MessageCircle size={18} /> WhatsApp Message
+          </a>
         </div>
 
         <div className={styles.detailsGrid}>
@@ -182,6 +281,12 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
               {format(safeDate(person.firstContactDate), "MMM d, yyyy")}
             </span>
           </div>
+          {person.hostel && (
+            <div className={styles.detailItem}>
+              <span className={styles.detailLabel}>Hostel</span>
+              <span className={styles.detailValue}>{person.hostel}</span>
+            </div>
+          )}
           {person.customFields && Object.entries(person.customFields).map(([key, value]) => (
             <div className={styles.detailItem} key={key}>
               <span className={styles.detailLabel}>{key}</span>
@@ -190,58 +295,49 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
           ))}
         </div>
 
-        <div className={styles.quickActions}>
-          <a href={`tel:${person.phone}`} className={`${styles.actionBtn} ${styles.actionBtnPrimary}`} style={{ gridColumn: 'span 2' }}>
-            <Phone size={18} /> Call
-          </a>
-          <button 
-            className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
-            onClick={() => handleOpenInteraction('CALL')}
-          >
-            <PlusCircle size={18} /> Log Interaction
-          </button>
-          <button 
-            className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
-            onClick={() => handleOpenInteraction('MEETING')}
-          >
-            <Calendar size={18} /> Schedule 1-to-1
-          </button>
-          <button 
-            className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
-            onClick={() => handleOpenInteraction('PRASADAM')}
-          >
-            <Coffee size={18} /> Prasadam
-          </button>
-          <button 
-            className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
-            onClick={() => handleOpenInteraction('BOOK')}
-          >
-            <Book size={18} /> Give Book
-          </button>
+        <div className={styles.detailsGrid} style={{ marginTop: '16px', background: 'rgba(139, 92, 246, 0.05)', border: '1px solid rgba(139, 92, 246, 0.2)', padding: '12px 16px', borderRadius: '12px' }}>
+          <div style={{ gridColumn: '1 / -1', marginBottom: '4px' }}>
+            <h3 style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px', margin: 0, color: 'var(--color-primary)' }}>Spiritual Progress</h3>
+          </div>
+          <div className={styles.detailItem}>
+            <span className={styles.detailLabel}>Chanting Rounds</span>
+            <span className={styles.detailValue} style={{ fontWeight: 600 }}>
+              {person.chantingRounds !== undefined ? `${person.chantingRounds} Rounds` : "Not Started"}
+            </span>
+          </div>
+          <div className={styles.detailItem}>
+            <span className={styles.detailLabel}>Ashraya Level</span>
+            <span className={styles.detailValue} style={{ fontWeight: 600, color: 'var(--color-warning)' }}>
+              {person.ashrayaLevel || "None"}
+            </span>
+          </div>
         </div>
+
+
       </div>
 
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Relationship Timeline</h2>
         
         <div className={styles.timeline}>
-          {interactions?.length === 0 ? (
+          {timelineEvents?.length === 0 ? (
             <p style={{ color: 'var(--color-text-muted)' }}>No interactions recorded yet.</p>
           ) : (
-            interactions?.map(interaction => (
+            timelineEvents?.map(interaction => (
               <div key={interaction.id} className={styles.timelineItem}>
-                <div className={styles.timelineIcon}>
+                <div className={styles.timelineIcon} style={interaction.type === 'SESSION_ATTENDANCE' ? { background: 'var(--color-primary-light)', color: 'var(--color-primary)' } : {}}>
                   {interaction.type === 'CALL' && <Phone size={20} />}
                   {interaction.type === 'MEETING' && <Calendar size={20} />}
                   {interaction.type === 'WHATSAPP' && <MessageCircle size={20} />}
                   {interaction.type === 'PRASADAM' && <Coffee size={20} />}
                   {interaction.type === 'BOOK' && <Book size={20} />}
+                  {interaction.type === 'SESSION_ATTENDANCE' && <Users size={20} />}
                   {interaction.type === 'OTHER' && <PlusCircle size={20} />}
                 </div>
                 <div className={styles.timelineContent}>
                   <div className={styles.timelineHeader}>
-                    <span className={styles.timelineType}>
-                      {interaction.type} {interaction.outcome ? `- ${interaction.outcome}` : ''}
+                    <span className={styles.timelineType} style={interaction.type === 'SESSION_ATTENDANCE' ? { color: 'var(--color-primary)' } : {}}>
+                      {interaction.type === 'SESSION_ATTENDANCE' ? 'SESSION' : interaction.type} {interaction.outcome ? `- ${interaction.outcome}` : ''}
                     </span>
                     <span className={styles.timelineDate}>
                       {format(safeDate(interaction.date), "MMM d, yyyy h:mm a")}
@@ -264,10 +360,62 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
 
       {showInteractionModal && (
         <InteractionModal 
-          personId={id} 
-          initialType={interactionType}
+          person={person} 
+          defaultType={interactionType}
           onClose={() => setShowInteractionModal(false)} 
         />
+      )}
+
+      {showReferModal && (
+        <ReferToGuideModal
+          personId={id}
+          personName={person.name}
+          onClose={() => setShowReferModal(false)}
+        />
+      )}
+
+      {showTransferModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+          <div style={{ background: 'var(--color-surface)', padding: 24, borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: 400, border: '1px solid var(--color-border)' }}>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: 16 }}>Transfer Contact</h2>
+            <p style={{ color: 'var(--color-text-muted)', marginBottom: 20, fontSize: '0.9rem' }}>
+              Select a team member to willingly transfer <strong>{person.name}</strong> to. Once transferred, they will disappear from your list.
+            </p>
+            <div style={{ marginBottom: 24 }}>
+              <GlassSelect 
+                value={transferTargetId} 
+                onChange={val => setTransferTargetId(val)}
+                options={[
+                  { value: "", label: "Select member..." },
+                  ...(teamUsers?.map(u => ({ value: String(u.id), label: u.name })) || [])
+                ]}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button 
+                onClick={() => setShowTransferModal(false)}
+                style={{ flex: 1, padding: 12, background: 'transparent', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', color: 'white' }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={async () => {
+                  if (!transferTargetId) return;
+                  await firestoreAPI.update('people', id, { 
+                    ownerId: transferTargetId,
+                    assignedUserId: transferTargetId
+                  });
+                  alert(`Contact transferred successfully!`);
+                  router.push('/people');
+                }}
+                disabled={!transferTargetId}
+                style={{ flex: 1, padding: 12, background: 'var(--color-primary)', border: 'none', borderRadius: 'var(--radius-md)', color: 'white', opacity: transferTargetId ? 1 : 0.5 }}
+              >
+                Transfer Now
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {isEditing && (

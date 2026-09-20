@@ -60,8 +60,18 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
       const lastCall = interactions.filter(i => i.type === 'CALL').sort((a,b) => new Date(safeDate(b.date)).getTime() - new Date(safeDate(a.date)).getTime())[0];
       const callsMadeForSession = interactions.filter(i => i.type === 'CALL' && String(i.outcome).includes('Session Call')).length;
 
+      const currentSession = await db.sessions.get(id);
+      const currentSessionDate = currentSession?.date ? new Date(safeDate(currentSession.date)) : new Date();
+
       const allSessionsForPerson = await db.sessionAttendance.where('personId').equals(record.personId).toArray();
-      const pastSessionsAttended = allSessionsForPerson.filter(s => s.status === 'ATTENDED').length;
+      const pastSessionsAttended = allSessionsForPerson.filter(s => {
+        if (s.status !== 'ATTENDED') return false;
+        
+        const otherDate = s.checkedInAt ? new Date(safeDate(s.checkedInAt)) : new Date(0);
+        const cutoffDate = record.checkedInAt ? new Date(safeDate(record.checkedInAt)) : currentSessionDate;
+        
+        return otherDate.getTime() <= cutoffDate.getTime();
+      }).length;
 
       return { 
         ...record, 
@@ -176,7 +186,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                 <button 
                   onClick={async () => {
                     if (window.confirm("Are you sure you want to delete this session? This action cannot be undone.")) {
-                      await firestoreAPI.delete('sessions', id);
+                      await db.sessions.delete(id);
                       window.location.href = '/sessions';
                     }
                   }}
@@ -822,9 +832,13 @@ function CallOutcomeModal({ recordId, onClose, onSuccess }: { recordId: number, 
   const [status, setStatus] = useState<SessionAttendance['status']>('CONFIRMED');
   const [outcomeStr, setOutcomeStr] = useState("");
   const [durationMinutes, setDurationMinutes] = useState<number | "">("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
-    const record = await firestoreAPI.get('sessionAttendance', recordId);
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const record = await firestoreAPI.get('sessionAttendance', recordId);
     
     await firestoreAPI.update('sessionAttendance', recordId, { 
       status, 
@@ -871,10 +885,14 @@ function CallOutcomeModal({ recordId, onClose, onSuccess }: { recordId: number, 
           notes: outcomeStr
         });
       }
+    } // end if(record)
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSaving(false);
+      onSuccess();
+      onClose();
     }
-
-    onSuccess();
-    onClose();
   };
 
   return (
@@ -925,8 +943,8 @@ function CallOutcomeModal({ recordId, onClose, onSuccess }: { recordId: number, 
           <button className={styles.btnAction} style={{ background: 'var(--color-surface)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }} onClick={onClose}>
             Cancel
           </button>
-          <button className={styles.btnAction} onClick={handleSave}>
-            Save Outcome
+          <button className={styles.btnAction} onClick={handleSave} disabled={isSaving}>
+            {isSaving ? "Saving..." : "Save Outcome"}
           </button>
         </div>
       </div>
@@ -935,6 +953,8 @@ function CallOutcomeModal({ recordId, onClose, onSuccess }: { recordId: number, 
 }
 
 function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
+  const [isNewContact, setIsNewContact] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { currentUser } = useAuth();
   const allPeople = useLiveQuery(async () => {
     if (!currentUser?.id) return [];
@@ -955,7 +975,6 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
     return allTeamContacts;
   }, [currentUser?.id, currentUser?.teamId]);
   const existingPersonIds = new Set(existingRecords.map((r: any) => r.personId));
-  const [isNewContact, setIsNewContact] = useState(false);
   
   const handleInvite = async (personId: number) => {
     await db.sessionAttendance.add({
@@ -998,34 +1017,53 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--color-text)' }}>✕</button>
         </div>
         
+        <div style={{ marginBottom: 16 }}>
+          <input 
+            type="text" 
+            placeholder="Search by name, phone, college..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-bg)', color: 'var(--color-text)' }}
+          />
+        </div>
+
         <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
           <input type="checkbox" id="newContactCheck" checked={isNewContact} onChange={e => setIsNewContact(e.target.checked)} />
           <label htmlFor="newContactCheck" className={styles.detailLabel}>Mark as New Contact</label>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-          <button className={styles.badge} style={{ background: 'var(--color-danger-light)', color: 'var(--color-danger)' }} onClick={() => handleBulkInvite('HOT')}>
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, marginBottom: 16, whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
+          <button className={styles.badge} style={{ flexShrink: 0, background: 'var(--color-danger-light)', color: 'var(--color-danger)' }} onClick={() => handleBulkInvite('HOT')}>
             + Add All Hot (⭐20+)
           </button>
-          <button className={styles.badge} style={{ background: 'var(--color-warning-light)', color: 'var(--color-warning)' }} onClick={() => handleBulkInvite('PRIORITY')}>
+          <button className={styles.badge} style={{ flexShrink: 0, background: 'var(--color-warning-light)', color: 'var(--color-warning)' }} onClick={() => handleBulkInvite('PRIORITY')}>
             + Add All Priority (⭐10+)
           </button>
-          <button className={styles.badge} style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)' }} onClick={() => handleBulkInvite('WARM')}>
+          <button className={styles.badge} style={{ flexShrink: 0, background: 'var(--color-primary-light)', color: 'var(--color-primary)' }} onClick={() => handleBulkInvite('WARM')}>
             + Add All Warm (10-19)
           </button>
-          <button className={styles.badge} style={{ background: 'var(--glass-bg)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }} onClick={() => handleBulkInvite('COLD')}>
+          <button className={styles.badge} style={{ flexShrink: 0, background: 'var(--glass-bg)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }} onClick={() => handleBulkInvite('COLD')}>
             + Add All Cold (1-9)
           </button>
-          <button className={styles.badge} style={{ background: 'var(--glass-bg)', color: 'var(--color-text-muted)' }} onClick={() => handleBulkInvite('DORMANT')}>
+          <button className={styles.badge} style={{ flexShrink: 0, background: 'var(--glass-bg)', color: 'var(--color-text-muted)' }} onClick={() => handleBulkInvite('DORMANT')}>
             + Add All Dormant
           </button>
-          <button className={styles.badge} style={{ background: 'var(--color-success-light)', color: 'var(--color-success)' }} onClick={() => handleBulkInvite('ALL')}>
+          <button className={styles.badge} style={{ flexShrink: 0, background: 'var(--color-success-light)', color: 'var(--color-success)' }} onClick={() => handleBulkInvite('ALL')}>
             + Add All Contacts
           </button>
         </div>
 
         <div style={{ maxHeight: 400, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {allPeople?.filter(p => !existingPersonIds.has(p.id)).sort((a,b) => b.priorityScore - a.priorityScore).map(person => (
+          {allPeople?.filter(p => !existingPersonIds.has(p.id))
+            .filter(p => {
+              if (!searchQuery) return true;
+              const q = searchQuery.toLowerCase();
+              return (p.name?.toLowerCase().includes(q) || 
+                      p.phone?.includes(q) || 
+                      p.college?.toLowerCase().includes(q) || 
+                      p.currentCity?.toLowerCase().includes(q));
+            })
+            .sort((a,b) => b.priorityScore - a.priorityScore).map(person => (
             <div key={person.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, border: '1px solid var(--color-border)', borderRadius: 8 }}>
               <div>
                 <span style={{ fontWeight: 600 }}>{person.name}</span>

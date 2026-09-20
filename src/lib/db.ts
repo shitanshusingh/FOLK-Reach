@@ -59,6 +59,9 @@ export interface Person {
   lastInteractionDate?: Date | string;
   lastInteractionType?: string;
   
+  chantingRounds?: number;
+  ashrayaLevel?: 'None' | 'Sevak' | 'Sadhaka' | 'Upasaka' | 'Charan Ashraya';
+  
   assignedUserId?: string | number; 
   ownerId?: string | number; 
   customFields?: Record<string, any>;
@@ -142,6 +145,15 @@ export interface CustomGroup {
   name: string;
   ownerId: string | number; 
   description?: string;
+}
+
+export interface ContactTransfer {
+  id?: string | number;
+  personId: string | number;
+  fromUserId: string | number;
+  toUserId: string | number;
+  status: 'PENDING' | 'ACCEPTED' | 'DENIED';
+  requestDate: Date;
 }
 
 // --- FIREBASE MOCK --- //
@@ -246,6 +258,8 @@ export const db = {
   tasks: createCollectionProxy('tasks'),
   users: createCollectionProxy('users'),
   teams: createCollectionProxy('teams'),
+  groups: createCollectionProxy('groups'),
+  contactTransfers: createCollectionProxy('contactTransfers'),
   notifications: createCollectionProxy('notifications'),
   customFields: createCollectionProxy('customFields'),
   customGroups: createCollectionProxy('customGroups'),

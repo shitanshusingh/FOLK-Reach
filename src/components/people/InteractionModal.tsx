@@ -28,6 +28,11 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
   const [bookTitle, setBookTitle] = useState("");
   const [bookQuantity, setBookQuantity] = useState("1");
 
+  // Meeting specific
+  const [meetingLocation, setMeetingLocation] = useState("At FOLK");
+  const [meetingOutcome, setMeetingOutcome] = useState("Done");
+  const [rescheduleDate, setRescheduleDate] = useState("");
+
   const topics = useFirestoreQuery('topics', [where('isActive', '==', 1)]);
 
   const handleTopicToggle = (topicId: number) => {
@@ -42,8 +47,13 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
     e.preventDefault();
     try {
       let finalNotes = notes;
+      let finalOutcome = outcome;
+      
       if (type === 'BOOK' && bookTitle) {
         finalNotes = `Book: ${bookTitle} (Qty: ${bookQuantity})\n${notes}`;
+      } else if (type === 'MEETING') {
+        finalOutcome = meetingOutcome;
+        finalNotes = `Location: ${meetingLocation}${notes ? '\n' + notes : ''}`;
       }
 
       await db.interactions.add({
@@ -51,7 +61,7 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
         type,
         date: new Date(),
         purpose,
-        outcome,
+        outcome: finalOutcome,
         notes: finalNotes,
         topicsDiscussed: selectedTopics.length > 0 ? selectedTopics : undefined,
         ...(type === 'CALL' && typeof durationMinutes === 'number' ? { durationMinutes } : {})
@@ -75,27 +85,39 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
           }
         }
 
-        // Calculate next date based on priority score
-        let threshold = 30;
-        if (person.priorityScore >= 20) threshold = 2; // Hot
-        else if (person.priorityScore >= 10) threshold = 4; // Warm
-        else if (person.priorityScore > 0) threshold = 5; // Cold
-        else threshold = 10; // Dormant
+        // Auto-schedule logic
+        if (type === 'MEETING' && meetingOutcome === 'Reschedule' && rescheduleDate) {
+          await db.tasks.add({
+            personId: personId,
+            title: "Rescheduled 1-to-1 Meeting",
+            type: "MEETING",
+            status: "PENDING",
+            dueDate: new Date(rescheduleDate),
+            notes: "Automatically rescheduled"
+          });
+        } else {
+          // Calculate next date based on priority score
+          let threshold = 30;
+          if (person.priorityScore >= 20) threshold = 2; // Hot
+          else if (person.priorityScore >= 10) threshold = 4; // Warm
+          else if (person.priorityScore > 0) threshold = 5; // Cold
+          else threshold = 10; // Dormant
 
-        const nextDate = new Date();
-        nextDate.setDate(nextDate.getDate() + threshold);
-        
-        const nextType = (type === 'MEETING' || type === 'PRASADAM' || type === 'BOOK') ? 'CALL' : 'MEETING';
-        const reason = nextType === 'MEETING' ? '1-to-1 / Prasadam / Topic' : 'Follow-up Call';
+          const nextDate = new Date();
+          nextDate.setDate(nextDate.getDate() + threshold);
+          
+          const nextType = (type === 'MEETING' || type === 'PRASADAM' || type === 'BOOK') ? 'CALL' : 'MEETING';
+          const reason = nextType === 'MEETING' ? '1-to-1 / Prasadam / Topic' : 'Follow-up Call';
 
-        await db.tasks.add({
-          personId: personId,
-          title: reason,
-          type: nextType,
-          status: "PENDING",
-          dueDate: nextDate,
-          notes: "Auto-scheduled"
-        });
+          await db.tasks.add({
+            personId: personId,
+            title: reason,
+            type: nextType,
+            status: "PENDING",
+            dueDate: nextDate,
+            notes: "Auto-scheduled"
+          });
+        }
       }
       
       onClose();
@@ -124,7 +146,7 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
               options={[
                 { value: "CALL", label: "Call" },
                 { value: "WHATSAPP", label: "WhatsApp" },
-                { value: "MEETING", label: "One-to-One / Meeting" },
+                { value: "MEETING", label: "1-to-1 Meeting" },
                 { value: "PRASADAM", label: "Prasadam" },
                 { value: "BOOK", label: "Book Distribution" },
                 { value: "OTHER", label: "Other" }
@@ -207,21 +229,62 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
           )}
 
           {type === 'MEETING' && (
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Topics Discussed</label>
-              <div className={styles.topicsContainer}>
-                {topics?.map(topic => (
-                  <label key={topic.id} className={styles.topicCheckbox}>
-                    <input 
-                      type="checkbox" 
-                      checked={topic.id ? selectedTopics.includes(topic.id) : false}
-                      onChange={() => topic.id && handleTopicToggle(topic.id)}
-                    />
-                    {topic.name}
-                  </label>
-                ))}
+            <>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Location</label>
+                <GlassSelect 
+                  value={meetingLocation}
+                  onChange={val => setMeetingLocation(val)}
+                  options={[
+                    { value: "At FOLK", label: "At FOLK" },
+                    { value: "Outside FOLK", label: "Outside FOLK" },
+                    { value: "In Temple", label: "In Temple" }
+                  ]}
+                />
               </div>
-            </div>
+              
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Outcome</label>
+                <GlassSelect 
+                  value={meetingOutcome}
+                  onChange={val => setMeetingOutcome(val)}
+                  options={[
+                    { value: "Done", label: "Done" },
+                    { value: "Busy / Unavailable", label: "Busy / Unavailable" },
+                    { value: "Reschedule", label: "Reschedule" }
+                  ]}
+                />
+              </div>
+
+              {meetingOutcome === "Reschedule" && (
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Reschedule To</label>
+                  <input 
+                    type="datetime-local" 
+                    className={styles.input} 
+                    value={rescheduleDate}
+                    onChange={e => setRescheduleDate(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Topics Discussed</label>
+                <div className={styles.topicsContainer}>
+                  {topics?.map(topic => (
+                    <label key={topic.id} className={styles.topicCheckbox}>
+                      <input 
+                        type="checkbox" 
+                        checked={topic.id ? selectedTopics.includes(topic.id) : false}
+                        onChange={() => topic.id && handleTopicToggle(topic.id)}
+                      />
+                      {topic.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
           )}
 
           <div className={styles.formGroup}>

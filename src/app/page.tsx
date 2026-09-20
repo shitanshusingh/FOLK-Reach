@@ -29,6 +29,7 @@ type ActionItem = {
   isDone?: boolean;
   outcome?: string;
   doneDate?: Date;
+  isRescheduled?: boolean;
 };
 
 export default function DashboardPage() {
@@ -94,14 +95,26 @@ export default function DashboardPage() {
       if (inActionPlan.has(person.id!)) return;
 
       const interaction = doneToday.get(person.id!);
-      const isDone = !!interaction;
       const outcome = interaction?.outcome;
       
       // If they already did something today, categorize them based on what they actually DID today
-      const isMeeting = interaction?.type === 'MEETING' || interaction?.type === 'PRASADAM' || interaction?.type === 'BOOK' || outcome === 'Meeting - Done';
-      const resolvedType = isDone ? (isMeeting ? 'MEETING' : 'CALL') : type;
+      const isRescheduled = outcome === 'Reschedule';
+      const isDone = !!interaction && !isRescheduled; 
+      
+      const isMeeting = interaction?.type === 'MEETING' || interaction?.type === 'PRASADAM' || interaction?.type === 'BOOK' || outcome === 'Meeting - Done' || outcome === 'Done' || isRescheduled;
+      const resolvedType = !!interaction ? (isMeeting ? 'MEETING' : 'CALL') : type;
 
-      const item: ActionItem = { person, reason, isOverdue, type: resolvedType, task, isDone, outcome, doneDate: interaction?.date ? safeDate(interaction.date) : undefined };
+      const item: ActionItem = { 
+        person, 
+        reason: isRescheduled ? 'Rescheduled' : reason, 
+        isOverdue, 
+        type: resolvedType, 
+        task, 
+        isDone, 
+        outcome, 
+        doneDate: interaction?.date ? safeDate(interaction.date) : undefined,
+        isRescheduled 
+      };
 
       if (resolvedType === 'MEETING') {
         if (!isDone) {
@@ -150,8 +163,13 @@ export default function DashboardPage() {
     const coldCandidates: Candidate[] = [];
     const dormantCandidates: Candidate[] = [];
 
+    const peopleWithPendingTasks = new Set(allTasks.map(t => t.personId));
+
     for (const person of sortedPeople) {
       if (inActionPlan.has(person.id!)) continue;
+      
+      // If they have a pending task that wasn't included today, it must be in the future. Skip them.
+      if (peopleWithPendingTasks.has(person.id!)) continue;
 
       // Check birthdays
       let isBirthday = false;
@@ -271,6 +289,7 @@ export default function DashboardPage() {
                       out.includes("Good Interaction") || 
                       out.includes("Connected") ||
                       out.includes("Meeting - Done") ||
+                      out === "Done" ||
                       out.includes("CONFIRMED") ||
                       out.includes("JOINING_NEXT_SESSION");
                       
@@ -293,7 +312,7 @@ export default function DashboardPage() {
   };
 
   const renderActionCard = (item: ActionItem, index: number) => (
-    <div key={item.task?.id ? `task-${item.task.id}` : `person-${item.person.id}-${index}`} className={styles.card}>
+    <div key={item.task?.id ? `task-${item.task.id}` : `person-${item.person.id}-${index}`} className={`${styles.card} ${item.isRescheduled ? styles.cardRescheduled : ''}`}>
       <div className={styles.cardHeader}>
         <div className={styles.cardNameRow}>
           <Link href={`/people/${item.person.id}?from=/`} className={styles.cardName}>
@@ -302,7 +321,7 @@ export default function DashboardPage() {
           {item.person.priorityScore > 0 && (
             <span className={styles.priorityBadge}>⭐ {item.person.priorityScore}</span>
           )}
-          <span className={`${styles.reasonBadge} ${item.isOverdue ? styles.badgeOverdue : styles.reasonMedium}`} title={item.reason}>
+          <span className={`${styles.reasonBadge} ${item.isRescheduled ? styles.badgeRescheduled : item.isOverdue ? styles.badgeOverdue : styles.reasonMedium}`} title={item.reason}>
             {item.reason}
           </span>
         </div>
@@ -392,12 +411,12 @@ export default function DashboardPage() {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle} style={{ color: 'var(--color-primary)' }}>
           <Calendar size={24} /> 
-          Top Meetings Today ({actionPlanMeetings.filter(m => m.isDone).length} / {actionPlanMeetings.length} completed)
+          Top 1-to-1 Meetings Today ({actionPlanMeetings.filter(m => m.isDone).length} / {actionPlanMeetings.length} completed)
         </h2>
 
         <div className={styles.priorityList}>
           {actionPlanMeetings.filter(m => !m.isDone).length === 0 ? (
-            <div className={styles.emptyState}>No meetings left to do today.</div>
+            <div className={styles.emptyState}>No 1-to-1 meetings left to do today.</div>
           ) : (
             actionPlanMeetings.filter(m => !m.isDone).map(renderActionCard)
           )}

@@ -56,12 +56,19 @@
   background-color: rgba(255, 255, 255, 0.03);
   border-radius: var(--radius-md);
   padding: 4px;
-  gap: 4px;
+  gap: 8px;
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.tabBar::-webkit-scrollbar {
+  display: none;
 }
 
 .tabBtn {
-  flex: 1;
-  padding: 8px 0;
+  flex: 1 1 auto;
+  padding: 8px 12px;
   text-align: center;
   border-radius: var(--radius-md);
   font-size: 0.85rem;
@@ -71,6 +78,7 @@
   transition: all var(--transition-fast);
   background: transparent;
   border: none;
+  white-space: nowrap;
 }
 
 .tabBtn:hover {

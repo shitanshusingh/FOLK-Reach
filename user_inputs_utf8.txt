@@ -1,0 +1,2030 @@
+----
+<USER_REQUEST>
+# FOLKReach — Relationship Management & Follow-up Platform
+
+Build a complete, production-quality, modern web application called **FOLKReach**.
+
+The application is designed for outreach teams who meet many new people through reaching, book distribution, college outreach, events, sessions, personal meetings, calls, and other activities.
+
+This is NOT a conventional sales CRM.
+
+The purpose of FOLKReach is:
+
+**“Meet people. Remember people. Understand people. Follow up at the right time. Never lose a relationship.”**
+
+The biggest problem this application must solve is that outreach members meet many new people every day, collect their names and contact information, have conversations, invite them to sessions, meet them personally, give books and Prasadam, and have many follow-ups. As the number of people increases, old relationships are easily forgotten.
+
+FOLKReach must therefore act as an intelligent relationship-management assistant that continuously tells the user:
+
+* Who should I contact today?
+* Who attended the recent session and needs immediate follow-up?
+* Who has an upcoming follow-up?
+* Who has been neglected?
+* Who should I meet?
+* What did I discuss with this person previously?
+* Which topics have already been discussed?
+* Which topics have never been discussed?
+* Was Prasadam given recently?
+* What happened during the last call?
+* What happened during the last one-to-one?
+* What should I do next?
+
+The application should feel extremely simple, fast, clean, human, and mobile-friendly.
+
+It must work beautifully on desktop, tablet, and mobile browsers.
+
+---
+
+# 1. PRODUCT PHILOSOPHY
+
+Do not design this like a complicated enterprise CRM.
+
+The user should never feel that they are “managing a database.”
+
+The application should feel like a personal assistant helping them maintain relationships.
+
+The core principle is:
+
+**The user should not have to remember what to do next. FOLKReach should remember it for them.**
+
+The interface should priorit
+<truncated 34531 bytes>
+7. SUCCESS CRITERIA
+
+Consider the build successful only if a normal user can answer these questions immediately:
+
+**“Who should I call today?”**
+
+**“Who attended the latest session?”**
+
+**“Who needs post-session follow-up?”**
+
+**“Who have I neglected?”**
+
+**“What happened the last time I spoke to Rahul?”**
+
+**“When was my last one-to-one with Rahul?”**
+
+**“Which topics have I already discussed with Rahul?”**
+
+**“What topics haven't been discussed yet?”**
+
+**“When did I last give Rahul Prasadam?”**
+
+**“Who am I meeting today?”**
+
+**“Whom should I take Prasadam for?”**
+
+**“Which people belong to MSU?”**
+
+**“Which people attended at least one session?”**
+
+**“Which follow-ups are overdue?”**
+
+**“Who is responsible for this person?”**
+
+If the application can answer these questions quickly and accurately, the core product is working correctly.
+
+--- important birthday reminder should be also there that tommorow is that peronson birthday , so we can arrange something special
+
+# 68. MOST IMPORTANT PRODUCT PRINCIPLE
+
+Do not optimize FOLKReach for collecting the largest number of contacts.
+
+Optimize it for:
+
+**Remembering people.**
+
+**Maintaining relationships.**
+
+**Following up at the right time.**
+
+**Understanding previous interactions.**
+
+**Making every interaction more meaningful.**
+
+The application should make the user feel:
+
+> “I don't have to remember everything anymore. FOLKReach remembers it for me.”
+
+Build the application with this principle at the center of every design and engineering decision.
+
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T10:53:52+05:30.
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from None to Gemini 3.1 Pro (High). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>
+----
+<USER_REQUEST>
+For right now, can we go with a Firebase database? For other projects, I'm using that, and it is much better. Currently, we can leave out the AI assistant; we don't require it that much. If required, you can use Google Gemini, whichever is free. I don't want to host on Vercel. First, I will see the demo on our local host, and then if everything is fine, we will go for connecting our database. We will add Firebase, and after that, we will host it on Vercel. We should make it available to download a JSON file so all the data can be saved. For offline support, you can see if possible to make it available, and after coming online, all the cached data will be transferred to our online app and the local storage will be cleaned. All the cache will be deleted permanently from local storage. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T10:57:58+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Yes, do it, and keep in mind that don't miss any feature, every feature is very important. If you miss any feature, it will be a very big blunder. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T10:59:19+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+this is coming
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T11:24:22+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Actually, there is no dummy data, how I am able to see it? And you have not added all the features which I wanted. You are missing so many things, please check it once. Please let me know which features are missing and add it. Do it seriously, don't be over smart and do as I have given. If it's taking time then take it, don't, I have plenty of time, don't do in hurry. Add all the features, everything. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T11:26:26+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+stiill so many are messing , add them too and implement it
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T11:28:16+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+
+
+## 🔐 A. Account & Organization
+
+1. ☐ User Sign Up
+2. ☐ User Login / Logout
+3. ☐ Forgot / Reset Password
+4. ☐ User Profile
+5. ☐ Organization / Workspace
+6. ☐ Multiple Users
+7. ☐ Roles & Permissions
+8. ☐ Admin
+9. ☐ Team Leader
+10. ☐ Member
+11. ☐ Multiple Teams
+12. ☐ Assign a person/contact to a particular member
+13. ☐ Reassign contacts
+14. ☐ Organization-level data isolation
+15. ☐ Activity/Audit history
+
+---
+
+## 👤 B. Person / Contact Management
+
+16. ☐ Add New Person
+17. ☐ **Quick Add** — Name + Phone and save immediately
+18. ☐ Edit Person
+19. ☐ Delete/Archive Person
+20. ☐ Full Name
+21. ☐ Phone Number
+22. ☐ Alternate Phone
+23. ☐ WhatsApp Number
+24. ☐ Email
+25. ☐ Profile Photo
+26. ☐ Birthday
+27. ☐ Native Place
+28. ☐ Current City
+29. ☐ Address
+30. ☐ College
+31. ☐ University
+32. ☐ Branch
+33. ☐ Year/Semester
+34. ☐ Company
+35. ☐ Job/Profession
+36. ☐ How/Where the person was first met
+37. ☐ First Contact Date
+38. ☐ Assigned Member
+39. ☐ Team
+40. ☐ Custom Fields
+41. ☐ Custom Tags
+
+---
+
+## 🔎 C. Search & Filtering
+
+42. ☐ Search by Name
+43. ☐ Search by Phone
+44. ☐ Search by College
+45. ☐ Search by Company
+46. ☐ Search by City
+47. ☐ Search by Tags
+48. ☐ Filter by Assigned Member
+49. ☐ Filter by Priority
+50. ☐ Filter by Session Attendance
+51. ☐ Filter by Last Contact
+52. ☐ Filter by Follow-up Status
+53. ☐ Filter by Overdue
+54. ☐ Filter by Topics Discussed
+55. ☐ Filter by Topics Not Discussed
+56. ☐ Filter by Prasadam Status
+57. ☐ Filter by One-to-One History
+58. ☐ Filter New Contacts
+59. ☐ Filter Dormant Contacts
+60. ☐ Multiple filters together
+
+---
+
+# 📞 D. Calling & Communication
+
+61. ☐ One-Tap Call
+62. ☐ Open Native Phone Dialer
+63. ☐ One-Tap WhatsApp
+64. ☐ Record Call Automatically after returning to app
+65. ☐ Call Date & Time
+66. ☐ Call Purpose
+67. ☐ Call Outcome
+68. ☐ Connect
+<truncated 9350 bytes>
+n interface
+334. ☐ Human/friendly feel
+335. ☐ Calm visual style
+336. ☐ Clear priority indicators
+337. ☐ Reusable design system
+338. ☐ Consistent buttons
+339. ☐ Consistent cards
+340. ☐ Loading states
+341. ☐ Error states
+342. ☐ Empty states
+343. ☐ Confirmation states
+344. ☐ Fast interaction
+345. ☐ No unnecessary complicated forms
+346. ☐ No cluttered enterprise CRM appearance
+
+---
+
+# ⚙️ U. Technical/Product Quality
+
+347. ☐ Real working database
+348. ☐ Real authentication
+349. ☐ Real CRUD operations
+350. ☐ Working search
+351. ☐ Working filters
+352. ☐ Working priority engine
+353. ☐ Working notifications
+354. ☐ Working sessions
+355. ☐ Working attendance
+356. ☐ Working follow-ups
+357. ☐ Working timeline
+358. ☐ Working topic tracking
+359. ☐ Working Prasadam system
+360. ☐ Working book system
+361. ☐ Working team system
+362. ☐ Proper database relationships
+363. ☐ Scalable architecture
+364. ☐ Good performance
+365. ☐ Error handling
+366. ☐ Demo/seed data
+367. ☐ No fake/static buttons
+368. ☐ All major workflows work end-to-end
+
+---
+
+## ⭐ The 10 MOST IMPORTANT FEATURES
+
+If you want to check the heart of the application first, these are the **10 core features**:
+
+1. ☐ **Complete Person Profile**
+2. ☐ **One-Tap Calling + Call Outcome Logging**
+3. ☐ **Session Management + Attendance**
+4. ☐ **Automatic High Priority for Recent Session Attendees**
+5. ☐ **Follow-up Management + “Who Should I Call Today?”**
+6. ☐ **Complete Relationship Timeline**
+7. ☐ **Topic Tracking Based on Actual Discussions**
+8. ☐ **Prasadam Reminder & Tracking**
+9. ☐ **Multi-user Teams + Contact Assignment**
+10. ☐ **Smart Dashboard that tells me what I should do today**
+
+this is list of all feature which it should have so pls tell me that what fature u have implemented and which are pending 
+
+
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T11:44:41+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+So, the features which are not included, you should include and work on it and give me the final output. And yes, the FOLKLead can generate a session. In the session, a list should come that this is calling sheet, so everyone has to call. And FOLKLead can divide the contact between the team, the team member has to call. So, they have to call and this one should be updated in the session. The team member will follow from there, but they will update here in our FOLKLead's leadership also because the session is an important part. For the session, don't just have to invite or book, a calling sheet should come and they will call and according to the call, the attendance should be marked. And then filter out a filter total score should come that this much call has been made for the session. These are the say that they will come and this total attendance they'll come from calling old contacts in this and new contact with this. That thing should be there. You understand it? So, design session part very nicely. Add more dummy data. This source code context is not clean enough. Add 50-60 contacts, and all different segments of dummy data should be there so I can see how these segments are working. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T11:49:03+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+do it
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T11:51:48+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Where is contact adding whenever I'm meeting a new person? How I can quickly add it just opening? You have not given that feature. So the basic feature which I want. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T11:59:51+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+I want you to put dummy data of various different categories, and I'm able to clearly see which of my contacts are very good, which are not very good, and which are dormant. We were discussing different classes, so I want to see my contacts in that priority, and it should be clearly visible. No contact should be duplicated. Who is my priority should not come on the second list. Keep in mind that I can meet hardly three to four boys in a day. It is difficult for me, so plan accordingly. I cannot just meet 10-15 people in a single day. The whole planning should be updated every day. So, if yesterday I missed two or three calls, today they should be given priority to call first, then the next. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T12:03:00+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+call i can do ti 30
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T12:04:07+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T12:09:53+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+The whole UI is very robust, very old type, not very cool, very bulky, not in a smart way. I wanted to make a very classical, very appealing, very wonderful UI, which will be attractive and very simplified. It should not take so much space, no bulky items, very simple, very sleek, and all details should come in one single line. Call should be a single button. I don't want a very sleek, very simple design, and so many things are not here, just like setting options are not there, which are available in the website version. Timeline analysis, team, various things are not here in the smartphone view. Add that thing also and make the design very beautiful, very classy, glassmorphic. It should be very glassmorphic, very alive. Every button should be designed with curves. Every space should be properly utilized, as we have done in our previous projects, our flagship project of Sadhana Tracker. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T12:13:55+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+do it , the app should look colourfull and alive
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T12:15:24+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Actually, I was thinking, so see, you are daily suggesting me this four contact which I have to meet today, but what happens is someone is not available or someone has not picked up the call. So after a call, we will as official give the response, okay done, we will meet. And yes, but someone has not picked up or someone is not today is busy, he is not available. So what we have to do that if someone choosing that he is not able or anything he is not able to meet by other. So other you should fetch a new contacts also, new recommendation according to priority listing. The priority according to them which you have to meet this boy. And the person who is having high priority and so they should also given a high chance to meet. So what we can do from four, two will be the top priority person which we have to meet daily and the two will be the new contacts or new anything else. And now what is happening because of this writing that overdue Prashantham follow-up, Prashantham follow-up because of that this name is hiding. So this thing is not that much is required that this things is required Prashantham is not given. And name should be visible when we are calling. And yes, and high priority person should be call always in top. First I should call high priority person then follow-up leads. And instead of writing give Bhagavad Gita, you should write book, book means overwriting book giving, book reading, book reading, book reading is not given. You are understanding. And yes, the people page still have to be improved so much because things I will also attach a picture, it is not properly corrected. So I am not able to bifurcate my contacts. And this and this down the navigation bar just like home, people, schedule, follow-up, it should come like island, a curved island, horizontal island, cylindrical, circular it should come and it will look nice and it should be little dark, glassmorphic. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T12:23:37+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+The dynamic island is a little too transparent and it is not clearly visible. The text is going under, so we have to make it a little more opaque. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T12:30:20+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Can we have a light mode in this app because dark mode is not favorable by everyone, so I need a very nice light mode. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T12:31:00+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+See, this has become more thick. Earlier, the size was very good. You can transfer this Prasadam follow-up pending after the name only. We can make it short. You mentioned that in that side only. And the daily calling sheet is according to the priority. In People, the search point is not properly. You have to make it correct. And bifurcation should be there. In Session, it is good. The priority score is not showing, and it should be arranged according to priority score. Everything in Session also, the session calling should also be according to the priority, not that new contact should be there. A priority thing should be there. The person is coming more in Session who is attending/meeting me, so it should be given high priority. And in Follow-ups and Tasks, in Follow-up, if some calling is there and meeting is there, so every time a call option should be there, immediately I can call. It's not that I have to go and dialer again. And in People page, two to plus buttons are coming. Therefore, I'm telling you to do that thing. In 1-to-1 Follow-up, also call thing should be there because you are giving me future plans. In 1-to-1 Follow-up, you also suggest I have done the upcoming, only the in 1-to-1 meetings, only past meetings and upcoming schedule is there. So it should also be call, call that boy. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T12:38:12+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+do it , piroty score shoild be everywhere
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T12:40:06+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Where is light mode in this app? You are implementing the light mode, I'm not able to find it. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T12:49:41+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+The name is still hiding. I don't want the name to be hidden in the main dashboard. Every name should be visible. If just the first name and surname is not visible, it is still fine, but the name should be visible. In People, all priority and neglected should become priority, just hot, warm, and dormant. This priority should come, and the contacts should be arranged in priority order list, not in alphabetical order. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T12:49:56+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+where that filter which we disceded
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T12:55:32+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+still not happened
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T12:56:42+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Improve this page because this is not properly looking system-like, so I want you to make this page look like a useful app. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T12:59:57+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+can u just explain me how this app work in backend and how i will never miss a boy to meet  in week ? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-14T23:37:08+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+You have to make one change in the session page. The session addition plus button is hidden behind the new contact plus button, so in the session page, we have to remove this new contact addition button. When I'm creating a new session and adding contacts to the campaign, there should be an option to select in bulk. We should be able to add hot contacts, priority contacts, warm contacts, or dormant contacts, or select all to add them. This will help because now we have to add one by one, so it is a little difficult. The tally color page is a little long, we have to scroll very much horizontally, so I want that we should not go for horizontal scrolling. We should not go for horizontal scrolling. This is the thing which I wanted to tell you. In follow-up and follow-up meeting, we are not able to schedule, so in the follow-up page or one-to-one page, the plus button should be used for adding our own. If we want to add a particular boy for follow-up on this particular day or one-by-one for follow-up on that day, this plus button should be customized for every page. For session, it is for adding a new session. In follow-up, for adding a new follow-up. In one-to-one, for adding a new follow-up. We should also add one more feature of a priority list. I want to make a special list of different boys which I want to meet daily. A separate list, I can create a list, okay, this is my daily meetup boys or daily online session boys. I can create a different group in which all boys are, and I can call that boy according to it, or boys from different colleges. So that is the thing I'm explaining. You understand what I wanted to explain our requirement what I have told you. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-14T23:43:54+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+I want you to keep a plus icon in which I can add contacts on the dashboard and on the people page only. On other pages, it should be customizable according to its page. For a one-to-one meeting, I want to meet a boy at this time and on this day, so I can schedule it. And a global list and feature, you can do what you are thinking and let me know and we'll see what you are doing. Add new all these features. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-14T23:49:07+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-14T23:56:18+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Yes, so now we have three sections. Our warm and dormant, but we want to add one more category which is known as cold. So one is hot, one is warm, and one is cold. Cold means a new person who is interested. Cold means interested. And dormant will be there. Dormant means the contact which we have not contacted or which they are dying. So now what is the thing? When we are adding a new contact, so we have to also give these three features also: hot, cold, and warm. You are understanding? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T09:20:05+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+The COLD option is not visible in the pipeline section, the relationship pipeline section, so please add it. I'm not able to understand what this pipeline feature is useful for because only the name and contact is there, and showing the last contacted date. Please make sure to make this section more useful and quick responsive. We don't have to just see the things, we want to take action on this contact. Whenever you're suggesting for a meet, for a 1-to-1 meet, we have to also tell that when we met him last time. And in calling also, when last call was happened, these details you have to show. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T09:24:26+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+And one more thing we have to do. If I have called any boy from the main dashboard, if I called and if I have talked with him, it should have a little color change, which means I have successfully called him. So it should become green and should come down. And the other who I have not called, who is next, it should come on first. So that cycle should be there. And if all the four meetings are done, then another new contacts will come, another new four contacts will come. And same should happen with calling also. The call which has been done, which was successful, which has not connected, it should come with another color. Who is got connected but busy. So if it is successful, then it will become light green and it will come down. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T09:32:34+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+So, what should happen when I click on call? The dialer will open, I will talk to that boy, and when I will again come to the app, it should ask what was the disposition he will have to enter, like if interested. It means a nice interaction. And call will be done. Done means it will increase his priority also. And then it will go down and the next contact will come. So, I want that when I come, it should enter. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T09:36:35+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Yes, the changes are very nice, but there's some correction which is required. So, in top meeting today, we also have to add a call section. It's very nice we have a calendar icon, but you can make a one call section to the left of it. It will be very easy to call them directly. And the thing which is coming down after calling that after this position is connected green. So now what this this will make this this will make it very long. So what we can do? We can make in round circles, this is a Pranav, so a round circle of Pranav very small and we can make it horizontal scrollable. Okay, horizontal scrollable as we're doing in pipeline. So very small so it will utilize very small space and similarly we can do in top calls today also. And it will also show that how many that how many meeting I have done today from four out of four how many meetings I have done today. And in call also. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T09:46:02+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+In the meetings section, we should have a nice circle, the same format we are having in Top Calls Today, so we should have that. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T09:49:29+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Continue
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T09:53:50+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+One more issue is there. First, in the Top Meetings section, you have added one person icon, and when I'm clicking it, I'm going to the profile of that boy, which is not required. You can remove that because when I'm clicking on the boy's name, I'm directly going to his profile. Now, remove that thing. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T09:55:44+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+The other thing is that now on the dashboard, I'm clicking on a boy's name and viewing his profile, and while coming back, I'm again coming to the people page, not on the dashboard. I want it to come back on the dashboard so I can call the next person. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T09:56:51+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Actually, it has not happened. I want you to ensure that if I am viewing the profile of a boy from anywhere, whether from follow-up, 1-to-1, meeting, or from the dashboard, if I am doing that, I should go back to where I had clicked the profile thing, not on the people's page. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T09:58:56+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+On the right side of the screen, a scroll bar is coming, showing how we are scrolling down. This is not looking very nice and is destroying the look of the page. Can we improve this, replace it, or totally remove this? What should we do? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T10:07:57+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+There are various buttons, various response things just like Call, Log Interaction, Schedule 1-to-1, Prasadam, Give Book, or Save, and different different buttons are there, Save, Contact, Cancel. These buttons are not polished, and these dropdowns, most of the dropdowns are looking very weird, and this is not very classic glassmorphism as the current websites are coming. The dropdowns are not properly aligned. Correct these things. Dropdown should be perfectly inclined, and the buttons should be very visible, and it should be in proper shape, matching the theme with nice curves. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T10:10:11+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+See, I have attached some of the pictures of how these things are looking, which is not very good and is very disappointing. The dropdowns are coming out, which is very old-fashioned. The buttons are not proper, and the buttons of the function are very small. These buttons are also very small. Please correct these things. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T10:15:09+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+The issues are not resolved. The dropdowns all over the application and the profile buttons are also not improved. The Save buttons are also not improved. The Quick Add dropdown is also not working properly. What are you doing? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T10:21:19+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+We have to make all popups a little more opaque because they are too transparent and we are having difficulty reading them. We have to reduce the transparency all over the app. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T10:32:59+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+more required
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T10:35:29+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Yesterday nice now we have to set up the login page. You can set up very nicely. So actually what I wanted that I want just like a login page where it is used as a team. So as a person he will be registered as a team. One person is as a team leader, other will be member. So what will happen the team leader contact will be also separated, the members contact also should be separated. But during session the whole team contact can be added and we can see that whose contact is and who will call this or not. And the person see the team leader contact will come first if he is viewing, if member is viewing from his phone then his contact will come first. Team leader can see that who has called his contact or not. If no one has called or if the person is not, so other team member can call it and he can assign it. You are understanding na? So tell me what I was telling. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T10:37:57+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+To the question of first, yes, we should create the dummy users. And second, yes, make something that team leader can also see the other team members' contact and their, because our team leader should also focus on their contacts. They not should again see the other team members' contacts. It required only during session. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T10:41:30+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+In session time, automatically all team contacts should be added. Team leader can add all contacts. Team leader should get an option to add this number of contacts and this number of contacts. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T10:52:14+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Actually my concern as team leader is that what happens sometimes a member misses to add their contacts for session. And then we miss how they feel they can call. We should not miss them calling their contacts. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T10:55:23+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+doYes, I'm doing it.  it
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T10:57:27+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+correct this
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T10:59:35+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+In the group section, there is no option to add new groups and delete group. And in group also, there is no option to add new contacts. So these options should be there. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T11:00:52+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+do it
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T11:02:38+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Where is dummy data? I'm not able to see the dummy data. And the plus icon in the group section is covering the more option. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T11:06:16+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+This will be our logo for our app and use this for the login page. Make a nice login page where login and sign up will be shown. Give a dummy ID and password only. With that, this logo should be used as a favicon also. After reviewing that login page and a page, then I will go with connecting our database, Firebase, so others can be used and then we will host on vercel
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T11:10:01+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+The answer to your question is, I want the sign up page to be seen now, how it will look, how people will select their team, and how team leaders will become team leaders. That is the thing which I wanted to know, how you will implement it, because not everyone can become a team leader, and everyone should not sign up as a team leader. That is the thing I'm trying to say. Not anyone can join anyone team, okay? Also, this since we should make sure about how it will look. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T11:13:33+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+do it
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T11:15:45+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+where is signout option after login
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T11:19:29+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+give pofile section Give a profile section where members can also see their own information. And one more thing, in the main logo, give us some dummy ID and password so I can log in and check. And here, the logo, our logo is looking a little much bigger. So, this is to be in our icon. And yes, we should do something. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T11:22:29+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Remove the role types dropdown scrollbar in the sign up page and change it to a dropdown. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T11:26:00+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+One last option you add, we could able to see the overall contacts' birthday. Whose birthday is coming, whose today's birthday is there, and whose birthday we have missed or whose passed. And we should also receive notification that tomorrow is someone's birthday, today we should receive notification also. So add that one more thing in. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T11:27:20+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+do it
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T11:28:56+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+It's all now ready for going for its final round for cleaning all the dummy data and connecting Firebase. ????
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T11:32:27+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCAJeYiQZ-bE3cYFlZi0OeCKSw-9KtEGkQ",
+  authDomain: "folk-reach.firebaseapp.com",
+  projectId: "folk-reach",
+  storageBucket: "folk-reach.firebasestorage.app",
+  messagingSenderId: "1067348666124",
+  appId: "1:1067348666124:web:9649c0ff81fc229b404b29",
+  measurementId: "G-3JVQS9731M"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T11:37:54+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Is it fully connected, or is there some gap or some action we have to take to fully connect Firebase? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T11:46:16+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+this is coming
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T11:49:23+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+i have done all thing , now ?
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T11:51:57+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+I have created a repository on GitHub, so I wanted to add my source code on GitHub. Then I will connect that repository to WhatsApp. But when I'm now adding to a repository, I'm not able to add src file because now clicking on src file it is showing open and another four files are opening. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T11:58:06+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+https://github.com/shitanshusingh/FOLK-Reach.git
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T11:59:38+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+nothing is coming
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T12:02:30+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+i have github desktop in my laptop , and i was using for our folk sadhna sync
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T12:03:54+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+done
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T12:06:27+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+12:10:30.601 Running build in Washington, D.C., USA (East) – iad1
+12:10:30.602 Build machine configuration: 2 cores, 8 GB
+12:10:30.741 Cloning github.com/shitanshusingh/FOLK-Reach (Branch: main, Commit: 1ea69b2)
+12:10:30.741 Previous build caches not available.
+12:10:31.050 Cloning completed: 309.000ms
+12:10:31.461 Running "vercel build"
+12:10:31.472 Vercel CLI 59.17.0
+12:10:31.647 Installing dependencies...
+12:10:36.823 npm warn deprecated eslint@9.39.5: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+12:10:41.852 
+12:10:41.852 added 429 packages in 10s
+12:10:41.852 
+12:10:41.852 145 packages are looking for funding
+12:10:41.852   run `npm fund` for details
+12:10:41.853 npm warn allow-scripts 3 packages have install scripts not yet covered by allowScripts:
+12:10:41.854 npm warn allow-scripts   @firebase/util@1.15.3 (postinstall: node ./postinstall.js)
+12:10:41.854 npm warn allow-scripts   protobufjs@7.6.6 (postinstall: node scripts/postinstall)
+12:10:41.854 npm warn allow-scripts   unrs-resolver@1.12.2 (postinstall: node postinstall.js)
+12:10:41.854 npm warn allow-scripts
+12:10:41.854 npm warn allow-scripts Run `npm approve-scripts --allow-scripts-pending` to review, or `npm approve-scripts <pkg>` to allow.
+12:10:41.903 Detected Next.js version: 16.3.5
+12:10:41.910 Running "npm run build"
+12:10:42.057 
+12:10:42.057 > folkreach@0.1.0 build
+12:10:42.057 > next build
+12:10:42.057 
+12:10:42.426 ▲ Next.js 16.3.5 (Turbopack)
+12:10:42.498   Applying modifyConfig from Vercel
+12:10:42.500 ✓ Running next.config.ts took 73ms
+12:10:42.547 Attention: Next.js now collects completely anonymous telemetry regarding usage.
+12:10:42.548 This information is used to shape Next.js' roadmap and prioritize features.
+12:10:42.548 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+12:10:42.548 https://nextjs.org/telemetry
+12:10:42.548 
+12:10:42.560 
+12:10:42.598   Creating an opti
+<truncated 26909 bytes>
+o type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+12:10:53.322 src/lib/seed.ts(138,18): error TS2352: Conversion of type 'string' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+12:10:53.322 src/lib/seed.ts(144,30): error TS2339: Property 'bulkAdd' does not exist on type '{ add: (data: any) => Promise<string>; update: (id: string | number, data: any) => Promise<void>; delete: (id: string | number) => Promise<void>; get: (id: string | number) => Promise<...>; where: (field: string) => { ...; }; toArray: () => Promise<...>; count: () => Promise<...>; }'.
+12:10:53.322 src/lib/seed.ts(167,18): error TS2339: Property 'bulkAdd' does not exist on type '{ add: (data: any) => Promise<string>; update: (id: string | number, data: any) => Promise<void>; delete: (id: string | number) => Promise<void>; get: (id: string | number) => Promise<...>; where: (field: string) => { ...; }; toArray: () => Promise<...>; count: () => Promise<...>; }'.
+12:10:53.322 src/lib/seed.ts(182,25): error TS2339: Property 'bulkAdd' does not exist on type '{ add: (data: any) => Promise<string>; update: (id: string | number, data: any) => Promise<void>; delete: (id: string | number) => Promise<void>; get: (id: string | number) => Promise<...>; where: (field: string) => { ...; }; toArray: () => Promise<...>; count: () => Promise<...>; }'.
+12:10:53.322 src/lib/seed.ts(186,13): error TS2352: Conversion of type 'string' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+12:10:53.322 Failed to type check.
+12:10:53.322 
+12:10:53.356 Error: Command "npm run build" exited with 1
+
+deploy fail on vercel becz of this error
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T12:11:30+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+12:20:54.997 
+src/components/tasks/QuickAddTask.tsx(56,39): error TS7006: Parameter 'p' implicitly has an 'any' type.
+12:20:54.997 
+src/lib/seed.ts(30,24): error TS2304: Cannot find name 'firestoreAPI'.
+12:20:54.997 
+src/lib/seed.ts(47,20): error TS2352: Conversion of type 'string' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+12:20:54.998 
+src/lib/seed.ts(74,72): error TS2352: Conversion of type 'string' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+12:20:54.998 
+src/lib/seed.ts(79,46): error TS2339: Property 'bulkAdd' does not exist on type '{ add: (data: any) => Promise<string>; update: (id: string | number, data: any) => Promise<void>; delete: (id: string | number) => Promise<void>; get: (id: string | number) => Promise<...>; where: (field: string) => { ...; }; toArray: () => Promise<...>; count: () => Promise<...>; }'.
+12:20:54.998 
+src/lib/seed.ts(87,18): error TS2352: Conversion of type 'string' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+12:20:54.998 
+src/lib/seed.ts(95,18): error TS2352: Conversion of type 'string' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+12:20:54.998 
+src/lib/seed.ts(103,20): error TS2352: Conversion of type 'string' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+12:20:54.999 
+src/lib/seed.ts(123,18): error TS2352: Conversion of type 'string' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+12:20:54.999 
+src/lib/seed.ts(138,18): error TS2352: Conversion of type 'string' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+12:20:54.999 
+src/lib/seed.ts(144,30): error TS2339: Property 'bulkAdd' does not exist on type '{ add: (data: any) => Promise<string>; update: (id: string | number, data: any) => Promise<void>; delete: (id: string | number) => Promise<void>; get: (id: string | number) => Promise<...>; where: (field: string) => { ...; }; toArray: () => Promise<...>; count: () => Promise<...>; }'.
+12:20:54.999 
+src/lib/seed.ts(167,18): error TS2339: Property 'bulkAdd' does not exist on type '{ add: (data: any) => Promise<string>; update: (id: string | number, data: any) => Promise<void>; delete: (id: string | number) => Promise<void>; get: (id: string | number) => Promise<...>; where: (field: string) => { ...; }; toArray: () => Promise<...>; count: () => Promise<...>; }'.
+12:20:54.999 
+src/lib/seed.ts(182,25): error TS2339: Property 'bulkAdd' does not exist on type '{ add: (data: any) => Promise<string>; update: (id: string | number, data: any) => Promise<void>; delete: (id: string | number) => Promise<void>; get: (id: string | number) => Promise<...>; where: (field: string) => { ...; }; toArray: () => Promise<...>; count: () => Promise<...>; }'.
+12:20:54.999 
+src/lib/seed.ts(186,13): error TS2352: Conversion of type 'string' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+12:20:55.024 
+Failed to type check.
+12:20:55.025 
+12:20:55.098 
+Error: Command "npm run build" exited with 1
+
+it again failed
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T12:24:34+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+12:32:50.977 Running build in Washington, D.C., USA (East) – iad1
+12:32:50.977 Build machine configuration: 2 cores, 8 GB
+12:32:51.038 Cloning github.com/shitanshusingh/FOLK-Reach (Branch: main, Commit: 1ea69b2)
+12:32:51.039 Skipping build cache, deployment was triggered without cache.
+12:32:51.377 Cloning completed: 339.000ms
+12:32:51.998 Running "vercel build"
+12:32:52.014 Vercel CLI 59.17.0
+12:32:52.295 Installing dependencies...
+12:32:58.997 npm warn deprecated eslint@9.39.5: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+12:33:05.785 
+12:33:05.786 added 429 packages in 13s
+12:33:05.787 
+12:33:05.787 145 packages are looking for funding
+12:33:05.787   run `npm fund` for details
+12:33:05.787 npm warn allow-scripts 3 packages have install scripts not yet covered by allowScripts:
+12:33:05.788 npm warn allow-scripts   @firebase/util@1.15.3 (postinstall: node ./postinstall.js)
+12:33:05.788 npm warn allow-scripts   protobufjs@7.6.6 (postinstall: node scripts/postinstall)
+12:33:05.788 npm warn allow-scripts   unrs-resolver@1.12.2 (postinstall: node postinstall.js)
+12:33:05.788 npm warn allow-scripts
+12:33:05.788 npm warn allow-scripts Run `npm approve-scripts --allow-scripts-pending` to review, or `npm approve-scripts <pkg>` to allow.
+12:33:05.858 Detected Next.js version: 16.3.5
+12:33:05.869 Running "npm run build"
+12:33:06.021 
+12:33:06.021 > folkreach@0.1.0 build
+12:33:06.021 > next build
+12:33:06.021 
+12:33:06.554 ▲ Next.js 16.3.5 (Turbopack)
+12:33:06.660   Applying modifyConfig from Vercel
+12:33:06.663 ✓ Running next.config.ts took 110ms
+12:33:06.782 Attention: Next.js now collects completely anonymous telemetry regarding usage.
+12:33:06.783 This information is used to shape Next.js' roadmap and prioritize features.
+12:33:06.783 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+12:33:06.783 https://nextjs.org/telemetry
+12:33:06.783 
+12:33:06.804 
+12:33
+<truncated 26900 bytes>
+2352: Conversion of type 'string' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+12:33:21.183 src/lib/seed.ts(138,18): error TS2352: Conversion of type 'string' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+12:33:21.183 src/lib/seed.ts(144,30): error TS2339: Property 'bulkAdd' does not exist on type '{ add: (data: any) => Promise<string>; update: (id: string | number, data: any) => Promise<void>; delete: (id: string | number) => Promise<void>; get: (id: string | number) => Promise<...>; where: (field: string) => { ...; }; toArray: () => Promise<...>; count: () => Promise<...>; }'.
+12:33:21.183 src/lib/seed.ts(167,18): error TS2339: Property 'bulkAdd' does not exist on type '{ add: (data: any) => Promise<string>; update: (id: string | number, data: any) => Promise<void>; delete: (id: string | number) => Promise<void>; get: (id: string | number) => Promise<...>; where: (field: string) => { ...; }; toArray: () => Promise<...>; count: () => Promise<...>; }'.
+12:33:21.183 src/lib/seed.ts(182,25): error TS2339: Property 'bulkAdd' does not exist on type '{ add: (data: any) => Promise<string>; update: (id: string | number, data: any) => Promise<void>; delete: (id: string | number) => Promise<void>; get: (id: string | number) => Promise<...>; where: (field: string) => { ...; }; toArray: () => Promise<...>; count: () => Promise<...>; }'.
+12:33:21.183 src/lib/seed.ts(186,13): error TS2352: Conversion of type 'string' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+12:33:21.195 Failed to type check.
+12:33:21.195 
+12:33:21.260 Error: Command "npm run build" exited with 1
+
+again
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T12:34:14+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+12:35:48.546 Running build in Washington, D.C., USA (East) – iad1
+12:35:48.547 Build machine configuration: 2 cores, 8 GB
+12:35:48.593 Cloning github.com/shitanshusingh/FOLK-Reach (Branch: main, Commit: 1ea69b2)
+12:35:48.594 Skipping build cache, deployment was triggered without cache.
+12:35:48.927 Cloning completed: 334.000ms
+12:35:49.430 Running "vercel build"
+12:35:49.442 Vercel CLI 59.17.0
+12:35:49.620 Installing dependencies...
+12:35:55.372 npm warn deprecated eslint@9.39.5: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+12:36:00.150 
+12:36:00.150 added 429 packages in 10s
+12:36:00.150 
+12:36:00.150 145 packages are looking for funding
+12:36:00.150   run `npm fund` for details
+12:36:00.151 npm warn allow-scripts 3 packages have install scripts not yet covered by allowScripts:
+12:36:00.151 npm warn allow-scripts   @firebase/util@1.15.3 (postinstall: node ./postinstall.js)
+12:36:00.151 npm warn allow-scripts   protobufjs@7.6.6 (postinstall: node scripts/postinstall)
+12:36:00.151 npm warn allow-scripts   unrs-resolver@1.12.2 (postinstall: node postinstall.js)
+12:36:00.151 npm warn allow-scripts
+12:36:00.151 npm warn allow-scripts Run `npm approve-scripts --allow-scripts-pending` to review, or `npm approve-scripts <pkg>` to allow.
+12:36:00.198 Detected Next.js version: 16.3.5
+12:36:00.209 Running "npm run build"
+12:36:00.482 
+12:36:00.482 > folkreach@0.1.0 build
+12:36:00.482 > next build
+12:36:00.483 
+12:36:00.827 ▲ Next.js 16.3.5 (Turbopack)
+12:36:00.903   Applying modifyConfig from Vercel
+12:36:00.906 ✓ Running next.config.ts took 77ms
+12:36:00.945 Attention: Next.js now collects completely anonymous telemetry regarding usage.
+12:36:00.948 This information is used to shape Next.js' roadmap and prioritize features.
+12:36:00.948 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+12:36:00.948 https://nextjs.org/telemetry
+12:36:00.948 
+12:36:00.977 
+12:36:
+<truncated 26919 bytes>
+type 'string' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+12:36:12.103 src/lib/seed.ts(138,18): error TS2352: Conversion of type 'string' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+12:36:12.103 src/lib/seed.ts(144,30): error TS2339: Property 'bulkAdd' does not exist on type '{ add: (data: any) => Promise<string>; update: (id: string | number, data: any) => Promise<void>; delete: (id: string | number) => Promise<void>; get: (id: string | number) => Promise<...>; where: (field: string) => { ...; }; toArray: () => Promise<...>; count: () => Promise<...>; }'.
+12:36:12.103 src/lib/seed.ts(167,18): error TS2339: Property 'bulkAdd' does not exist on type '{ add: (data: any) => Promise<string>; update: (id: string | number, data: any) => Promise<void>; delete: (id: string | number) => Promise<void>; get: (id: string | number) => Promise<...>; where: (field: string) => { ...; }; toArray: () => Promise<...>; count: () => Promise<...>; }'.
+12:36:12.103 src/lib/seed.ts(182,25): error TS2339: Property 'bulkAdd' does not exist on type '{ add: (data: any) => Promise<string>; update: (id: string | number, data: any) => Promise<void>; delete: (id: string | number) => Promise<void>; get: (id: string | number) => Promise<...>; where: (field: string) => { ...; }; toArray: () => Promise<...>; count: () => Promise<...>; }'.
+12:36:12.103 src/lib/seed.ts(186,13): error TS2352: Conversion of type 'string' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+12:36:12.120 Failed to type check.
+12:36:12.121 
+12:36:12.175 Error: Command "npm run build" exited with 1
+
+same again after doing it
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T12:36:48+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+this is coming on vercel
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T12:40:47+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Continue
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T13:20:46+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Yes, what I observed outside is live. What is the issue? It's loading, time is very big, and it is sticking. It takes so much time to load and it is not very fast. And when I'm adding new contact, this is coming up. The session page is taking so long, more than one minute to load. Why these things are happening? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T13:23:10+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+If I want to edit someone's contact details or I want to add someone's date of birth while saving his number, but after two, three days he's telling me his date of birth, so I am adding that. Is this option available or not? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T13:27:45+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+The loading is very long while opening the app, clicking the profile page, and in session. So, what I'm thinking, as we have done in the Sadhna Sync, our Sadhna app is so fast. It first work on local storage, then in backend it update to server database. And if it is offline also, first it will take things in local storage and then after getting connection, he will push that cache to database and it deletes from it. So, what we can do, or any other suggestion which we can do to make zero the lag? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T13:51:04+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+But it should not happen that the local storage is filling up. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T13:53:41+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Still the lag is there and I'm not able to open the profile view of any boy. Whenever I'm clicking on any profile, it is showing loading profile. The same happening with session, it is showing both loading. And in follow-up, the boy name is not reflecting. I've added the contact, but it is not responding to select the person. The same for the one-to-one thing also, no person is showing. So please make it correct and this lag, you should hardcode implement this feature. I don't want any lag. This is my first and final warning to you. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T13:57:21+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+When I added that contact, it should reflect on my dashboard that you have to call this and you have to meet him. Two, three contacts are only there, but now it is not showing. It should be there. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T14:01:43+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+So now what is happening, whenever I am opening this app in my smartphone, a blank screen is coming and in between them it is writing loading and it's staying there for 10 to 15 seconds and this is very disturbing. And same happening when I'm clicking on the session page, it is coming that this page cannot be loaded. I have also attached the image. So this issue is coming there. And yes, so it takes time, this app takes time to open it. And I am also not able to open any profile pages of any boy or contact which I have added. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T23:45:05+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+And what about the profile page? I am not able to see anyone's profile. It is only showing loading profile. When I am clicking on profiles, I am not able to see anyone's profile. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T23:53:28+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Still same thing is coming the page cannot be loaded in the profile
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-15T23:57:59+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Sorry, but the issue is not resolved. The blank screen is again coming and it is again telling that this page cannot be loaded in the session section also and in the profile section also. So this is the thing. Still the issue is not resolved. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T00:03:03+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Still the same thing is happening, so the issue is not resolved. Please do it. Please find what is the actual problem. This time, see properly what is happening wrong. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T00:05:34+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+I have added one contact, so now the things are properly opening. Now the auto-reschedule theme, auto-follow-up suggestion, and auto-one-on-one meeting suggestion, and this pipeline or the pipeline relationship thing, it will come automatically. Our whole thing is that this app will suggest so people will not forget, the leader will not forget, the member will not forget. And if they want to add extra follow-up things, they can add by the plus button. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T00:16:36+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+The timeline for suggestions for hot contact should be if I have not contacted in 2 days. For warm, it should be 4 days. And for cold contact who are interested, it should be the 5th day. And for dormant, it should be a 10 day. And you know, while making this app, we discussed how I want this suggestion that we should never miss any boy. You should analyze that who boy is missed and all the section one to one. We should give them everything, the prasadam or book or each and everything, having one-to-one meeting, having calls. So we should not miss any boy, and we should have it very nice. Just recall what we have discussed while building that, and then tell me what you think. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T00:21:20+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Actually, I don't want the name button on this dashboard. The current button, the Quick Add button, is okay. I just want it to auto-suggest each and everything, and a boy should never miss a plan. As we discussed, the prasadam is the main thing, so every boy should be given recurring things. It is not like I give one thing and then it is done. A recurring thing, one-to-one meeting, and then prasadam should be given. Every boy should receive prasadam and discuss the topics. I have given you a list of topics we should discuss, and then whatever the next meeting or next call, it should be suggested and it should be cleared. The pipeline should auto-fill. We should get a new suggestion, one-to-one meeting suggestion. We should analyze and make a note that we met this boy on this state. We should auto-schedule and follow up. Also, the same thing should be there. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T00:25:04+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+And if I have something like less contact, I have just added 10 contacts, so that contact should be immediately shuffled. It should not wait for the four day that I have not contacted. It should become again and again and again. We should make sure that it will show me contact and no one can be left out. Means in one week our target should be like if we have 100 contacts, we should have touched all the 100 contacts and we should have nice follow-up with them on call or one-to-one or prasadam. Okay, understanding? Because the main thing is we miss boys. Now I don't want to miss them. I want to almost touch them daily some or some or the other way. Okay, today I will talk on call, tomorrow I will meet him one-to-one and give prasadam. Some other day I have some other things, so some things should be coming. In our relationship building, our main thing is relationship. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T00:29:59+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+I think this feature is not working properly. Please check it once because I'm not able to see anything in my follow-up and one-to-one meeting schedule. The system has not automatically scheduled anything. For example, if I have only one contact, I should meet that contact every day. This type of consistency I want. I don't want to miss that one contact also. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T00:34:41+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+In the 'By this pipeline' section, it is showing that 'No hot contact not already in action plan' and in 'Warm' also 'No warm contact not already in action plan'. So what is this thing? I'm not able to understand. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T00:39:56+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+In the 'By this pipeline' section, in this 'Ready hot' or 'Hot' section, the contacts will be aligned in that way that who are not in our action list for today, and they will arrange in the priority order. This thing you want to tell, if they are in our daily action task, so they will not in our pipeline. If they are in pipeline, so they will not in our daily action plan. This is the thing? Please tell me yes or no. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T00:42:35+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+So actually I wanted theThe previous version only. I want to see the pipeline daily action plan according to that only, not like the newer. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T00:43:33+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Now the other major issue is that I have added some contacts and the other user of other team has added some other contact, but in session it is showing the same. In follow-up, if I wanted to add something new, so someone else's contact is also able to see in my list. So why this is happening? If team are different, if persons are different, if numbers are different, so no contact should be seen. They should have their own contacts. And yes, that is the thing. Only our contact should be under our thing. And in session only, only our team members' contact we will be able to see. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T00:46:10+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Also, this schedule follow-up thing, actually, while clicking the select person name, it is not selecting even after clicking on it. And the type, just like call one to one, so what is happening? The dropdown is a little cutting, so I'm not able to scroll it up. And we are not able to save the task. So that is the thing which I am telling. So also correct this. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T00:50:36+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+None of the updates has happened which we have discussed probably from last five updates which we have discussed is not yet happened. Okay, so please check it. It is not showing in our 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T00:54:25+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Still the other person contact is showing in my session. And in the schedule follow-up type, the dropdown is not coming properly. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T00:57:37+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+In the session, after I have called my assigned contact, it is showing that it is a little bit confirmed, but after that, it is showing pending call. I have saved the output, but still it is showing pending call. Two different dropdowns are coming after clicking on that, so what is this? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T01:02:37+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Now what is the thing is that when I am opening from app icon, it's very basic. So the save icon we have set, it has a black border. Now when I am opening the app, it should come in white so the save icon is really visible. What we should do is we should make something that holds things to premium value. It is looking very cheap. And for a few seconds, the login page is coming and then it is going. For a fraction of a second, I am able to see the login page. This thing should not be there. Understand what I am telling you? And the loading time is really long. It is taking 15 to 20 seconds to start the app. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T12:08:12+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Okay, so now in session page, what is happening? I am able to see all the session which any leader has created. So the thing is that only the leaders can execute the sessions, members cannot create sessions. But also they can create session, yes, member can also create session. So but now we have a team, we are a team, team with a member, but we are able to see other team session also. This should not be, it should be there. Actually, the leader and team members should be able to see their own created sessions only and they should call their own voice which they have generated. That will be much better. What do you think about it? Please tell me. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T13:06:06+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Actually, only team members and team leaders can see each other's contacts in the session calling, not the outside team contacts. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T13:13:43+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+And in follow-up section, in header it is coming initial follow-up call and then it is coming the name. So can we shift name up and then initial follow-up call or whatever thing we have to do in follow-up, so that we can see the name to whom we have to follow up. And same thing is here in follow-up when I'm clicking on call, it is opening the dialer but the deposition page is not coming after returning to app. So deposition should be there every time on every call icon when we click and it should be according to the follow-up that how the follow-up things and it's somewhere else the other things. So dynamic deposition according to the page requirement because that will help us to get the proper input and it will help to improve the priority and the points. You are understanding me so what I'm telling? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T13:18:09+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Now what is the thing, I'm just doing the call, I mean follow-up. From follow-up, I have done one call. And from call, the call has not connected, he didn't pick up the call. But it is showing completed, I've completed my follow-up task for today. But after completing, in dashboard, in today's meeting, his name is coming in 'Circum'. It should be coming in 'Call' just like 'He didn't pick up'. So what we should do? We have not contacted, he didn't pick up. What you are doing? What is your planning with that thing? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T13:28:11+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Yes, and now what is happening in one-to-one meeting? For example, it is not my other person, another leader has done something, but still it is showing in my name that upcoming scheduled meeting is scheduled here. So other leaders' team meetings are showing in mine. We have to change this layout also. Past meeting is coming first, but upcoming scheduled meeting should come first, then past, and then missed. And the days are also, just like today I talked, today is 16th of September, I talked with some boy. Just like Rudra, I talked to Rudra from my contact, from Shitanshu leader. Now the one-to-one meeting is scheduled on 21st of September. So this is too long, you understand? This is too long. This is too long. We have to schedule immediate. Just today I talked, today or tomorrow we should do one-to-one meeting. You are understanding? It should be immediate. No this long gap should be there. Every contact we should have a regular follow-up, regular, recurring regular follow-up. We have to do recurring things with immediate update, so we should touch every boy. Because my target is that in one week I should have touched all the boys three times. You understanding? No one should be in touch with everyone. EXPLAIN ME WHAT U UNDERSTAND
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T13:32:47+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Yes, and now what is happening in one-to-one meeting? For example, it is not my other person, another leader has done something, but still it is showing in my name that upcoming scheduled meeting is scheduled here. So other leaders' team meetings are showing in mine. We have to change this layout also. Past meeting is coming first, but upcoming scheduled meeting should come first, then past, and then missed. And the days are also, just like today I talked, today is 16th of September, I talked with some boy. Just like Rudra, I talked to Rudra from my contact, from Shitanshu leader. Now the one-to-one meeting is scheduled on 21st of September. So this is too long, you understand? This is too long. This is too long. We have to schedule immediate. Just today I talked, today or tomorrow we should do one-to-one meeting. You are understanding? It should be immediate. No this long gap should be there. Every contact we should have a regular follow-up, regular, recurring regular follow-up. We have to do recurring things with immediate update, so we should touch every boy. Because my target is that in one week I should have touched all the boys three times. You understanding? No one should be in touch with everyone. EXPLAIN ME WHAT U UNDERSTAND
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T13:35:07+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Could you remove the inappropriate things if you think it's something there? But according to me, there is nothing inappropriate language in this prompt which violates Google policy. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T13:35:27+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+So, here the scheduled meeting date is still coming after one week. The date has not shortened, so it is not coming for tomorrow in one-to-one meeting. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T13:43:22+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Okay, now come on session. In calling page, there is two things in calling campaign. First is calendar to assign. Now the name of all the members are coming, all the leaders are coming. If I am team leader, so my name and my team members' name should come there. Why the other team leaders and names are coming to assign? That should not be there. After that, there is a pending call status. Now there is different things like pending call, confirmed, maybe, declined. This is also deposition. Then there is something like log outcome. There is also another deposition when I am clicking calls, another deposition is coming. So two depositions are there. It is very difficult to understand what is the thing. So you are understanding, we should have to optimize it so it should look much more clear and it is not confusing. Now after that, attendance list should come and after that, session analysis. In session outcome, there is one more feature, one more option we have to add. There is a confirmed will come, maybe not show, declined, not interested is there. But one more option we also have to add that not coming. That option we should also be mentioned here. And one more thing which will join for next session, not coming in this session but will join for next session. And as soon as it should go to attendance list. If someone is confirmed or maybe is coming, it should go to attendance and we should check that he's coming or not. And in attendance list also, we should have a thing to call. Now what happened during session, some extra people are coming, some their friend has came. So in attendance sheet also, we should give one more plus icon where they can add the new contact who came. And instead of going to dashboard and adding their name, we can add from this attendance list. This is new contact form plus all the details we mentioned and it will automatically mention their attendance here and it will also add in our main contact list. So from one point, we can do two things and follow-up system should be happened. You understand what I'm telling you? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T13:48:49+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+YES DO IT
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T13:50:48+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+In the Add Walk-in Modal, we have to make a full-fledged entry just like we have done on the dashboard and the people page. We have to make the exact same thing here also, so that same contact should be mentioned there, mentioned in the main database for priority follow-up and also mark as attendance here.  UNDERSTANDING
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T14:06:30+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+WE SHOULD ALSO GIVE OPTION TO DO DELETE OR EDIT THE SESSION , LIKE  WE SOME MISTAKE WE CREATED THE SESSION NOW WANT TO DELETE
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T14:14:21+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+THIS MOVE BUTTON IS NOT WORKING , AND LOOKING VERY ROUGH , DESIGN MUCH CLEAR LAYOUT
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T14:36:19+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+STILL ITS NOT WORKING , WHY THIS IISSUE IS COMING , WHERE IS  COMPLETE SELECTION PART , THAT I MEET HIM 1 TO 1 BUT WHERE TO MARK THAT I MEET HIM ,  REMOVE THAT JUST TODAY AND TOMMOROW SELECTION PART ,JUST MAKE CORRECT DATE FOR MEET
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T14:42:44+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+BUT 21 SEPTEMBER DATE TO SHIFT JUST AFTERF INITIAL CALL
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T14:45:35+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+WHAT IS THIS EXPLAIN ME ?
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-16T14:48:02+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+In the session section in walk-in, we can also introduce a very nice system of QR. What happens if a new person is coming, he can also scan the QR or we can make QR available for everyone. If already the person who is coming, if his name is there, so in attendance system, we should also have to first attach a search bar, a dynamic search bar where we can search a person who is coming in session so we can mark his attendance like his name or we can number or any details. And if he's not there, then he can register so we can have our own QR where he can fill his detail, some of his basic details that only. And then he save and we can directly get his attendance in our form in this attendee attendance. And it will be newly registered walk-in. A walk-in option should be there. That is a walk-in, he's totally new.  what u tell
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T08:20:37+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Yes, do it, but keep the name, phone number, and college and branch compulsory. All the things should be compulsory. And also mention which hostel and gender option. These things should be compulsory. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T08:27:21+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+local run i need
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T08:33:19+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+See in this attendance list, the select an option long is very long horizontally, taking very much space. We can give it half of the space and put this call button beside it only. Why put it down? This will be much better idea. And yes, this analytical section, we can make it much more good, much more interactive. It is not simple looking, very bold and very boxy, not a very nice thing. So we can make it very much attractive. And when we have called in session, just like in telecalling sheet, I have called someone, some boy for session and he says, so that thing also should show that okay, this person has contacted that person. In our main CRM, in our main dashboard, it should also reflect in our whole the timeline. It should also enter this person is calling for session. So in that thing, if initial calls what pending if I have called for session, then it should consider that okay, now this person has called and we should plan accordingly. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T09:06:47+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+You should give option of also deleting the contact. Okay, I want to do some work. I should delete it. Okay. And yes, so now what is happening when I'm completing one meeting or doing something, so it is coming down as we have discussed the round circle is coming in horizontal form. But if the if old meeting should it will start from left to right. This new thing I have completed that thing should come in left and then old one will come in right. But now if I am also completing the call, today's call I am doing in dashboard, so it is also coming in the today's meeting part, not in the call top call today in downlines. Okay. And only we should show 10 contact in dashboad in place of 30 , and remaing in pipeline , if 10 complete then other will come as we discussed earlier
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T09:15:30+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+The call which is coming should come from the various thing and not just on the top priority people are coming. It should be a mixture of everything. You should suggest, the system should suggest to whom I should call. And because then we can check that that boy will 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T09:18:33+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+HOT should be contacted every 1 day. Then WARM should be contacted every 2 days. We should be in touch with every contact every day. No one can remain dormant; their priority should increase, and if they are not interested, we can mark them as 'not interested' and delete their contact afterwards. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T09:24:22+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+And the colored thing, after completion, the completed circle was coming in color, but now after having a good conversation, it is not coming in different colors, which we have discussed. So please check this once. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T09:26:31+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+This is the feedback of our project of our app which we have received. This feedback I received from my client that we can do all these things. So please definitely read and tell me what you think about it and what we can do for this. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T09:32:39+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+So the custom field should be implemented only on that person profile, please change that. It should not affect any other person, not even his team, not others' work. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T09:37:23+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Check the database functions and ensure that every feature works properly because some of the features are not working properly. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T09:48:59+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+The done part, the completed part, the option is coming after the call log. Earlier, what we have decided, two different things for meeting, it will come after the meeting thing, and for contact, it will come after the calling thing. But now everything is coming down. We have to correct this. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T09:59:15+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+I've met Dev Sutharia ahead of meeting, and I have completed the meeting, but his name is coming in the call log. His name should come in meeting, not call. And this completed meeting and completed call things should come after pending meeting list and pending call list. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T10:02:48+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+So, yes, Divya, you've done very nice changes. The thing is, now the thing is, I'm thinking of how we can make that session attendance, Divya, nice, that the QR session we can attach for everyone. When everyone has to send QR, if he's an old person or if he's already a member, he has attended a past session or new, so we can make an option attended past or today. If his attended past name of list will come, he can search and he can mark as attended. We should make sure that his attendance is compulsory and his attendance should be marked automatically live in our attendance sheet. We don't have to refresh our attendance sheet to view. And for new, for new they have to register. The page we have sent them. So this is the thing. The thing is, we shouldn't have to refresh our attendance page to check the new attendance to make any confirmation. And we should also give an option of member how that to whom he is in touch. Just like the old member, they are already in touch, they are already allowed. For this member, but for new, we have to give option like all the member just like Shitanshu, Divya, and if no one, one more option that not in touch of anyone. So if he chooses that, so it will directly come to the leader. Okay, so this is the thing. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T10:09:29+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Actually, the issue assigned to the leader who's organizing this session, his QR is there. And we should make it more attractive, what happens that sometimes their contact's already saved, some boy I've met, but he has not come for session. He has not come for session, but he's in contact with me. I want to meet them. His contact details are already saved. So, but he's coming here as new, so it will get duplicate contact. So that is the thing. So what we can do to correct this? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T10:15:26+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Okay, so are you sure about our first thing, the duplicate prevention thing? Or we can make it much better and improve it? Suggest some ideas. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T10:17:34+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+I'm still not satisfied. I want something more. So, not just the number searching or unified searching, we should also give them some selection, old or new, something like that. So, a combination of all our previous ideas. That would be great. The idea is that it is also nice, but I don't know. So, it should be very nice when they open, it should be very nicely done, give them a professional feel, have some professional sessions, which session they are coming, and they are managing very nicely. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T10:20:58+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+ok do it
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T10:22:55+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Now we have to make one of the biggest changes here. The current team and members structure needs to convert into the folk residences, and the folk residents and folk leader. The same thing which we have done in folk sadhna sangh, there is a folk guide. We have to give a folk guide, and under the folk guide, there will be different folk residences, and in folk residence, there will be a folk leader. Who folk guide is selected, he is a leader from his dashboard, from his admin page. The leader and every other resident should come under the folk leader. The folk leader now can assign contacts. In registration also, if I'm not in contact with anyone, that will go to the folk leader. So that is the thing. It will help us to have all the contacts in all the folk resident contact in one list, and we can call for sessions and see all the progress. We can also see the folk residence teaching updates. We can also see the member-wise report. So that will be the nice idea as we have done in folk sadhna sangh. What do you think about it? What we can do? Please tell me your thought, your suggestions. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T10:37:24+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+See, actually we have to do things as we have done in Folk Sadhna Sync, wherein in login page only, what we do, in signup page we are able to select a Folk Guide. So there will be an admin page, which ID password he will only create. And the admin page will be Super Admin. So that admin will create Folk Guide. And the Folk Guide will have a different separate page. Then that Folk Guide will create different Folk Residences under him, and those residences will be visible when we are signing up as a new member. And now that Folk Residency, it will select everyone will be registered under the Folk Guide. They can select Folk Residency. That is the thing. And now then what is the thing is that they can select Folk Residency, and from Folk Residency it will, the main Folk Guide will be able to see these numbers are there in Folk Residency. And that Folk Guide will be able to select who will be the Folk Leader. The Folk Leader has all the power as already mentioned. And it should be mentioned in the login page. But for now, who is already now registered and who are using, for them what it should come? A new pop-up should come whenever they open the new app, and this and that new and that page will show them about the current pages, and it will also show them who the new Folk, please select a Folk Leader and Folk Leader from different residencies. So that thing will make them a proper shift of team and structures, and their old teams will be destroyed and new these things will come in power. So this is the thing. And talking about the thing is that we don't want to lose any of it. We don't want to lose. We just make the UI changes. And yes, so that is amazing. You study Folk Sadhnasync. That will help you understand it. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T10:48:50+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+So, you create the admin page yourself and give me the ID and password. The ID will be admin@folk.in and the password will be admin. The admin should have access to all the things that are happening. The super admin will get that thing, and the folk guide will have the overview of all the residencies, how every member is performing, and how weekly teaching is going on. So, all the summary reports should be there, and they can also see the contacts of every boy and how they are following. That is the thing I'm telling you. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T10:55:20+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+this is coming
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:07:41+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+this is coming
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:09:07+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+solve all this why its coming
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:10:19+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Now what is happening, I'm not able to log out from my page and go to super admin so I can create the folk guide because I have not created any folk guide and folk guide has not created any residency, so how they will select? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:11:29+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+I am trying to log in to super admin, but it is showing invalid credentials. In the password section, I also put eye icons so I can view what password I am entering. So please check why this thing is coming. And the super admin should, when creating a folk guide, also be able to create the ID and the password for the folk guide, because folk guides also don't have to sign up. So their ID and password should also be created. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:14:30+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Actually, this super admin page should also be globally, and FolkReach should also be globally. I can enter from wherever I want. You are understanding, na? It should have folk ID and password. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:17:44+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+this isse are still there
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:21:14+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+What is the thing you have done? I have entered from this admin page, super admin page form, admin@folk.in, but it has opened the normal page. Where is the admin page, the super admin page, so I can create folk guide option? Why you are not taking lessons which we have done in Folk Sadhna Sync App, the whole authorization thing? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:23:39+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+?
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:27:25+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Solve this issue properly in one shot. No things again should come. Everything should be worked. Folk guide should be created perfectly and folk guide after creating it should perfectly log in also to his account. So this and this thing should be there. This is my last warning, take time but complete it. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:30:02+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+I am again not able to create FolkReach. I also tried another different email IDs, but the same things are not happening. It should show in super admin that you have created this FolkReach, this is here, that ID, this is password. If someone wants to change the password, they can change it. Why are you not understanding why these errors are coming? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:33:20+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+So, we have created the folk guide account, but where is the option to reset their password if they have forgotten? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:37:53+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Now the super admin page is stuck. The left side bar is stuck and I am not able to scroll up and log out. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:39:13+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+In the folk guide page, in analytics, what this analytics are showing? Which context it is showing to the folk guide? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:43:06+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+YES DO IT
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:44:05+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Folk leader should both their personal and folk members analytics, both folk leader can see. And if a folk guide is chosen, assign a folk leader to any member. It should immediately show. And if you deselect and select another member, it should immediately give that other member that power and take the power from the old folk leader. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:46:02+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+DO IT
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:47:39+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:50:02+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Setting up the registration UI and the password entry pages for folk reach. So good. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:50:08+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+You see, in Shitanshu's account, he has created a session and we have also done a calling for the session, and he has done a very nice calling. But now he says the session data is not showing up in this analytics log. So why is this happening? All of our created session of team has been deleted. ?
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T11:55:41+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+I am checking the session in Firebase also because currently I have not published this change on Vercel. Still on the current live page, I am able to see from that there is no session, the session which I have created yesterday and which Shitanshu and Smith, they both have created the session. It is not there, it is deleted. We are not able to see all our hard work. So I want you to recover that session in both our profile, in Shitanshu's profile and in Narendra also and Smith also. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T12:01:20+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Can you check in database and tell me what was the password and ID for Divya Sharma account?
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T12:09:39+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+What is the issue? He is entering the right ID and password but he is not able to log in. Check why he is not able to log in. This is happening with other members also, so take a serious note and look into it and correct it. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T12:12:06+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Actually now after refreshing he is able to log in. He's already logged in, but he was just stuck on the login page. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T12:15:39+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Now check if there is any mistake or anything, or if any loopholes or some of the features are not working properly, because we have just changed these things during contact registration, the QR and auto-fetching and auto-allocating if someone is selecting that not in contact with anyone. So, please check these things in attendance. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T12:17:41+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Actually, the current thing is that we can search name and number both of the things. So that is much better, I am feeling. So we should go with that and do other changes. Optimize duplicity and other changes have recommended, do that thing. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T12:20:50+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Now come to our main question. Yesterday, as a team leader, Divya and Shitanshu created a session in the name of Geeta for you. It was on the date of 17th September, time was 7:00 p.m., and we have added contact we have done for it. Now in our session page, it is showing no session created here. Why? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T12:22:58+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Actually, now come to the fact that I am in Shitanshu's account. Keep aside everything, this is a totally new issue. I'm now seeing it as a Shitanshu account. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T12:24:11+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+No, our app was already using the Firebase and it was already live and data was already synced and it was not also offline. The session name was Gita for Youth. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T12:25:37+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+You have to do this for one time and also do for other session if someone else created, like Smith has created something. You should also do this thing, but this is only one time. Now if any new session will be created, it should be coming under the FOLK_Pdeu thing only. if he create now. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T12:30:09+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+You just do one thing, the Smit session should come under FOLK_InfoCity.  not in madhav
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T12:43:09+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Now what is happening in the session, we are adding the details. We have added contact, but earlier what used to be, there used to be a particular select whoever adding, it is automatically assigned to it. And after adding data, one to assign to someone else, then you can choose and assign. But now what happening, now anyone if anyone having adding, if a team leader or other member is adding folk leader, is adding new contact, so it is coming unassigned. So first we have to category this, we should assign it, and only folk leader can assign, can change, not any other member. Also other members can also change. And what happening, the other member, it is same, it is seeing the list according to their priority. Now what is in Devansh phone, Shitanshu contacts are showing because they are high priority values. But what should come back first, in top Devansh contact should come. First, for example, I am viewing Devansh phone, Devansh from account. So in calling telephonic list, first Devansh contacts and Devansh assigned contact should come according to priority, then other person contact should come according to priority. Do you understand what I am telling you? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T13:09:42+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Continue
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T13:31:55+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Also add one thing there: in the session, whoever is creating it and who is a leader, they can only edit or delete that particular session. No other member can edit or delete that particular session. Add this thing also. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T13:39:05+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+So the answer of your open question is that only folk leader and the person who is creating, for example, if a member has created a session in his thing. So it is visible to everyone also, but only edit and deletion can be made by the leader and that particular member. No other member can edit or delete anything. And in that also, only the leader can assign contacts to another person, reassign, because already when someone is adding contact, the contact is already assigned to them. But if we want to reassign, then leader can make them assign. So that is the thing. Yes, the member resident cannot see the dropdown. They can only see to whom the contact has assigned. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T13:42:19+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+So what are these two calling sheets? Please explain. Where is the global people page? And just I have a question, if a leader has created a session, in that session everyone can add their contact and it will be automatically assigned to them, right? So everyone can add contact in that and do calling? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T14:56:04+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+In this global people page, only our contacts should be there, while member contacts should be separated. No global people. They can only see the contacts which they have added. No other contact they can see. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T14:58:15+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+So actually, in Session Attendance to whom you are in touch with, we have to improve that dropdown and we have to remove the super admin thing. And the hRishikesh Prabhu thing also we have to remove, and we have to make the dropdown more elegant so it will suit. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T18:03:56+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+It should only, just like the session is a Folk PDeu, only Folk PDP members dropdown should come in selection. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T18:06:02+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Could you put a search bar in the telecalling sheet also? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T18:27:12+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Now I am not able to add a new contact when I am clicking on plus, so an error is coming up in the dashboard and in people section. Why is this coming up? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T18:39:54+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+still not solve ,check in details why this things are happening
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T18:44:58+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+So, we have to improve the attendance section in our session part. Give me suggestions on how we can improve it. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T22:30:30+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+We can implement the option till size, we don't have to implement the six. In sorting, we also have to mention the time at what time they have checked in. Because if we follow the same scenario for entry attendance, we will not mark them manually absent or present. They have the scan QR. Whoever is coming, they will scan the QR of the session and they can fill this. The system should be arranged so that who has time who's checking. So the their time should also be arranged in such a way, just like I open. The latest person has checked in. For example, at 8:00 this person has checked in. So his name is above. The person who has checked in at 7:00, his name will come down. So this sequence is solved. So in checking things should come and we can include the analytical part. So the current analytical board is not that much perfect. It is very long, very boxy. We can use very keywords, very buttons, displays and overall summary that how we were, how much you were expecting, how much has checked in, how many has checked in, how we were expected and how many columns we did and how many follow calls we did. Sometimes what happens, we have called two three times one person. So that thing, so we have done and expected and how many person has repeated from previous session. Now the thing is that we have created this session for next session we create. So one section should be there that from this session how many people have again came for this session. The repeated audience and how many of them new, how many has not registered. So this should be done in analytical part and we can also download a report of an analytical thing. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T22:36:06+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+do it
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T22:43:13+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+this issue iis coming
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T22:47:44+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Oh bhai, actually attendance showing is 21 this data for this session of PDEU.  ealier why ?
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T22:52:13+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+still it 17 only who check in ealier it was showing that 21 attended
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T22:54:48+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+So we should also be able to clearly see who were the other four people who said that they will come but they don't appear. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T22:56:15+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+In attendance, the total expected confirmed was 12, the total checked in was 17, and the total new walk-in was 9. So I'm not able to understand the whole mathematics. It is not matching perfectly, and this is the reputed audience. So we can see that the reputed audience is 9. After that, we should see who escaped. And why the time of checking is not showing? It should be showing. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T22:58:58+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Actually, I'm taking an online session, so all the expected people have become zero, so we are not able to see them. This should not happen. It's just like that expected means missed. So for next time, they have shown the interest. Next time we can also call them, so that will be a much better thing. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T23:01:36+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+In the missed section, it is only showing the name. It should also show our deposition, what they have told during our call, and the response they gave, like confirmed, next meeting, not available. We should also show the deposition. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T23:02:55+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Then after attending the session, the person who have attended the session was checked in. So their priority should be increasing, no? Because they personally came to the session and they have attended it. That thing should increase their priority. What are you doing? Are you doing this already or it is not done already? Please tell me. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T23:04:26+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Is it will also reflect in the timeline or the history of interaction in their profile?At this date, at this time, and this was the session name, it will be added in the profile or not? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T23:06:44+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Actually, I'm not able to see the response which the boys have given who missed the session, like 'maybe next time' or 'confirmed'. I'm not able to see that response. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T23:08:51+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+done vey good , it will remain same na , not change na with new call respnse we make
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T23:11:22+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Here you can see that the end session button is cutting off, so it is not coming properly. And the search bar is also not aligned properly, so we have to realign this. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-18T09:43:42+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+now end buttom is looking big , not attactive , so can we do somethinhg else
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-18T09:47:32+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Actually, I'm thinking that it is still not good. I want something more attractive because if by mistake someone clicks on this end session button, so the button should be somewhere more attractive and give some nice curves to it, it's not a rectangle. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-18T09:49:07+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Align the end session button with the search bar below it. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-18T09:50:41+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Keep the end session button on top and after that the search bar. Both should be aligned and both should be in perfect shape. Now the search bar is in rectangle and the end session is in curve, so that should not happen. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-18T09:52:32+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Just like check-in, when we are showing the attendance, just like the name is there, Dev Suthari attended. So after Dev Suthari, it should also show that they are under whom. And stats also we should show from how many members, how many people have come and who are those members. In the analytical part of the session, it should show. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-18T09:54:26+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+See here you can see displaying all the under. Actually I wanted to the contact is assigned to who which member belong. Just like they were sending, so they were assigned to which member, so that thing should come in missed part or in expected or in checking. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-18T09:56:52+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+why meet v name dont show any under assign person name ?
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-18T10:00:47+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+But we don't have, just like Smith was assigned to Smith Kakadiya, but in our list, Smith Kakadiya was not there. So Smith has selected 'not in touch with anyone here', so therefore we have assigned it to Smith. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-18T10:02:37+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Yes, but now actually I'm telling you this is a good thing. Actually, it's a good boy coming up with a different thing and attending our session and he's selecting not in contact with anyone because he will select his team leader, a member. So yes, if he's already in our database, it should automatically show that whose team member he should come. He should not send him and if the member is not in our database, then it should assign to the leader. And the new member should also be noted that this is new. The person who are new for the first time checking, so we should show them new and assign to Shivanshu Singh. So that thing we should mention on contact and new note should be new first time. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-18T10:04:38+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+In the analytical part, add a new table format for attendance by assigned member. Also, mention the repeated person's name and how many sessions they have conducted. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-18T10:06:16+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+In the analytical part, it is very nice that you have attended the total number of boys details, how many checked in, how many pending, how many call made. We should also add one more thing, how many calls they have made. Now we have check-in, expected, we will also show them for this session how many calls they have made. And we should also count the repetitive calls also. And in this, how many times they clicked on call button in anywhere, in from anywhere, if in expected or pending or miss or in telecalling sheet. And similarly, you make one new add-on of separate table below this attendance part of who has repeated. Only repeated person name should come there, who has repeated, who is repeatedly coming, and how many sessions they have attended. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-18T10:07:42+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+ Actually in repeated audience it is showing on but I am not able to know that who is that repetitive audience. I wanted to know who is repetitive audience and this this should be totally different. The others the other name which you have added it should come on old contact which you attended. So in repetitive you just add who has
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-18T10:12:03+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+See this thing, I have attached a screenshot. The profile page is coming like this, and you see the bottom bar also, the follow-up is coming in two lines. The buttons are coming in a line and taking so much space. We can arrange them properly. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-18T10:17:16+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Can we make a whole change in the profile page where the focal can able to see the team's under him, all the team performance, session they have collected, how many people they have, how many team members are there, how many team members have this much contact, proper following up, how many contacts they have done, how many meetings they have done, how many pending tasks are there? So all the things can focal see. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-18T10:24:53+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+cancel it , i have some other plans
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-20T07:31:33+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-20T08:18:26+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+As you can see, what is happening here is the profile of a boy, and two times the same thing is showing up. Please check it and correct it. And after that, he has attended a session, and it is only showing confirmed, but if he has attended, if he has checked in, it is not showing that he has attended the session or checked in on this date. Understanding what I'm telling? 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-20T08:18:39+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+this is coming
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-20T08:21:50+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+again session call is coming twice
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-20T08:24:22+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+In meeting deposition, first we have to rename this top meeting to one-to-one meeting. And then in the deposition, we have to also mention if the meeting is done at folk or outside folk, so this option should be there. And in meeting deposition, we have to also mention that for meeting, he was unavailable for meeting or busy or reschedule meeting. We should also give an option of reschedule. If we click on reschedule, to some day or time he will tell, so that time meeting will be automatically rescheduled. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-20T08:49:30+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+This thing is still not showing. It is not showing. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-20T08:54:02+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+It is not coming in dashboard main dashboard. I told you it should be shown in the main
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-20T08:58:30+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Any rescheduling meeting here, it will also show rescheduling actual also. It should also show in our one-to-one rescheduling section and it should come in top meeting if any rescheduling we are doing. If I have done rescheduling for tomorrow, it should also come in my top meeting. And it is also show that 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-20T09:01:29+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+But if I am scheduling for after two days, it should come on that date only, not before that. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-20T09:04:30+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+this is coming
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-20T09:06:20+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Add one more option in the dropdown here of that meeting at folk or outside folk. Keep one more item in this dropdown point in temple. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-20T09:08:08+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+In our people section, we can also put the call deposition. and track it and mention it in  interaction
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-20T09:12:51+05:30.
+</ADDITIONAL_METADATA>
+----
+<USER_REQUEST>
+Yes, so do you remember I have given a list of some 46 topics earlier? You just check it in our conversation and let me know. 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-20T09:16:20+05:30.
+</ADDITIONAL_METADATA>

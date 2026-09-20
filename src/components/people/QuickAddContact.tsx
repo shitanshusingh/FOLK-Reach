@@ -18,6 +18,7 @@ interface QuickAddContactProps {
 
 export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddContactProps) {
   const [showOptional, setShowOptional] = useState(!!personToEdit);
+  const [duplicateError, setDuplicateError] = useState<any>(null);
   
   // Required
   const [name, setName] = useState(personToEdit?.name || "");
@@ -51,6 +52,9 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
   const [birthday, setBirthday] = useState(formatBirthday(personToEdit?.birthday));
   const [howMet, setHowMet] = useState(personToEdit?.howMet || "");
   const [notes, setNotes] = useState(personToEdit?.notes || "");
+  const [chantingRounds, setChantingRounds] = useState<number | ''>(personToEdit?.chantingRounds ?? "");
+  const [ashrayaLevel, setAshrayaLevel] = useState(personToEdit?.ashrayaLevel || "None");
+  const [hostel, setHostel] = useState(personToEdit?.hostel || "");
 
   // Dynamic Custom Fields specific to this person only
   const [customFieldsList, setCustomFieldsList] = useState<{key: string, value: string}[]>(
@@ -98,16 +102,25 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
           priorityScore: Number(priorityScore),
           customFields: customFieldsObj,
           assignedUserId: assignedUserId || currentUser?.id,
+          chantingRounds: chantingRounds === "" ? undefined : Number(chantingRounds),
+          ashrayaLevel: ashrayaLevel === "None" ? undefined : ashrayaLevel,
+          hostel: hostel.trim() || undefined,
         });
         if (onSuccess) onSuccess(personToEdit.id as number);
       } else {
         // Duplicate check for NEW contacts
         const existing = await db.people.where('phone').equals(phone).toArray();
         if (existing.length > 0) {
-          const confirmMerge = window.confirm(
-            `Warning: A contact with phone ${phone} already exists (${existing[0].name}).\nDo you want to add anyway?`
-          );
-          if (!confirmMerge) return;
+          const match = existing[0];
+          
+          if (String(match.ownerId) !== String(currentUser?.id)) {
+            // Block and show UI for "Request Transfer"
+            setDuplicateError(match);
+            return;
+          } else {
+             alert(`You already have a contact with phone ${phone} (${match.name}). Please edit the existing contact instead.`);
+             return;
+          }
         }
 
         const id = await db.people.add({
@@ -128,6 +141,9 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
           ownerId: currentUser?.id,
           assignedUserId: assignedUserId || currentUser?.id,
           customFields: customFieldsObj,
+          chantingRounds: chantingRounds === "" ? undefined : Number(chantingRounds),
+          ashrayaLevel: ashrayaLevel === "None" ? undefined : ashrayaLevel,
+          hostel: hostel.trim() || undefined,
         });
 
         // Physically create the initial follow-up task
@@ -159,7 +175,43 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
           </button>
         </div>
         
-        <form className={styles.form} onSubmit={handleSubmit}>
+        {duplicateError ? (
+          <div style={{ padding: '20px', textAlign: 'center' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🛑</div>
+            <h3 style={{ color: 'white', marginBottom: '12px' }}>Duplicate Contact</h3>
+            <p style={{ color: 'var(--color-text-muted)', marginBottom: '24px' }}>
+              This number is already assigned to someone else. You cannot add them to your list.
+            </p>
+            <p style={{ color: 'var(--color-text)', marginBottom: '24px', fontWeight: 'bold' }}>
+              Current Assignee ID: {duplicateError.ownerId || duplicateError.assignedUserId}
+            </p>
+            <button 
+              className={styles.submitBtn} 
+              style={{ background: 'var(--color-primary)' }}
+              onClick={async () => {
+                await db.contactTransfers.add({
+                  personId: duplicateError.id,
+                  fromUserId: duplicateError.ownerId || duplicateError.assignedUserId,
+                  toUserId: currentUser?.id,
+                  status: 'PENDING',
+                  requestDate: new Date()
+                });
+                alert("Transfer request sent successfully!");
+                onClose();
+              }}
+            >
+              Request Transfer
+            </button>
+            <button 
+              className={styles.submitBtn} 
+              style={{ background: 'transparent', border: '1px solid var(--color-border)', marginTop: '12px' }}
+              onClick={() => setDuplicateError(null)}
+            >
+              Back
+            </button>
+          </div>
+        ) : (
+          <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
             <label className={styles.label} htmlFor="name">Name *</label>
             <input 
@@ -304,6 +356,55 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
               </div>
 
               <div className={styles.formGroup}>
+                <label className={styles.label} htmlFor="hostel">Hostel (Free-text)</label>
+                <input 
+                  id="hostel"
+                  className={styles.input} 
+                  type="text" 
+                  placeholder="E.g., Bhabha Bhavan"
+                  value={hostel} 
+                  onChange={e => setHostel(e.target.value)}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label} htmlFor="chantingRounds">Chanting Rounds</label>
+                <GlassSelect 
+                  value={chantingRounds.toString()} 
+                  onChange={val => {
+                    setChantingRounds(val === "" ? "" : Number(val));
+                    // Optional auto-suggestion based on rounds can be handled here if needed, but per request it's user-selected.
+                  }}
+                  options={[
+                    { value: "", label: "None" },
+                    { value: "0", label: "0 Rounds" },
+                    { value: "1", label: "1 Round" },
+                    { value: "2", label: "2 Rounds" },
+                    { value: "3", label: "3 Rounds" },
+                    { value: "4", label: "4 Rounds" },
+                    { value: "8", label: "8 Rounds" },
+                    { value: "12", label: "12 Rounds" },
+                    { value: "16", label: "16 Rounds" }
+                  ]}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label} htmlFor="ashrayaLevel">Ashraya Level</label>
+                <GlassSelect 
+                  value={ashrayaLevel} 
+                  onChange={val => setAshrayaLevel(val)}
+                  options={[
+                    { value: "None", label: "None" },
+                    { value: "Sevak", label: "Sevak" },
+                    { value: "Sadhaka", label: "Sadhaka" },
+                    { value: "Upasaka", label: "Upasaka" },
+                    { value: "Charan Ashraya", label: "Charan Ashraya" }
+                  ]}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
                 <label className={styles.label} htmlFor="birthday">Birthday</label>
                 <input 
                   id="birthday"
@@ -375,7 +476,8 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
               {personToEdit ? "Update Contact" : "Save Contact"}
             </button>
           </div>
-        </form>
+          </form>
+        )}
       </div>
     </div>
   );

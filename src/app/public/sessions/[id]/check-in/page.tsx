@@ -23,7 +23,7 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
   const [branch, setBranch] = useState('');
   const [hostel, setHostel] = useState('');
   const [gender, setGender] = useState('');
-  const [assignedUserId, setAssignedUserId] = useState('UNASSIGNED');
+  const [assignedUserId, setAssignedUserId] = useState('');
   
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -65,6 +65,15 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
   }, [allPeople, searchQuery]);
 
   const handleSelectPerson = (person: Person) => {
+    // Cross-team hard block
+    if (person.ownerId) {
+       const isOwnerInThisTeam = allUsers?.some((u: any) => String(u.id) === String(person.ownerId));
+       if (!isOwnerInThisTeam) {
+          alert("You are already registered under a different team. Please contact the front desk.");
+          return;
+       }
+    }
+    
     setSelectedPerson(person);
     // Check if missing compulsory fields
     if (!person.phone || !person.college || !person.branch || !person.hostel || !person.gender) {
@@ -88,22 +97,22 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
       const record = existingRecords.find((r: any) => String(r.personId) === String(personId));
 
       if (record) {
-        await firestoreAPI.update('sessionAttendance', record.id, {
+        await db.sessionAttendance.update(record.id, {
           status: 'ATTENDED',
           checkedInAt: new Date()
         });
       } else {
-        await firestoreAPI.add('sessionAttendance', {
+        await db.sessionAttendance.add({
           sessionId,
-          personId,
+          personId: Number(personId),
           status: 'ATTENDED',
           isNewContact: false,
           checkedInAt: new Date()
         });
       }
-      const person = await firestoreAPI.get('people', personId as string | number);
+      const person = await db.people.get(Number(personId));
       if (person) {
-        await firestoreAPI.update('people', person.id as number, { priorityScore: (person.priorityScore || 0) + 5 });
+        await db.people.update(person.id, { priorityScore: (person.priorityScore || 0) + 5 });
       }
       await db.interactions.add({
         personId: personId as number,
@@ -126,7 +135,7 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
     if (!selectedPerson) return;
     setIsSubmitting(true);
     try {
-      await firestoreAPI.update('people', selectedPerson.id as number, {
+      await db.people.update(Number(selectedPerson.id), {
         phone, college, branch, hostel, gender
       });
       await handleCheckIn(selectedPerson.id as number);
@@ -139,6 +148,10 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!assignedUserId) {
+      alert("Please select who you are in touch with.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       // 1. DEDUPLICATION CHECK
@@ -149,8 +162,18 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
       let ownerId = assignedUserId;
 
       if (existingMatch) {
+        // Cross-team hard block
+        if (existingMatch.ownerId) {
+           const isOwnerInThisTeam = allUsers?.some((u: any) => String(u.id) === String(existingMatch.ownerId));
+           if (!isOwnerInThisTeam) {
+              alert("You are already registered under a different team. Please contact the front desk.");
+              setIsSubmitting(false);
+              return;
+           }
+        }
+
         // Merge Data
-        await firestoreAPI.update('people', existingMatch.id as number, {
+        await db.people.update(Number(existingMatch.id), {
           name, 
           college: college || existingMatch.college,
           branch: branch || existingMatch.branch,
@@ -163,16 +186,11 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
         if (existingMatch.ownerId) {
           ownerId = existingMatch.ownerId;
         }
-      } 
-      
-      // If still unassigned (new person, or existing person with no owner)
-      if (ownerId === 'UNASSIGNED') {
-        ownerId = team?.leaderId || (allUsers && allUsers.length > 0 ? allUsers.find((u:any)=>u.role==='FOLK_LEADER' || u.role==='LEADER')?.id || allUsers[0].id : '');
       }
 
       if (!existingMatch) {
         // Create New Person
-        finalPersonId = await firestoreAPI.add('people', {
+        finalPersonId = await db.people.add({
           name, phone, college, branch, hostel, gender,
           priorityScore: 0,
           tags: [],
@@ -183,9 +201,9 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
       }
 
       // Check them in
-      await firestoreAPI.add('sessionAttendance', {
+      await db.sessionAttendance.add({
         sessionId,
-        personId: finalPersonId,
+        personId: Number(finalPersonId),
         status: 'ATTENDED',
         isNewContact: !existingMatch,
         assignedUserId: ownerId,
@@ -193,9 +211,9 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
       });
       
       if (existingMatch) {
-        await firestoreAPI.update('people', finalPersonId as number, { priorityScore: (existingMatch.priorityScore || 0) + 5 });
+        await db.people.update(Number(finalPersonId), { priorityScore: (existingMatch.priorityScore || 0) + 5 });
       } else {
-        await firestoreAPI.update('people', finalPersonId as number, { priorityScore: 5 });
+        await db.people.update(Number(finalPersonId), { priorityScore: 5 });
       }
       await db.interactions.add({
         personId: finalPersonId as number,
@@ -377,7 +395,7 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
               <div className={styles.formGroup}>
                 <label>Who are you in touch with? *</label>
                 <GlassSelect value={assignedUserId} onChange={val => setAssignedUserId(val)} options={[
-                  { value: "UNASSIGNED", label: "Not in touch with anyone" },
+                  { value: "", label: "Select a member" },
                   ...(allUsers?.map(u => ({ value: String(u.id), label: u.name })) || [])
                 ]} />
               </div>

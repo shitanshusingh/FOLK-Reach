@@ -21,18 +21,31 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
   const [outcome, setOutcome] = useState("Connected - Good Interaction");
   const [notes, setNotes] = useState("");
   const [durationMinutes, setDurationMinutes] = useState<number | "">("");
+  
+  // Meeting specific
+  const [meetingLocation, setMeetingLocation] = useState("At FOLK");
+  const [meetingOutcome, setMeetingOutcome] = useState("Done");
+  const [rescheduleDate, setRescheduleDate] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
+      let finalNotes = notes;
+      let finalOutcome = outcome;
+      
+      if (type === 'MEETING') {
+        finalOutcome = meetingOutcome;
+        finalNotes = `Location: ${meetingLocation}${notes ? '\n' + notes : ''}`;
+      }
+
       // Create interaction
       await db.interactions.add({
         personId: person.id as number,
         type: type,
         date: new Date(),
-        outcome: outcome,
-        notes: notes,
+        outcome: finalOutcome,
+        notes: finalNotes,
         ...(type === 'CALL' && typeof durationMinutes === 'number' ? { durationMinutes } : {})
       });
 
@@ -65,17 +78,19 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
       else if (newPriority > 0) threshold = 3; // Cold: 3 days
       else threshold = 4; // Dormant: 4 days
 
-      let nextType: 'CALL' | 'MEETING' = (type === 'MEETING' || type === 'PRASADAM' || type === 'BOOK') ? 'CALL' : 'MEETING';
+      let nextType: 'CALL' | 'MEETING' = (type === 'MEETING') ? 'CALL' : 'MEETING';
       let reason = nextType === 'MEETING' ? '1-to-1 / Prasadam / Topic' : 'Follow-up Call';
       let shouldScheduleTask = true;
 
-      // Force 1-to-1 meetings to be scheduled immediately (tomorrow) 
-      if (nextType === 'MEETING') {
-        threshold = 1;
-      }
-
       // Dynamically adjust based on specific outcomes
-      if (outcome === "Did Not Answer" || outcome === "Busy") {
+      if (type === 'MEETING' && meetingOutcome === 'Reschedule' && rescheduleDate) {
+        nextType = 'MEETING';
+        reason = "Rescheduled 1-to-1 Meeting";
+        threshold = 0; // Handled by date directly
+        shouldScheduleTask = true;
+      } else if (type === 'MEETING') {
+        threshold = 1;
+      } else if (outcome === "Did Not Answer" || outcome === "Busy") {
         nextType = 'CALL';
         reason = `Follow-up Call (${outcome})`;
         threshold = 1; // Try again tomorrow
@@ -84,8 +99,13 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
       }
 
       if (shouldScheduleTask) {
-        const nextDate = new Date();
-        nextDate.setDate(nextDate.getDate() + threshold);
+        const nextDate = (type === 'MEETING' && meetingOutcome === 'Reschedule' && rescheduleDate) 
+          ? new Date(rescheduleDate) 
+          : (() => {
+              const d = new Date();
+              d.setDate(d.getDate() + threshold);
+              return d;
+            })();
 
         await db.tasks.add({
           personId: person.id as number,
@@ -93,11 +113,11 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
           type: nextType,
           status: "PENDING",
           dueDate: nextDate,
-          notes: "Auto-scheduled"
+          notes: (type === 'MEETING' && meetingOutcome === 'Reschedule') ? "Automatically rescheduled" : "Auto-scheduled"
         });
       }
 
-      onSuccess(outcome);
+      onSuccess(type === 'MEETING' ? meetingOutcome : outcome);
     } catch (err) {
       console.error(err);
       alert("Failed to save log");
@@ -108,7 +128,7 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
     <div className={styles.modalOverlay}>
       <div className={styles.modalContent}>
         <div className={styles.header}>
-          <h2 className={styles.title}>Log {type === 'CALL' ? 'Call' : 'Meeting'}</h2>
+          <h2 className={styles.title}>Log {type === 'CALL' ? 'Call' : '1-to-1 Meeting'}</h2>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
             <X size={24} />
           </button>
@@ -117,22 +137,66 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
         <p className={styles.subtitle}>with {person.name}</p>
         
         <form className={styles.form} onSubmit={handleSubmit}>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Outcome / Disposition</label>
-            <GlassSelect 
-              value={outcome}
-              onChange={val => setOutcome(val)}
-              options={[
-                { value: "Connected - Good Interaction", label: "✅ Connected (Good Interaction)" },
-                { value: "Connected - Average", label: "✅ Connected (Average)" },
-                { value: "Meeting - Done", label: "🤝 Meeting Completed" },
-                { value: "Busy", label: "⏳ Busy / Call Back Later" },
-                { value: "Did Not Answer", label: "📵 Did Not Answer" },
-                { value: "Number Invalid", label: "❌ Number Invalid" },
-                { value: "Not Interested", label: "🛑 Not Interested" }
-              ]}
-            />
-          </div>
+          {type === 'CALL' && (
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Outcome / Disposition</label>
+              <GlassSelect 
+                value={outcome}
+                onChange={val => setOutcome(val)}
+                options={[
+                  { value: "Connected - Good Interaction", label: "✅ Connected (Good Interaction)" },
+                  { value: "Connected - Average", label: "✅ Connected (Average)" },
+                  { value: "Busy", label: "⏳ Busy / Call Back Later" },
+                  { value: "Did Not Answer", label: "📵 Did Not Answer" },
+                  { value: "Number Invalid", label: "❌ Number Invalid" },
+                  { value: "Not Interested", label: "🛑 Not Interested" }
+                ]}
+              />
+            </div>
+          )}
+
+          {type === 'MEETING' && (
+            <>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Location</label>
+                <GlassSelect 
+                  value={meetingLocation}
+                  onChange={val => setMeetingLocation(val)}
+                  options={[
+                    { value: "At FOLK", label: "At FOLK" },
+                    { value: "Outside FOLK", label: "Outside FOLK" },
+                    { value: "In Temple", label: "In Temple" }
+                  ]}
+                />
+              </div>
+              
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Outcome / Disposition</label>
+                <GlassSelect 
+                  value={meetingOutcome}
+                  onChange={val => setMeetingOutcome(val)}
+                  options={[
+                    { value: "Done", label: "🤝 Meeting Completed" },
+                    { value: "Busy / Unavailable", label: "⏳ Busy / Unavailable" },
+                    { value: "Reschedule", label: "📅 Reschedule" }
+                  ]}
+                />
+              </div>
+
+              {meetingOutcome === "Reschedule" && (
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Reschedule To</label>
+                  <input 
+                    type="datetime-local" 
+                    className={styles.input} 
+                    value={rescheduleDate}
+                    onChange={e => setRescheduleDate(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+            </>
+          )}
 
           {type === 'CALL' && (
             <div className={styles.formGroup}>
