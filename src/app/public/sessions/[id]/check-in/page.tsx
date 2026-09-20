@@ -122,9 +122,9 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
         notes: `Checked in via public registration page at ${format(new Date(), "h:mm a")}`
       });
       setStep('SUCCESS');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Failed to check in. Please try again.");
+      alert("Failed to check in: " + (err.message || err));
     } finally {
       setIsSubmitting(false);
     }
@@ -139,9 +139,9 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
         phone, college, branch, hostel, gender
       });
       await handleCheckIn(selectedPerson.id);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Failed to update profile.");
+      alert("Failed to update profile: " + (err.message || err));
       setIsSubmitting(false);
     }
   };
@@ -224,9 +224,9 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
       });
 
       setStep('SUCCESS');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Registration failed. Please try again.");
+      alert("Registration failed: " + (err.message || err));
     } finally {
       setIsSubmitting(false);
     }

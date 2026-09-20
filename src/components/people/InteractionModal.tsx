@@ -121,9 +121,9 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
       }
       
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to log interaction", error);
-      alert("Error saving interaction.");
+      alert("Error saving interaction: " + (error.message || error));
     }
   };
 
