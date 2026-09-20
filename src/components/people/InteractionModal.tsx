@@ -70,7 +70,7 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
       // Update person lastInteractionDate and maybe adjust priorityScore
       const person = await db.people.get(personId);
       
-      await firestoreAPI.update('people', personId, {
+      await db.people.update(personId, {
         lastInteractionDate: new Date(),
         lastInteractionType: type
       });
@@ -81,7 +81,7 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
         const existingTasks = await db.tasks.where('personId').equals(personId).toArray();
         for (const t of existingTasks) {
           if (t.status === 'PENDING') {
-            await firestoreAPI.update('tasks', t.id as number, { status: 'COMPLETED' });
+            await db.tasks.update(t.id as number, { status: 'COMPLETED' });
           }
         }
 
