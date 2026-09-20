@@ -118,7 +118,7 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
         personId: personId,
         type: 'SESSION',
         date: new Date(),
-        outcome: `Attended Session: ${sessionData?.name || sessionData?.title || 'Session'}`,
+        outcome: `Attended Session: ${session?.name || session?.title || 'Session'}`,
         notes: `Checked in via public registration page at ${format(new Date(), "h:mm a")}`
       });
       setStep('SUCCESS');
@@ -219,7 +219,7 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
         personId: finalPersonId,
         type: 'SESSION',
         date: new Date(),
-        outcome: `Attended Session: ${sessionData?.name || sessionData?.title || 'Session'}`,
+        outcome: `Attended Session: ${session?.name || session?.title || 'Session'}`,
         notes: `Registered and checked in via public registration page at ${format(new Date(), "h:mm a")}`
       });
 
