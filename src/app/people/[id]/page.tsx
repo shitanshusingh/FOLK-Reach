@@ -405,6 +405,22 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
                     ownerId: transferTargetId,
                     assignedUserId: transferTargetId
                   });
+                  await db.tasks.add({
+                    personId: id,
+                    title: "New Contact Transferred",
+                    type: "CALL",
+                    status: "PENDING",
+                    dueDate: new Date(),
+                    assignedToUserId: transferTargetId,
+                    notes: `Transferred from ${currentUser?.name || 'another member'}`
+                  });
+                  await db.notifications.add({
+                    userId: transferTargetId,
+                    message: `${currentUser?.name || 'A team member'} transferred a contact to you: ${person.name}`,
+                    isRead: false,
+                    createdAt: new Date(),
+                    link: `/people/${id}`
+                  });
                   alert(`Contact transferred successfully!`);
                   router.push('/people');
                 }}
