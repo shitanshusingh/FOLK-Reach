@@ -104,18 +104,18 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
       } else {
         await db.sessionAttendance.add({
           sessionId,
-          personId: Number(personId),
+          personId,
           status: 'ATTENDED',
           isNewContact: false,
           checkedInAt: new Date()
         });
       }
-      const person = await db.people.get(Number(personId));
+      const person = await db.people.get(personId);
       if (person) {
         await db.people.update(person.id, { priorityScore: (person.priorityScore || 0) + 5 });
       }
       await db.interactions.add({
-        personId: personId as number,
+        personId: personId,
         type: 'SESSION',
         date: new Date(),
         outcome: `Attended Session: ${sessionData?.name || sessionData?.title || 'Session'}`,
@@ -135,10 +135,10 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
     if (!selectedPerson) return;
     setIsSubmitting(true);
     try {
-      await db.people.update(Number(selectedPerson.id), {
+      await db.people.update(selectedPerson.id, {
         phone, college, branch, hostel, gender
       });
-      await handleCheckIn(selectedPerson.id as number);
+      await handleCheckIn(selectedPerson.id);
     } catch (err) {
       console.error(err);
       alert("Failed to update profile.");
@@ -173,7 +173,7 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
         }
 
         // Merge Data
-        await db.people.update(Number(existingMatch.id), {
+        await db.people.update(existingMatch.id, {
           name, 
           college: college || existingMatch.college,
           branch: branch || existingMatch.branch,
@@ -203,7 +203,7 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
       // Check them in
       await db.sessionAttendance.add({
         sessionId,
-        personId: Number(finalPersonId),
+        personId: finalPersonId,
         status: 'ATTENDED',
         isNewContact: !existingMatch,
         assignedUserId: ownerId,
@@ -211,12 +211,12 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
       });
       
       if (existingMatch) {
-        await db.people.update(Number(finalPersonId), { priorityScore: (existingMatch.priorityScore || 0) + 5 });
+        await db.people.update(finalPersonId, { priorityScore: (existingMatch.priorityScore || 0) + 5 });
       } else {
-        await db.people.update(Number(finalPersonId), { priorityScore: 5 });
+        await db.people.update(finalPersonId, { priorityScore: 5 });
       }
       await db.interactions.add({
-        personId: finalPersonId as number,
+        personId: finalPersonId,
         type: 'SESSION',
         date: new Date(),
         outcome: `Attended Session: ${sessionData?.name || sessionData?.title || 'Session'}`,
