@@ -109,7 +109,12 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
         if (onSuccess) onSuccess(personToEdit.id as number);
       } else {
         // Duplicate check for NEW contacts
-        const existing = await db.people.where('phone').equals(phone).toArray();
+        const normalizePhone = (p: string) => (p || '').replace(/\D/g, '').slice(-10);
+        const normalizedInput = normalizePhone(phone);
+        
+        const allPeople = await db.people.toArray();
+        const existing = allPeople.filter((p: any) => normalizePhone(p.phone) === normalizedInput);
+        
         if (existing.length > 0) {
           const match = existing[0];
           

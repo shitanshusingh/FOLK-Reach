@@ -155,7 +155,10 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
     setIsSubmitting(true);
     try {
       // 1. DEDUPLICATION CHECK
-      const existingMatches = await db.people.where('phone').equals(phone).toArray();
+      const normalizePhone = (p: string) => (p || '').replace(/\D/g, '').slice(-10);
+      const normalizedInput = normalizePhone(phone);
+      const allPeople = await db.people.toArray();
+      const existingMatches = allPeople.filter((p: any) => normalizePhone(p.phone) === normalizedInput);
       const existingMatch = existingMatches.length > 0 ? existingMatches[0] : null;
       
       let finalPersonId = null;
