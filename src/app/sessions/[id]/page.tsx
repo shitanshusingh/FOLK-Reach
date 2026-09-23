@@ -79,8 +79,8 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
         personPhone: person?.phone || "",
         personPriority: person?.priorityScore || 0,
         personOwnerId: person?.ownerId,
-        callerName: user?.name || owner?.name || "Unassigned",
-        ownerName: owner?.name || "Unassigned",
+        callerName: user?.name || owner?.name || null,
+        ownerName: owner?.name || null,
         lastCallOutcome: lastCall ? lastCall.outcome : null,
         callsMadeForSession,
         pastSessionsAttended
@@ -275,6 +275,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                       {record.calledAt && (
                         <span style={{ marginLeft: 8, color: 'var(--color-success)' }}>
                           ✅ Called at {format(safeDate(record.calledAt), 'h:mm a')}
+                          {record.actualCallerName && ` by ${record.actualCallerName}`}
                         </span>
                       )}
                     </div>
@@ -560,9 +561,13 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                           NEW
                         </span>
                       )}
-                      {record.callerName && record.callerName !== 'Unassigned' && record.callerName.trim() !== '' && (
+                      {record.callerName ? (
                         <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginLeft: 8, fontWeight: 400 }}>
-                          (under {record.callerName})
+                          (assigned to {record.callerName})
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.8rem', color: 'var(--color-warning)', marginLeft: 8, fontWeight: 400 }}>
+                          (Unassigned)
                         </span>
                       )}
                       {attendanceSubTab === 'CHECKED_IN' && record.checkedInAt && (
@@ -665,6 +670,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
           recordId={activeCallModal} 
           onClose={() => setActiveCallModal(null)} 
           onSuccess={() => setRefreshTrigger(prev => prev + 1)}
+          currentUser={currentUser}
         />
       )}
 
@@ -682,14 +688,15 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
         <QuickAddContact 
           onClose={() => setShowWalkInModal(false)}
           onSuccess={async (personId) => {
+            const person = await firestoreAPI.get('people', personId as string | number);
             await db.sessionAttendance.add({
               sessionId: id,
               personId: personId as number,
               status: 'ATTENDED',
               isNewContact: true,
-              checkedInAt: new Date()
+              checkedInAt: new Date(),
+              assignedUserId: person?.ownerId || currentUser?.id || null
             });
-            const person = await firestoreAPI.get('people', personId as string | number);
             if (person) {
               await firestoreAPI.update('people', person.id as number, { priorityScore: (person.priorityScore || 0) + 5 });
             }
@@ -828,7 +835,7 @@ function EditSessionModal({ session, onClose, onSuccess }: { session: any, onClo
   );
 }
 
-function CallOutcomeModal({ recordId, onClose, onSuccess }: { recordId: number, onClose: () => void, onSuccess: () => void }) {
+function CallOutcomeModal({ recordId, onClose, onSuccess, currentUser }: { recordId: number, onClose: () => void, onSuccess: () => void, currentUser: any }) {
   const [status, setStatus] = useState<SessionAttendance['status']>('CONFIRMED');
   const [outcomeStr, setOutcomeStr] = useState("");
   const [durationMinutes, setDurationMinutes] = useState<number | "">("");
@@ -844,7 +851,9 @@ function CallOutcomeModal({ recordId, onClose, onSuccess }: { recordId: number, 
       status, 
       callOutcome: outcomeStr, 
       calledAt: new Date(),
-      callCount: (record?.callCount || 0) + 1
+      callCount: (record?.callCount || 0) + 1,
+      actualCallerId: currentUser?.id,
+      actualCallerName: currentUser?.name
     });
 
     if (record) {
@@ -977,11 +986,13 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
   const existingPersonIds = new Set(existingRecords.map((r: any) => r.personId));
   
   const handleInvite = async (personId: number) => {
+    const p = allPeople?.find(p => p.id === personId);
     await db.sessionAttendance.add({
       sessionId,
       personId,
       status: 'PENDING_CALL',
-      isNewContact
+      isNewContact,
+      assignedUserId: p?.ownerId || currentUser?.id || null
     });
     onSuccess();
   };
@@ -998,7 +1009,8 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
       sessionId,
       personId: p.id as number,
       status: 'PENDING_CALL' as const,
-      isNewContact
+      isNewContact,
+      assignedUserId: p.ownerId || currentUser?.id || null
     }));
 
     if (records.length > 0) {
