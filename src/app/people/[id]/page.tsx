@@ -391,10 +391,16 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
                 ]}
               />
             </div>
-            <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
               <button 
                 onClick={() => setShowTransferModal(false)}
-                style={{ flex: 1, padding: 12, background: 'transparent', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', color: 'white' }}
+                style={{ 
+                  flex: 1, padding: '12px', background: 'transparent', 
+                  border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', 
+                  color: 'white', cursor: 'pointer', transition: 'all 0.2s ease', fontWeight: 500
+                }}
+                onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                onMouseOut={e => e.currentTarget.style.background = 'transparent'}
               >
                 Cancel
               </button>
@@ -425,7 +431,14 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
                   router.push('/people');
                 }}
                 disabled={!transferTargetId}
-                style={{ flex: 1, padding: 12, background: 'var(--color-primary)', border: 'none', borderRadius: 'var(--radius-md)', color: 'white', opacity: transferTargetId ? 1 : 0.5 }}
+                style={{ 
+                  flex: 1, padding: '12px', background: 'var(--color-primary)', 
+                  border: 'none', borderRadius: 'var(--radius-md)', 
+                  color: 'white', cursor: transferTargetId ? 'pointer' : 'not-allowed', 
+                  transition: 'all 0.2s ease', fontWeight: 500, opacity: transferTargetId ? 1 : 0.5 
+                }}
+                onMouseOver={e => transferTargetId && (e.currentTarget.style.filter = 'brightness(1.1)')}
+                onMouseOut={e => transferTargetId && (e.currentTarget.style.filter = 'brightness(1)')}
               >
                 Transfer Now
               </button>

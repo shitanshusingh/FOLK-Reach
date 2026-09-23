@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, AlertCircle } from "lucide-react";
 import styles from "./QuickAddContact.module.css";
 import { firestoreAPI, useFirestoreQuery, useFirestoreDoc, useLiveQuery } from "@/lib/firestore";
 import { where } from "firebase/firestore";;
@@ -181,39 +181,67 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
         </div>
         
         {duplicateError ? (
-          <div style={{ padding: '20px', textAlign: 'center' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🛑</div>
-            <h3 style={{ color: 'white', marginBottom: '12px' }}>Duplicate Contact</h3>
-            <p style={{ color: 'var(--color-text-muted)', marginBottom: '24px' }}>
-              This number is already assigned to someone else. You cannot add them to your list.
+          <div style={{ padding: '32px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ 
+              width: '64px', height: '64px', borderRadius: '50%', 
+              background: 'rgba(239, 68, 68, 0.1)', color: 'rgb(239, 68, 68)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              marginBottom: '20px'
+            }}>
+              <AlertCircle size={32} />
+            </div>
+            <h3 style={{ color: 'white', marginBottom: '12px', fontSize: '1.25rem' }}>Contact Already Exists</h3>
+            <p style={{ color: 'var(--color-text-muted)', marginBottom: '24px', lineHeight: '1.5' }}>
+              This phone number is already saved in our database. It is currently managed by:
             </p>
-            <p style={{ color: 'var(--color-text)', marginBottom: '24px', fontWeight: 'bold' }}>
-              Current Assignee ID: {duplicateError.ownerId || duplicateError.assignedUserId}
-            </p>
-            <button 
-              className={styles.submitBtn} 
-              style={{ background: 'var(--color-primary)' }}
-              onClick={async () => {
-                await db.contactTransfers.add({
-                  personId: duplicateError.id,
-                  fromUserId: duplicateError.ownerId || duplicateError.assignedUserId,
-                  toUserId: currentUser?.id,
-                  status: 'PENDING',
-                  requestDate: new Date()
-                });
-                alert("Transfer request sent successfully!");
-                onClose();
-              }}
-            >
-              Request Transfer
-            </button>
-            <button 
-              className={styles.submitBtn} 
-              style={{ background: 'transparent', border: '1px solid var(--color-border)', marginTop: '12px' }}
-              onClick={() => setDuplicateError(null)}
-            >
-              Back
-            </button>
+            <div style={{ 
+              background: 'var(--color-surface)', border: '1px solid var(--color-border)',
+              padding: '12px 24px', borderRadius: 'var(--radius-md)',
+              marginBottom: '32px', color: 'white', fontWeight: '500',
+              display: 'inline-block'
+            }}>
+              {(() => {
+                const ownerId = duplicateError.ownerId || duplicateError.assignedUserId;
+                const owner = teamUsers?.find(u => String(u.id) === String(ownerId));
+                return owner ? owner.name : "Another team member";
+              })()}
+            </div>
+            <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+              <button 
+                onClick={() => setDuplicateError(null)}
+                style={{ 
+                  flex: 1, padding: '12px', background: 'transparent', 
+                  border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', 
+                  color: 'white', cursor: 'pointer', transition: 'all 0.2s ease', fontWeight: 500
+                }}
+                onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+              >
+                Go Back
+              </button>
+              <button 
+                onClick={async () => {
+                  await db.contactTransfers.add({
+                    personId: duplicateError.id,
+                    fromUserId: duplicateError.ownerId || duplicateError.assignedUserId,
+                    toUserId: currentUser?.id,
+                    status: 'PENDING',
+                    requestDate: new Date()
+                  });
+                  alert("Transfer request sent successfully!");
+                  onClose();
+                }}
+                style={{ 
+                  flex: 1, padding: '12px', background: 'var(--color-primary)', 
+                  border: 'none', borderRadius: 'var(--radius-md)', 
+                  color: 'white', cursor: 'pointer', transition: 'all 0.2s ease', fontWeight: 500
+                }}
+                onMouseOver={e => e.currentTarget.style.filter = 'brightness(1.1)'}
+                onMouseOut={e => e.currentTarget.style.filter = 'brightness(1)'}
+              >
+                Request Transfer
+              </button>
+            </div>
           </div>
         ) : (
           <form className={styles.form} onSubmit={handleSubmit}>
