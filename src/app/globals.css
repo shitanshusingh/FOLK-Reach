@@ -212,3 +212,9 @@ select option {
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
 }
+
+@media print {
+  nav, aside, button.nav-link {
+    display: none !important;
+  }
+}

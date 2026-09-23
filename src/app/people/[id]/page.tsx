@@ -55,6 +55,10 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
   const [interactionType, setInteractionType] = useState<Interaction['type']>('CALL');
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [transferTargetId, setTransferTargetId] = useState('');
+  const [referGuideId, setReferGuideId] = useState('');
+  const [referNotes, setReferNotes] = useState('');
+
+  const allUsers = useLiveQuery(() => db.users.toArray(), []);
 
   const handleOpenInteraction = (type: Interaction['type']) => {
     setInteractionType(type);
@@ -448,6 +452,83 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
           onClose={() => setIsEditing(false)}
         />
       )}
+
+      {showReferModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent} style={{ maxWidth: 500, width: '90%' }}>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: 16 }}>Refer to Folk Guide</h2>
+            <p style={{ color: 'var(--color-text-muted)', marginBottom: 20, fontSize: '0.9rem' }}>
+              Select a Folk Guide to refer <strong>{person.name}</strong> to. Please provide details on why you are referring them.
+            </p>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', marginBottom: 8, fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Select Folk Guide</label>
+              <GlassSelect 
+                value={referGuideId} 
+                onChange={val => setReferGuideId(val)}
+                options={[
+                  { value: "", label: "Select Guide..." },
+                  ...(allUsers?.filter(u => u.role === 'FOLK_GUIDE').map(u => ({ value: String(u.id), label: u.name })) || [])
+                ]}
+              />
+            </div>
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: 'block', marginBottom: 8, fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Notes / Reason for Referral</label>
+              <textarea 
+                value={referNotes}
+                onChange={e => setReferNotes(e.target.value)}
+                placeholder="He has to meet 1-to-1 regarding..."
+                rows={4}
+                style={{ width: '100%', padding: '12px', background: 'var(--glass-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', color: 'var(--color-text)' }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+              <button 
+                onClick={() => setShowReferModal(false)}
+                style={{ 
+                  flex: 1, padding: '12px', background: 'transparent', 
+                  border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', 
+                  color: 'white', cursor: 'pointer', transition: 'all 0.2s ease', fontWeight: 500
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={async () => {
+                  if (!referGuideId) return;
+                  await db.tasks.add({
+                    personId: id,
+                    assignedUserId: referGuideId,
+                    title: `Referral: ${person.name}`,
+                    type: 'MEETING',
+                    status: 'PENDING',
+                    dueDate: new Date(),
+                    notes: `Referred by ${currentUser?.name}:\n${referNotes}`
+                  });
+                  await db.notifications.add({
+                    userId: referGuideId,
+                    message: `${currentUser?.name} referred a contact to you: ${person.name}.`,
+                    isRead: false,
+                    createdAt: new Date(),
+                    link: `/people/${id}`
+                  });
+                  alert(`Referred to Guide successfully!`);
+                  setShowReferModal(false);
+                }}
+                disabled={!referGuideId || !referNotes}
+                style={{ 
+                  flex: 1, padding: '12px', background: 'var(--color-primary)', 
+                  border: 'none', borderRadius: 'var(--radius-md)', 
+                  color: 'white', cursor: (referGuideId && referNotes) ? 'pointer' : 'not-allowed', 
+                  transition: 'all 0.2s ease', fontWeight: 500, opacity: (referGuideId && referNotes) ? 1 : 0.5 
+                }}
+              >
+                Submit Referral
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
