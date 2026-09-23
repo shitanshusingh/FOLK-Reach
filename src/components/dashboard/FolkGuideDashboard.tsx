@@ -184,7 +184,7 @@ export function FolkGuideDashboard() {
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: 4 }}>{ref.title}</div>
                   </div>
                   {ref.person?.phone && (
-                    <a href={	el:${ref.person.phone}} className={styles.btnCall}>
+                    <a href={`tel:${ref.person?.phone}`} className={styles.btnCall}>
                       <PhoneCall size={16} /> Call
                     </a>
                   )}
@@ -280,8 +280,7 @@ export function FolkGuideDashboard() {
       </div>
 
       {drilldownUserId && (
-        <div className={
-o-print }>
+        <div className={`no-print ${styles.modalOverlay}`}>
           <div className={styles.modalContent}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ margin: 0 }}>Detailed Analysis</h2>
@@ -294,8 +293,8 @@ o-print }>
 
               const renderComparison = (curr: number, prev: number) => {
                 const diff = curr - prev;
-                if (diff > 0) return <span style={{ color: 'var(--color-success)', fontSize: '0.85rem' }}>? +{diff} vs prev</span>;
-                if (diff < 0) return <span style={{ color: 'var(--color-danger)', fontSize: '0.85rem' }}>? {Math.abs(diff)} vs prev</span>;
+                if (diff > 0) return <span style={{ color: 'var(--color-success)', fontSize: '0.85rem' }}>↑ +{diff} vs prev</span>;
+                if (diff < 0) return <span style={{ color: 'var(--color-danger)', fontSize: '0.85rem' }}>↓ {Math.abs(diff)} vs prev</span>;
                 return <span style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>- No change</span>;
               };
 
