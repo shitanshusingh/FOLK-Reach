@@ -27,10 +27,9 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
   const { currentUser } = useAuth();
   const [assignedUserId, setAssignedUserId] = useState(personToEdit?.assignedUserId || currentUser?.id);
   
-  const teamUsers = useLiveQuery(async () => {
-    if (!currentUser?.teamId) return [];
-    return await db.users.where('teamId').equals(currentUser.teamId).toArray();
-  }, [currentUser?.teamId]);
+  const allUsers = useLiveQuery(async () => {
+    return await db.users.toArray();
+  }, []);
   
   const formatBirthday = (date: any) => {
     if (!date) return "";
@@ -202,7 +201,7 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
             }}>
               {(() => {
                 const ownerId = duplicateError.ownerId || duplicateError.assignedUserId;
-                const owner = teamUsers?.find(u => String(u.id) === String(ownerId));
+                const owner = allUsers?.find(u => String(u.id) === String(ownerId));
                 return owner ? owner.name : "Another team member";
               })()}
             </div>
@@ -295,7 +294,7 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
                 onChange={(val) => setAssignedUserId(val)}
                 options={[
                   { value: currentUser?.id ? String(currentUser.id) : "", label: "Me" },
-                  ...(teamUsers?.filter((u: any) => String(u.id) !== String(currentUser?.id)).map((u: any) => ({
+                  ...(allUsers?.filter((u: any) => String(u.id) !== String(currentUser?.id) && String(u.teamId) === String(currentUser?.teamId) && u.role !== 'SUPER_ADMIN' && u.role !== 'FOLK_GUIDE').map((u: any) => ({
                     value: String(u.id),
                     label: u.name
                   })) || [])
@@ -308,7 +307,7 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
             <div className={styles.formGroup}>
               <label className={styles.label}>Assigned To</label>
               <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', color: 'var(--color-text-muted)', border: '1px solid var(--color-border)' }}>
-                {String(assignedUserId) === String(currentUser?.id) ? 'Me' : teamUsers?.find((u: any) => String(u.id) === String(assignedUserId))?.name || 'Unknown'}
+                {String(assignedUserId) === String(currentUser?.id) ? 'Me' : allUsers?.find((u: any) => String(u.id) === String(assignedUserId))?.name || 'Unknown'}
               </div>
             </div>
           )}

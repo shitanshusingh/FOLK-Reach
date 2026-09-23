@@ -19,6 +19,7 @@ const safeDate = (d: any) => {
   return new Date(d);
 };
 import { useAuth } from "@/contexts/AuthContext";
+import { FolkGuideDashboard } from "@/components/dashboard/FolkGuideDashboard";
 
 type ActionItem = {
   person: Person;
@@ -37,6 +38,10 @@ export default function DashboardPage() {
   const [activeCallType, setActiveCallType] = useState<'CALL' | 'MEETING' | null>(null);
 
   const { currentUser } = useAuth();
+
+  if (currentUser?.role === 'FOLK_GUIDE' || currentUser?.role === 'SUPER_ADMIN') {
+    return <FolkGuideDashboard />;
+  }
 
   const allPeopleConstraints = currentUser?.id ? [where('ownerId', '==', currentUser.id)] : undefined;
   const allPeople = useFirestoreQuery<Person>('people', allPeopleConstraints || [], [currentUser?.id]);

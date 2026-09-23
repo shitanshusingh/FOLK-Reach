@@ -838,6 +838,7 @@ function EditSessionModal({ session, onClose, onSuccess }: { session: any, onClo
 function CallOutcomeModal({ recordId, onClose, onSuccess, currentUser }: { recordId: number, onClose: () => void, onSuccess: () => void, currentUser: any }) {
   const [status, setStatus] = useState<SessionAttendance['status']>('CONFIRMED');
   const [outcomeStr, setOutcomeStr] = useState("");
+  const [rescheduleDate, setRescheduleDate] = useState("");
   const [durationMinutes, setDurationMinutes] = useState<number | "">("");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -893,6 +894,27 @@ function CallOutcomeModal({ recordId, onClose, onSuccess, currentUser }: { recor
           dueDate: nextDate,
           notes: outcomeStr
         });
+      } else if (status === 'RESCHEDULE' as any && rescheduleDate) {
+        await db.tasks.add({
+          personId: record.personId,
+          title: "Rescheduled Session Call",
+          type: "CALL",
+          status: "PENDING",
+          dueDate: new Date(rescheduleDate),
+          notes: outcomeStr
+        });
+      } else if (status === 'DID_NOT_ANSWER' as any || status === 'UNAVAILABLE' as any || status === 'BUSY' as any) {
+        // Try again tomorrow
+        const nextDate = new Date();
+        nextDate.setDate(nextDate.getDate() + 1);
+        await db.tasks.add({
+          personId: record.personId,
+          title: `Follow-up Call (${status})`,
+          type: "CALL",
+          status: "PENDING",
+          dueDate: nextDate,
+          notes: outcomeStr
+        });
       }
     } // end if(record)
     } catch (e) {
@@ -920,7 +942,10 @@ function CallOutcomeModal({ recordId, onClose, onSuccess, currentUser }: { recor
               { value: "JOINING_NEXT_SESSION", label: "⏭️ Will join for next session" },
               { value: "NOT_COMING", label: "❌ Not Coming (This time)" },
               { value: "DECLINED", label: "🛑 Declined / Not Interested" },
-              { value: "DID_NOT_ANSWER", label: "📵 Did Not Answer / Busy" }
+              { value: "DID_NOT_ANSWER", label: "📵 Did Not Answer" },
+              { value: "BUSY", label: "🕒 Busy / Call Back Later" },
+              { value: "UNAVAILABLE", label: "🚫 Unavailable" },
+              { value: "RESCHEDULE", label: "📅 Reschedule Call" }
             ]}
           />
         </div>
@@ -935,6 +960,19 @@ function CallOutcomeModal({ recordId, onClose, onSuccess, currentUser }: { recor
             placeholder="e.g. He is bringing 2 friends..."
           />
         </div>
+
+        {status === 'RESCHEDULE' as any && (
+          <div className={styles.formGroup}>
+            <label className={styles.detailLabel}>Reschedule To</label>
+            <input 
+              type="datetime-local" 
+              className={styles.statusSelect} 
+              value={rescheduleDate}
+              onChange={e => setRescheduleDate(e.target.value)}
+              required
+            />
+          </div>
+        )}
 
         <div className={styles.formGroup}>
           <label className={styles.detailLabel}>Call Duration (minutes)</label>
@@ -1039,10 +1077,7 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
           />
         </div>
 
-        <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <input type="checkbox" id="newContactCheck" checked={isNewContact} onChange={e => setIsNewContact(e.target.checked)} />
-          <label htmlFor="newContactCheck" className={styles.detailLabel}>Mark as New Contact</label>
-        </div>
+
 
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, marginBottom: 16, whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
           <button className={styles.badge} style={{ flexShrink: 0, background: 'var(--color-danger-light)', color: 'var(--color-danger)' }} onClick={() => handleBulkInvite('HOT')}>

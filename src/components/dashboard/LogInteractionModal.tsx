@@ -88,9 +88,14 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
         reason = "Rescheduled 1-to-1 Meeting";
         threshold = 0; // Handled by date directly
         shouldScheduleTask = true;
+      } else if (type === 'CALL' && outcome === 'Reschedule' && rescheduleDate) {
+        nextType = 'CALL';
+        reason = "Rescheduled Call";
+        threshold = 0;
+        shouldScheduleTask = true;
       } else if (type === 'MEETING') {
         threshold = 1;
-      } else if (outcome === "Did Not Answer" || outcome === "Busy") {
+      } else if (outcome === "Did Not Answer" || outcome === "Busy" || outcome === "Unavailable") {
         nextType = 'CALL';
         reason = `Follow-up Call (${outcome})`;
         threshold = 1; // Try again tomorrow
@@ -99,7 +104,7 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
       }
 
       if (shouldScheduleTask) {
-        const nextDate = (type === 'MEETING' && meetingOutcome === 'Reschedule' && rescheduleDate) 
+        const nextDate = ((type === 'MEETING' && meetingOutcome === 'Reschedule') || (type === 'CALL' && outcome === 'Reschedule')) && rescheduleDate
           ? new Date(rescheduleDate) 
           : (() => {
               const d = new Date();
@@ -147,7 +152,9 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
                   { value: "Connected - Good Interaction", label: "✅ Connected (Good Interaction)" },
                   { value: "Connected - Average", label: "✅ Connected (Average)" },
                   { value: "Busy", label: "⏳ Busy / Call Back Later" },
+                  { value: "Unavailable", label: "🚫 Unavailable" },
                   { value: "Did Not Answer", label: "📵 Did Not Answer" },
+                  { value: "Reschedule", label: "📅 Reschedule" },
                   { value: "Number Invalid", label: "❌ Number Invalid" },
                   { value: "Not Interested", label: "🛑 Not Interested" }
                 ]}
@@ -199,17 +206,31 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
           )}
 
           {type === 'CALL' && (
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Call Duration (minutes)</label>
-              <input 
-                type="number"
-                min="0"
-                className={styles.input} 
-                value={durationMinutes}
-                onChange={e => setDurationMinutes(e.target.value ? Number(e.target.value) : "")}
-                placeholder="e.g. 5"
-              />
-            </div>
+            <>
+              {outcome === "Reschedule" && (
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Reschedule To</label>
+                  <input 
+                    type="datetime-local" 
+                    className={styles.input} 
+                    value={rescheduleDate}
+                    onChange={e => setRescheduleDate(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Call Duration (minutes)</label>
+                <input 
+                  type="number"
+                  min="0"
+                  className={styles.input} 
+                  value={durationMinutes}
+                  onChange={e => setDurationMinutes(e.target.value ? Number(e.target.value) : "")}
+                  placeholder="e.g. 5"
+                />
+              </div>
+            </>
           )}
 
           <div className={styles.formGroup}>
