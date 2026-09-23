@@ -49,7 +49,33 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
   }, [currentUser?.id, currentUser?.teamId]);
   
   const attendanceRecords = useLiveQuery(async () => {
-    const records = await db.sessionAttendance.where("sessionId").equals(id).toArray();
+    let records = await db.sessionAttendance.where("sessionId").equals(id).toArray();
+    
+    // Deduplicate on the fly to fix data corruption
+    const uniqueRecords = [];
+    const seenPersonIds = new Set();
+    const recordsToDelete = [];
+    
+    records.sort((a, b) => {
+      if (a.status === 'ATTENDED' && b.status !== 'ATTENDED') return -1;
+      if (a.status !== 'ATTENDED' && b.status === 'ATTENDED') return 1;
+      return 0;
+    });
+
+    for (const r of records) {
+      if (seenPersonIds.has(r.personId)) {
+        recordsToDelete.push(r.id);
+      } else {
+        seenPersonIds.add(r.personId);
+        uniqueRecords.push(r);
+      }
+    }
+    
+    if (recordsToDelete.length > 0) {
+      await db.sessionAttendance.bulkDelete(recordsToDelete);
+    }
+    records = uniqueRecords;
+
     const joined = await Promise.all(records.map(async record => {
       const person = await db.people.get(record.personId);
       const user = record.assignedUserId ? await db.users.get(String(record.assignedUserId)) : null;
@@ -689,14 +715,28 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
           onClose={() => setShowWalkInModal(false)}
           onSuccess={async (personId) => {
             const person = await firestoreAPI.get('people', personId as string | number);
-            await db.sessionAttendance.add({
-              sessionId: id,
-              personId: personId as number,
-              status: 'ATTENDED',
-              isNewContact: true,
-              checkedInAt: new Date(),
-              assignedUserId: person?.ownerId || currentUser?.id || null
-            });
+            
+            // Prevent duplicate records
+            const existingRecord = await db.sessionAttendance
+              .where({ sessionId: id, personId: personId as number })
+              .first() || await db.sessionAttendance.where('sessionId').equals(id).and(r => r.personId === (personId as number)).first();
+
+            if (existingRecord) {
+              await firestoreAPI.update('sessionAttendance', existingRecord.id as number, {
+                status: 'ATTENDED',
+                checkedInAt: new Date()
+              });
+            } else {
+              await db.sessionAttendance.add({
+                sessionId: id,
+                personId: personId as number,
+                status: 'ATTENDED',
+                isNewContact: true,
+                checkedInAt: new Date(),
+                assignedUserId: person?.ownerId || currentUser?.id || null
+              });
+            }
+
             if (person) {
               await firestoreAPI.update('people', person.id as number, { priorityScore: (person.priorityScore || 0) + 5 });
             }
@@ -1024,6 +1064,12 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
   const existingPersonIds = new Set(existingRecords.map((r: any) => r.personId));
   
   const handleInvite = async (personId: number) => {
+    const existing = await db.sessionAttendance.where({ sessionId, personId }).first() || await db.sessionAttendance.where('sessionId').equals(sessionId).and(r => r.personId === personId).first();
+    if (existing) {
+      alert("This person is already in the campaign!");
+      return;
+    }
+
     const p = allPeople?.find(p => p.id === personId);
     await db.sessionAttendance.add({
       sessionId,
@@ -1042,6 +1088,11 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
     else if (type === 'WARM') toAdd = toAdd.filter(p => p.priorityScore >= 10 && p.priorityScore < 20);
     else if (type === 'COLD') toAdd = toAdd.filter(p => p.priorityScore > 0 && p.priorityScore < 10);
     else if (type === 'DORMANT') toAdd = toAdd.filter(p => p.priorityScore <= 0);
+
+    // Double check DB to absolutely prevent race condition duplicates
+    const currentRecords = await db.sessionAttendance.where('sessionId').equals(sessionId).toArray();
+    const currentPersonIds = new Set(currentRecords.map(r => r.personId));
+    toAdd = toAdd.filter(p => !currentPersonIds.has(p.id));
 
     const records = toAdd.map(p => ({
       sessionId,
@@ -1075,6 +1126,11 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-bg)', color: 'var(--color-text)' }}
           />
+        </div>
+
+        <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <input type="checkbox" id="newContactCheck" checked={isNewContact} onChange={e => setIsNewContact(e.target.checked)} />
+          <label htmlFor="newContactCheck" className={styles.detailLabel}>Mark as New Contact</label>
         </div>
 
 
