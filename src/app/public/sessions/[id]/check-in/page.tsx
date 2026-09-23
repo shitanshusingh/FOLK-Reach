@@ -37,9 +37,8 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
 
   const allUsers = useLiveQuery(async () => {
     let users = await db.users.toArray();
-    
-    // Filter out SUPER_ADMIN
-    users = users.filter(u => u.role !== 'SUPER_ADMIN');
+    // Filter out SUPER_ADMIN and FOLK_GUIDE
+    users = users.filter(u => u.role !== 'SUPER_ADMIN' && u.role !== 'FOLK_GUIDE');
     
     // Filter out Hrishikesh Prabhu
     users = users.filter(u => !u.name.toLowerCase().includes('hrishikesh'));
