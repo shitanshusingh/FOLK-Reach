@@ -1043,24 +1043,35 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
   const [isNewContact, setIsNewContact] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { currentUser } = useAuth();
+  const [selectedUserId, setSelectedUserId] = useState<string>('ALL');
+
+  const teamUsers = useLiveQuery(async () => {
+    if (!currentUser?.teamId) return currentUser?.id ? [currentUser] : [];
+    return await db.users.where('teamId').equals(currentUser.teamId).toArray();
+  }, [currentUser?.teamId, currentUser?.id]);
+
   const allPeople = useLiveQuery(async () => {
     if (!currentUser?.id) return [];
     
-    let teamUserIds = [currentUser.id];
-    if (currentUser.teamId) {
-      const teamUsers = await db.users.where('teamId').equals(currentUser.teamId).toArray();
-      teamUserIds = teamUsers.map((u: any) => u.id);
+    let userIdsToFetch = [currentUser.id];
+    
+    if (selectedUserId === 'ALL') {
+      if (teamUsers && teamUsers.length > 0) {
+        userIdsToFetch = teamUsers.map((u: any) => String(u.id));
+      }
+    } else {
+      userIdsToFetch = [selectedUserId];
     }
     
-    // Fetch contacts for all team members
+    // Fetch contacts for the selected users
     const allTeamContacts = [];
-    for (const uid of teamUserIds) {
+    for (const uid of userIdsToFetch) {
       const contacts = await db.people.where('ownerId').equals(uid).toArray();
       allTeamContacts.push(...contacts);
     }
     
     return allTeamContacts;
-  }, [currentUser?.id, currentUser?.teamId]);
+  }, [currentUser?.id, selectedUserId, teamUsers]);
   const existingPersonIds = new Set(existingRecords.map((r: any) => r.personId));
   
   const handleInvite = async (personId: number) => {
@@ -1127,6 +1138,21 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
             style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-bg)', color: 'var(--color-text)' }}
           />
         </div>
+
+        {(currentUser?.role === 'LEADER' || currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'FOLK_GUIDE') && teamUsers && teamUsers.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <select
+              value={selectedUserId}
+              onChange={(e) => setSelectedUserId(e.target.value)}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-bg)', color: 'var(--color-text)' }}
+            >
+              <option value="ALL">All Team Members</option>
+              {teamUsers.map((u: any) => (
+                <option key={u.id} value={String(u.id)}>{u.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
           <input type="checkbox" id="newContactCheck" checked={isNewContact} onChange={e => setIsNewContact(e.target.checked)} />
