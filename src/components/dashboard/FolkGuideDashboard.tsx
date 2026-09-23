@@ -248,7 +248,7 @@ export function FolkGuideDashboard() {
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: 4 }}>{ref.title}</div>
                   </div>
                   {ref.person?.phone && (
-                    <a href={	el: + ref.person?.phone} className={styles.btnCall}>
+                    <a href={'tel:' + ref.person?.phone} className={styles.btnCall}>
                       <PhoneCall size={16} /> Call
                     </a>
                   )}
