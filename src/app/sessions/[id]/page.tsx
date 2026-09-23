@@ -57,23 +57,25 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
     const recordsToDelete = [];
     
     records.sort((a, b) => {
-      if (a.status === 'ATTENDED' && b.status !== 'ATTENDED') return -1;
-      if (a.status !== 'ATTENDED' && b.status === 'ATTENDED') return 1;
-      return 0;
+      const rank = (status: string) => {
+        if (status === 'ATTENDED') return 3;
+        if (status === 'CONFIRMED' || status === 'JOINING_NEXT_SESSION' || status === 'MAYBE') return 2;
+        return 1;
+      };
+      return rank(b.status) - rank(a.status);
     });
 
     for (const r of records) {
-      if (seenPersonIds.has(r.personId)) {
+      const pid = String(r.personId);
+      if (seenPersonIds.has(pid)) {
         recordsToDelete.push(r.id);
       } else {
-        seenPersonIds.add(r.personId);
+        seenPersonIds.add(pid);
         uniqueRecords.push(r);
       }
     }
-    
-    if (recordsToDelete.length > 0) {
-      await db.sessionAttendance.bulkDelete(recordsToDelete);
-    }
+    // We intentionally don't call bulkDelete here because mutating inside useLiveQuery causes infinite loops.
+    // The data is deduplicated in memory.
     records = uniqueRecords;
 
     const joined = await Promise.all(records.map(async record => {
@@ -1046,9 +1048,12 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
   const [selectedUserId, setSelectedUserId] = useState<string>('ALL');
 
   const teamUsers = useLiveQuery(async () => {
+    if (['SUPER_ADMIN', 'FOLK_GUIDE'].includes(currentUser?.role || '')) {
+      return await db.users.toArray();
+    }
     if (!currentUser?.teamId) return currentUser?.id ? [currentUser] : [];
     return await db.users.where('teamId').equals(currentUser.teamId).toArray();
-  }, [currentUser?.teamId, currentUser?.id]);
+  }, [currentUser?.teamId, currentUser?.id, currentUser?.role]);
 
   const allPeople = useLiveQuery(async () => {
     if (!currentUser?.id) return [];
@@ -1139,7 +1144,7 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
           />
         </div>
 
-        {(currentUser?.role === 'LEADER' || currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'FOLK_GUIDE') && teamUsers && teamUsers.length > 0 && (
+        {teamUsers && teamUsers.length > 1 && (
           <div style={{ marginBottom: 16 }}>
             <select
               value={selectedUserId}
