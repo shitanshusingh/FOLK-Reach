@@ -3,17 +3,20 @@
 import { useState } from "react";
 import { useLiveQuery } from "@/lib/firestore";
 import { db } from "@/lib/db";
-import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, subMonths, isWithinInterval } from "date-fns";
+import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, subMonths, isWithinInterval, startOfDay, endOfDay, subDays } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import styles from "./FolkGuideDashboard.module.css";
 import { Users, Phone, Calendar as CalendarIcon, TrendingUp, Download, PhoneCall, X } from "lucide-react";
 
-type DateFilter = 'THIS_WEEK' | 'LAST_WEEK' | 'THIS_MONTH' | 'LAST_MONTH' | 'ALL_TIME';
+type DateFilter = 'TODAY' | 'YESTERDAY' | 'THIS_WEEK' | 'LAST_WEEK' | 'THIS_MONTH' | 'LAST_MONTH' | 'ALL_TIME' | 'CUSTOM';
 
 export function FolkGuideDashboard() {
   const { currentUser } = useAuth();
   
   const [dateFilter, setDateFilter] = useState<DateFilter>('THIS_WEEK');
+  const [customStartDate, setCustomStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [customEndDate, setCustomEndDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [teamFilter, setTeamFilter] = useState<string>('ALL');
   const [peopleFilter, setPeopleFilter] = useState<string>('ALL');
   const [drilldownUserId, setDrilldownUserId] = useState<string | null>(null);
 
@@ -24,11 +27,17 @@ export function FolkGuideDashboard() {
     let allUsers = await db.users.toArray();
     let myUsers = allUsers.filter(u => u.role !== 'SUPER_ADMIN' && u.role !== 'FOLK_GUIDE');
     
+    if (teamFilter !== 'ALL') {
+      myUsers = myUsers.filter(u => String(u.teamId) === teamFilter);
+    }
     if (peopleFilter !== 'ALL') {
       myUsers = myUsers.filter(u => String(u.id) === peopleFilter);
     }
     
     const myUserIds = myUsers.map(u => String(u.id));
+    
+    // Get all teams for filter
+    const allTeams = await db.teams.toArray();
     
     // Get all people assigned to these users
     const allPeople = await db.people.toArray();
@@ -49,7 +58,17 @@ export function FolkGuideDashboard() {
     let prevStartD = new Date(0);
     let prevEndD = new Date(0);
 
-    if (dateFilter === 'THIS_WEEK') {
+    if (dateFilter === 'TODAY') {
+      startD = startOfDay(now);
+      endD = endOfDay(now);
+      prevStartD = startOfDay(subDays(now, 1));
+      prevEndD = endOfDay(subDays(now, 1));
+    } else if (dateFilter === 'YESTERDAY') {
+      startD = startOfDay(subDays(now, 1));
+      endD = endOfDay(subDays(now, 1));
+      prevStartD = startOfDay(subDays(now, 2));
+      prevEndD = endOfDay(subDays(now, 2));
+    } else if (dateFilter === 'THIS_WEEK') {
       startD = startOfWeek(now, { weekStartsOn: 1 });
       endD = endOfWeek(now, { weekStartsOn: 1 });
       prevStartD = startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
@@ -69,6 +88,13 @@ export function FolkGuideDashboard() {
       endD = endOfMonth(subMonths(now, 1));
       prevStartD = startOfMonth(subMonths(now, 2));
       prevEndD = endOfMonth(subMonths(now, 2));
+    } else if (dateFilter === 'CUSTOM') {
+      startD = startOfDay(new Date(customStartDate));
+      endD = endOfDay(new Date(customEndDate));
+      const diffTime = Math.abs(endD.getTime() - startD.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      prevStartD = startOfDay(subDays(startD, diffDays));
+      prevEndD = endOfDay(subDays(endD, diffDays));
     }
 
     const isCurrentDate = (d: string | Date | undefined | null) => d && isWithinInterval(new Date(d), { start: startD, end: endD });
@@ -121,6 +147,7 @@ export function FolkGuideDashboard() {
     
     return {
       allUsersForFilter: allUsers.filter(u => u.role !== 'SUPER_ADMIN' && u.role !== 'FOLK_GUIDE'),
+      allTeams,
       totalContacts: myPeople.length,
       contactsPeriod,
       callsPeriod,
@@ -128,7 +155,7 @@ export function FolkGuideDashboard() {
       userPerformance,
       referrals: referralsWithPeople
     };
-  }, [currentUser, dateFilter, peopleFilter]);
+  }, [currentUser, dateFilter, customStartDate, customEndDate, teamFilter, peopleFilter]);
 
   if (!metrics) return <div style={{ padding: 24 }}>Loading manager dashboard...</div>;
 
@@ -141,17 +168,52 @@ export function FolkGuideDashboard() {
             <p className={styles.subtitle}>Welcome back, {currentUser?.name}. Monitor your team's progress.</p>
           </div>
           
-          <div className="no-print" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div className="no-print" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
             <select 
               value={dateFilter} 
               onChange={e => setDateFilter(e.target.value as DateFilter)}
               className={styles.filterSelect}
             >
+              <option value="TODAY">Today</option>
+              <option value="YESTERDAY">Yesterday</option>
               <option value="THIS_WEEK">This Week</option>
               <option value="LAST_WEEK">Last Week</option>
               <option value="THIS_MONTH">This Month</option>
               <option value="LAST_MONTH">Last Month</option>
               <option value="ALL_TIME">All Time</option>
+              <option value="CUSTOM">Custom Range</option>
+            </select>
+
+            {dateFilter === 'CUSTOM' && (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input 
+                  type="date" 
+                  value={customStartDate} 
+                  onChange={e => setCustomStartDate(e.target.value)}
+                  className={styles.filterSelect}
+                />
+                <span style={{ color: 'var(--color-text-muted)' }}>to</span>
+                <input 
+                  type="date" 
+                  value={customEndDate} 
+                  onChange={e => setCustomEndDate(e.target.value)}
+                  className={styles.filterSelect}
+                />
+              </div>
+            )}
+
+            <select 
+              value={teamFilter} 
+              onChange={e => {
+                setTeamFilter(e.target.value);
+                setPeopleFilter('ALL'); // Reset member filter when team changes
+              }}
+              className={styles.filterSelect}
+            >
+              <option value="ALL">All Teams</option>
+              {metrics.allTeams.map(t => (
+                <option key={t.id} value={String(t.id)}>{t.name}</option>
+              ))}
             </select>
             
             <select 
@@ -159,9 +221,11 @@ export function FolkGuideDashboard() {
               onChange={e => setPeopleFilter(e.target.value)}
               className={styles.filterSelect}
             >
-              <option value="ALL">All Team Members</option>
-              {metrics.allUsersForFilter.map(u => (
-                <option key={u.id} value={String(u.id)}>{u.name}</option>
+              <option value="ALL">All Members</option>
+              {metrics.allUsersForFilter
+                .filter(u => teamFilter === 'ALL' || String(u.teamId) === teamFilter)
+                .map(u => (
+                  <option key={u.id} value={String(u.id)}>{u.name}</option>
               ))}
             </select>
             
@@ -184,7 +248,7 @@ export function FolkGuideDashboard() {
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: 4 }}>{ref.title}</div>
                   </div>
                   {ref.person?.phone && (
-                    <a href={`tel:${ref.person?.phone}`} className={styles.btnCall}>
+                    <a href={	el: + ref.person?.phone} className={styles.btnCall}>
                       <PhoneCall size={16} /> Call
                     </a>
                   )}
@@ -280,7 +344,8 @@ export function FolkGuideDashboard() {
       </div>
 
       {drilldownUserId && (
-        <div className={`no-print ${styles.modalOverlay}`}>
+        <div className={
+o-print }>
           <div className={styles.modalContent}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ margin: 0 }}>Detailed Analysis</h2>
@@ -293,8 +358,8 @@ export function FolkGuideDashboard() {
 
               const renderComparison = (curr: number, prev: number) => {
                 const diff = curr - prev;
-                if (diff > 0) return <span style={{ color: 'var(--color-success)', fontSize: '0.85rem' }}>↑ +{diff} vs prev</span>;
-                if (diff < 0) return <span style={{ color: 'var(--color-danger)', fontSize: '0.85rem' }}>↓ {Math.abs(diff)} vs prev</span>;
+                if (diff > 0) return <span style={{ color: 'var(--color-success)', fontSize: '0.85rem' }}>? +{diff} vs prev</span>;
+                if (diff < 0) return <span style={{ color: 'var(--color-danger)', fontSize: '0.85rem' }}>? {Math.abs(diff)} vs prev</span>;
                 return <span style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>- No change</span>;
               };
 
