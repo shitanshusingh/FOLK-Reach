@@ -52,8 +52,8 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
     const records = await db.sessionAttendance.where("sessionId").equals(id).toArray();
     const joined = await Promise.all(records.map(async record => {
       const person = await db.people.get(record.personId);
-      const user = record.assignedUserId ? await db.users.get(record.assignedUserId) : null;
-      const owner = person?.ownerId ? await db.users.get(person.ownerId) : null;
+      const user = record.assignedUserId ? await db.users.get(String(record.assignedUserId)) : null;
+      const owner = person?.ownerId ? await db.users.get(String(person.ownerId)) : null;
       
       // Fetch latest call interaction to recover lost statuses
       const interactions = await db.interactions.where('personId').equals(record.personId).toArray();

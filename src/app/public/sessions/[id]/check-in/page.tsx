@@ -75,8 +75,10 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
     }
     
     setSelectedPerson(person);
+    const hasValidOwner = person.ownerId && String(person.ownerId).length > 5;
+    
     // Check if missing compulsory fields or missing owner
-    if (!person.phone || !person.college || !person.branch || !person.hostel || !person.gender || !person.ownerId) {
+    if (!person.phone || !person.college || !person.branch || !person.hostel || !person.gender || !hasValidOwner) {
       // Pre-fill existing data
       setPhone(person.phone || '');
       setCollege(person.college || '');
@@ -137,7 +139,9 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
     e.preventDefault();
     if (!selectedPerson) return;
     
-    if (!selectedPerson.ownerId && !assignedUserId) {
+    const hasValidOwner = selectedPerson.ownerId && String(selectedPerson.ownerId).length > 5;
+    
+    if (!hasValidOwner && !assignedUserId) {
       alert("Please select who you are in touch with.");
       return;
     }
@@ -145,7 +149,7 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
     setIsSubmitting(true);
     try {
       const updates: any = { phone, college, branch, hostel, gender };
-      if (!selectedPerson.ownerId) {
+      if (!hasValidOwner) {
         updates.ownerId = assignedUserId;
         updates.assignedUserId = assignedUserId;
       }
@@ -370,7 +374,7 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
                 ]} />
               </div>
               
-              {!selectedPerson.ownerId && (
+              {!(selectedPerson.ownerId && String(selectedPerson.ownerId).length > 5) && (
                 <div className={styles.formGroup}>
                   <label className={styles.detailLabel}>Who are you in touch with? *</label>
                   <div style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem', marginBottom: '8px' }}>
