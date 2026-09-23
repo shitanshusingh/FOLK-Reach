@@ -75,14 +75,15 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
     }
     
     setSelectedPerson(person);
-    // Check if missing compulsory fields
-    if (!person.phone || !person.college || !person.branch || !person.hostel || !person.gender) {
+    // Check if missing compulsory fields or missing owner
+    if (!person.phone || !person.college || !person.branch || !person.hostel || !person.gender || !person.ownerId) {
       // Pre-fill existing data
       setPhone(person.phone || '');
       setCollege(person.college || '');
       setBranch(person.branch || '');
       setHostel(person.hostel || '');
       setGender(person.gender || '');
+      setAssignedUserId(person.ownerId || '');
       setStep('ENRICH');
     } else {
       handleCheckIn(person.id as number);
@@ -102,11 +103,13 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
           checkedInAt: new Date()
         });
       } else {
+        const person = await db.people.get(personId);
         await db.sessionAttendance.add({
           sessionId,
           personId,
           status: 'ATTENDED',
           isNewContact: false,
+          assignedUserId: person?.ownerId || null,
           checkedInAt: new Date()
         });
       }
@@ -133,11 +136,21 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
   const handleEnrichSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPerson) return;
+    
+    if (!selectedPerson.ownerId && !assignedUserId) {
+      alert("Please select who you are in touch with.");
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
-      await db.people.update(selectedPerson.id, {
-        phone, college, branch, hostel, gender
-      });
+      const updates: any = { phone, college, branch, hostel, gender };
+      if (!selectedPerson.ownerId) {
+        updates.ownerId = assignedUserId;
+        updates.assignedUserId = assignedUserId;
+      }
+      
+      await db.people.update(selectedPerson.id, updates);
       await handleCheckIn(selectedPerson.id);
     } catch (err: any) {
       console.error(err);
@@ -356,6 +369,20 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ id: st
                   { value: "Female", label: "Female" }
                 ]} />
               </div>
+              
+              {!selectedPerson.ownerId && (
+                <div className={styles.formGroup}>
+                  <label className={styles.detailLabel}>Who are you in touch with? *</label>
+                  <div style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem', marginBottom: '8px' }}>
+                    Select the person who invited you or who you interact with.
+                  </div>
+                  <GlassSelect 
+                    value={assignedUserId}
+                    onChange={setAssignedUserId}
+                    options={allUsers?.map(u => ({ value: u.id!.toString(), label: u.name })) || []}
+                  />
+                </div>
+              )}
               <button type="submit" className={styles.submitBtn} disabled={isSubmitting}>
                 {isSubmitting ? 'Checking in...' : 'Save & Check In'}
               </button>
