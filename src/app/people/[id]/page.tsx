@@ -407,28 +407,23 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
               <button 
                 onClick={async () => {
                   if (!transferTargetId) return;
-                  await firestoreAPI.update('people', id, { 
-                    ownerId: transferTargetId,
-                    assignedUserId: transferTargetId
-                  });
-                  await db.tasks.add({
+                  await db.contactTransfers.add({
                     personId: id,
-                    title: "New Contact Transferred",
-                    type: "CALL",
-                    status: "PENDING",
-                    dueDate: new Date(),
-                    assignedToUserId: transferTargetId,
-                    notes: `Transferred from ${currentUser?.name || 'another member'}`
+                    fromUserId: currentUser?.id,
+                    toUserId: transferTargetId,
+                    status: 'PENDING',
+                    requestDate: new Date(),
+                    direction: 'PUSH'
                   });
                   await db.notifications.add({
                     userId: transferTargetId,
-                    message: `${currentUser?.name || 'A team member'} transferred a contact to you: ${person.name}`,
+                    message: `${currentUser?.name || 'A team member'} wants to transfer a contact to you: ${person.name}. Please check your Inbox.`,
                     isRead: false,
                     createdAt: new Date(),
-                    link: `/people/${id}`
+                    link: `/tasks`
                   });
-                  alert(`Contact transferred successfully!`);
-                  router.push('/people');
+                  alert(`Transfer request sent to the user's inbox successfully!`);
+                  setShowTransferModal(false);
                 }}
                 disabled={!transferTargetId}
                 style={{ 

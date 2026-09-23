@@ -25,13 +25,22 @@ export default function TasksPage() {
 
   const pendingTransfers = useLiveQuery(async () => {
     if (!currentUser?.id) return [];
-    const allTransfers = await db.contactTransfers.where('fromUserId').equals(String(currentUser.id)).toArray();
-    const pending = allTransfers.filter(t => t.status === 'PENDING');
     
-    const joined = await Promise.all(pending.map(async (t: any) => {
+    // PULL requests (someone else is requesting from me) -> I am fromUserId
+    const fromTransfers = await db.contactTransfers.where('fromUserId').equals(String(currentUser.id)).toArray();
+    // PUSH requests (someone else is giving to me) -> I am toUserId
+    const toTransfers = await db.contactTransfers.where('toUserId').equals(String(currentUser.id)).toArray();
+    
+    const pendingFrom = fromTransfers.filter(t => t.status === 'PENDING' && t.direction === 'PULL');
+    const pendingTo = toTransfers.filter(t => t.status === 'PENDING' && t.direction === 'PUSH');
+    
+    const allPending = [...pendingFrom, ...pendingTo];
+    
+    const joined = await Promise.all(allPending.map(async (t: any) => {
       const person = await db.people.get(t.personId);
       const toUser = await db.users.get(t.toUserId);
-      return { ...t, person, toUser };
+      const fromUser = await db.users.get(t.fromUserId);
+      return { ...t, person, toUser, fromUser };
     }));
     return joined;
   }, [currentUser?.id]);
@@ -136,7 +145,11 @@ export default function TasksPage() {
                   <div>
                     <div style={{ fontWeight: 'bold', color: 'white' }}>{t.person?.name}</div>
                     <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-                      Requested by <span style={{ color: 'var(--color-primary-light)' }}>{t.toUser?.name}</span>
+                      {t.direction === 'PUSH' ? (
+                        <>Offered to you by <span style={{ color: 'var(--color-primary-light)' }}>{t.fromUser?.name}</span></>
+                      ) : (
+                        <>Requested by <span style={{ color: 'var(--color-primary-light)' }}>{t.toUser?.name}</span></>
+                      )}
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>

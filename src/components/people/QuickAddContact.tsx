@@ -226,7 +226,8 @@ export function QuickAddContact({ onClose, onSuccess, personToEdit }: QuickAddCo
                     fromUserId: duplicateError.ownerId || duplicateError.assignedUserId,
                     toUserId: currentUser?.id,
                     status: 'PENDING',
-                    requestDate: new Date()
+                    requestDate: new Date(),
+                    direction: 'PULL'
                   });
                   alert("Transfer request sent successfully!");
                   onClose();
