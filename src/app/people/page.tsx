@@ -212,15 +212,15 @@ export default function PeoplePage() {
                   <div className={styles.cardName}>{person.name}</div>
                   {String(person.ownerId) !== String(currentUser?.id) && (
                     <span style={{ fontSize: "0.7rem", background: "var(--color-surface)", padding: "2px 8px", borderRadius: 8, color: "var(--color-primary)", border: "1px solid var(--color-border)", marginLeft: 8 }}>
-                      ðŸ‘¤ {(person as any).ownerName}
+                      👤 {(person as any).ownerName}
                     </span>
                   )}
                   {person.priorityScore > 0 && (
-                    <span className={styles.priorityBadge}>ðŸ”¥ {person.priorityScore}</span>
+                    <span className={styles.priorityBadge}>🔥 {person.priorityScore}</span>
                   )}
                 </div>
                 <div className={styles.cardMeta}>
-                  {person.college || person.howMet || "No college details"} â€¢ {person.phone}
+                  {person.college || person.howMet || "No college details"} • {person.phone}
                 </div>
               </Link>
               <div className={styles.cardActions}>
