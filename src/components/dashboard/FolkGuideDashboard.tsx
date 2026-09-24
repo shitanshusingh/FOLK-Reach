@@ -185,12 +185,13 @@ export function FolkGuideDashboard() {
             </select>
 
             {dateFilter === 'CUSTOM' && (
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', width: '100%' }}>
                 <input 
                   type="date" 
                   value={customStartDate} 
                   onChange={e => setCustomStartDate(e.target.value)}
                   className={styles.filterSelect}
+                  style={{ flex: 1 }}
                 />
                 <span style={{ color: 'var(--color-text-muted)' }}>to</span>
                 <input 
@@ -198,6 +199,7 @@ export function FolkGuideDashboard() {
                   value={customEndDate} 
                   onChange={e => setCustomEndDate(e.target.value)}
                   className={styles.filterSelect}
+                  style={{ flex: 1 }}
                 />
               </div>
             )}
@@ -324,15 +326,15 @@ export function FolkGuideDashboard() {
             <tbody>
               {metrics.userPerformance.map((user, idx) => (
                 <tr key={user.id} onClick={() => setDrilldownUserId(String(user.id))} style={{ cursor: 'pointer' }} className={styles.tableRowHover}>
-                  <td style={{ fontWeight: 'bold', color: idx === 0 ? 'var(--color-warning)' : 'inherit' }}>#{idx + 1}</td>
-                  <td style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{user.name}</td>
-                  <td>
+                  <td data-label="Rank" style={{ fontWeight: 'bold', color: idx === 0 ? 'var(--color-warning)' : 'inherit' }}>#{idx + 1}</td>
+                  <td data-label="Member" style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{user.name}</td>
+                  <td data-label="Role" className="hide-mobile">
                     <span className={styles.roleBadge}>{user.role}</span>
                   </td>
-                  <td style={{ fontWeight: user.meetingsWeek > 0 ? 'bold' : 'normal', color: user.meetingsWeek > 0 ? '#a855f7' : 'inherit' }}>{user.meetingsWeek}</td>
-                  <td style={{ fontWeight: user.callsWeek > 0 ? 'bold' : 'normal', color: user.callsWeek > 0 ? 'var(--color-success)' : 'inherit' }}>{user.callsWeek}</td>
-                  <td style={{ fontWeight: user.contactsWeek > 0 ? 'bold' : 'normal', color: user.contactsWeek > 0 ? 'var(--color-primary)' : 'inherit' }}>{user.contactsWeek}</td>
-                  <td style={{ fontWeight: 600 }}>{user.contactsTotal}</td>
+                  <td data-label="1-to-1s" style={{ fontWeight: user.meetingsWeek > 0 ? 'bold' : 'normal', color: user.meetingsWeek > 0 ? '#a855f7' : 'inherit' }}>{user.meetingsWeek}</td>
+                  <td data-label="Calls" style={{ fontWeight: user.callsWeek > 0 ? 'bold' : 'normal', color: user.callsWeek > 0 ? 'var(--color-success)' : 'inherit' }}>{user.callsWeek}</td>
+                  <td data-label="New Contacts" style={{ fontWeight: user.contactsWeek > 0 ? 'bold' : 'normal', color: user.contactsWeek > 0 ? 'var(--color-primary)' : 'inherit' }}>{user.contactsWeek}</td>
+                  <td data-label="Total Contacts" style={{ fontWeight: 600 }}>{user.contactsTotal}</td>
                 </tr>
               ))}
               {metrics.userPerformance.length === 0 && (

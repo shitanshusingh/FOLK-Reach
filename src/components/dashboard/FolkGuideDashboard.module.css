@@ -222,3 +222,50 @@
     margin-bottom: 8px;
   }
 }
+
+@media (max-width: 768px) {
+  .filterSelect {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  .btnDownload {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .table thead {
+    display: none;
+  }
+  
+  .table, .table tbody, .table tr, .table td {
+    display: block;
+    width: 100%;
+  }
+  
+  .table tr {
+    margin-bottom: 16px;
+    background: var(--glass-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 12px;
+  }
+  
+  .table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    padding: 8px 0;
+  }
+  
+  .table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+  }
+  
+  :global(.hide-mobile) {
+    display: none !important;
+  }
+}
