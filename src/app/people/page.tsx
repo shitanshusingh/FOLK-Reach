@@ -45,7 +45,7 @@ export default function PeoplePage() {
           (u.teamId && myTeamIds.includes(String(u.teamId)))
         );
         validOwnerIds = [...validOwnerIds, ...myUsers.map(u => String(u.id))];
-
+      }
 
       const uniqueOwnerIds = Array.from(new Set(validOwnerIds));
       let allPeople = await db.people.toArray();
