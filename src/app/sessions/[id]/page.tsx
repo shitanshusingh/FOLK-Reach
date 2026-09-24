@@ -314,10 +314,10 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                       )}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                      {record.isNewContact ? 'ðŸ†• New Contact' : 'ðŸ”„ Old Contact'}
+                      {record.isNewContact ? 'ðŸ†• New Contact' : '🔥„ Old Contact'}
                       {record.calledAt && (
                         <span style={{ marginLeft: 8, color: 'var(--color-success)' }}>
-                          âœ… Called at {format(safeDate(record.calledAt), 'h:mm a')}
+                          ✅ Called at {format(safeDate(record.calledAt), 'h:mm a')}
                           {record.actualCallerName && ` by ${record.actualCallerName}`}
                         </span>
                       )}
@@ -326,7 +326,8 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                 </div>
                 
                 <div className={styles.callCardActions}>
-                  {['FOLK_LEADER', 'LEADER', 'SUPER_ADMIN', 'FOLK_GUIDE'].includes(currentUser?.role || '') ? (
+                  <div style={{ flex: 1, minWidth: "120px" }}>
+                  {["FOLK_LEADER", "LEADER", "SUPER_ADMIN", "FOLK_GUIDE"].includes(currentUser?.role || "") ? (
                     <GlassSelect 
                       value={record.assignedUserId ? record.assignedUserId.toString() : ""}
                       onChange={(val) => handleAssignCaller(record.id as number, val)}
@@ -344,13 +345,13 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                     style={{ padding: '6px 12px', borderRadius: '4px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', fontSize: '0.85rem', cursor: 'pointer', textAlign: 'center', flex: 1, fontWeight: 500 }}
                   >
                     {record.status === 'PENDING_CALL' && 'â³ Pending'}
-                    {record.status === 'CONFIRMED' && 'âœ… Confirmed'}
+                    {record.status === 'CONFIRMED' && '✅ Confirmed'}
                     {record.status === 'MAYBE' && 'ðŸ¤” Maybe'}
                     {record.status === 'NOT_COMING' && 'âŒ Not Coming'}
                     {record.status === 'JOINING_NEXT_SESSION' && 'â­ï¸ Next Session'}
                     {record.status === 'DECLINED' && 'ðŸ›‘ Declined'}
                     {record.status === 'DID_NOT_ANSWER' && 'ðŸ“µ No Answer'}
-                    {record.status === 'ATTENDED' && 'âœ… Attended'}
+                    {record.status === 'ATTENDED' && '✅ Attended'}
                     {record.status === 'MISSED' && 'âŒ Missed'}
                   </div>
                   
@@ -615,7 +616,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                       )}
                       {attendanceSubTab === 'CHECKED_IN' && record.checkedInAt && (
                         <span style={{ fontSize: '0.85rem', fontWeight: 500, marginLeft: 8, color: 'var(--color-success)' }}>
-                          â€¢ {format(safeDate(record.checkedInAt), "h:mm a")}
+                          • {format(safeDate(record.checkedInAt), "h:mm a")}
                         </span>
                       )}
                     </div>
@@ -994,7 +995,7 @@ function CallOutcomeModal({ recordId, onClose, onSuccess, currentUser }: { recor
             value={status} 
             onChange={val => setStatus(val as any)}
             options={[
-              { value: "CONFIRMED", label: "âœ… Will Come (Confirmed)" },
+              { value: "CONFIRMED", label: "✅ Will Come (Confirmed)" },
               { value: "MAYBE", label: "ðŸ¤” Maybe / Not Sure" },
               { value: "JOINING_NEXT_SESSION", label: "â­ï¸ Will join for next session" },
               { value: "NOT_COMING", label: "âŒ Not Coming (This time)" },
@@ -1235,5 +1236,6 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
     </div>
   );
 }
+
 
 
