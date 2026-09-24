@@ -47,6 +47,20 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
     if (currentUser.role === "SUPER_ADMIN") {
       return users;
     } else if (currentUser.role === "FOLK_GUIDE") {
+      let creatorId = session?.ownerId;
+      if (!creatorId) {
+        const fetchedSession = await db.sessions.get(id);
+        creatorId = fetchedSession?.ownerId;
+      }
+      
+      const creator = users.find(u => String(u.id) === String(creatorId));
+      
+      if (creator && creator.teamId) {
+        // If session was created by a specific team member, ONLY show that team
+        return users.filter(u => String(u.teamId) === String(creator.teamId));
+      }
+      
+      // Fallback: show all teams
       const allTeams = await db.teams.toArray();
       const myTeams = allTeams.filter(t => String(t.guideId) === String(currentUser.id));
       const myTeamIds = myTeams.map(t => String(t.id));
@@ -61,7 +75,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
       }
     }
     return [currentUser];
-  }, [currentUser?.id, currentUser?.role]);
+  }, [currentUser?.id, currentUser?.role, session?.ownerId]);
   
   const attendanceRecords = useLiveQuery(async () => {
     let records = await db.sessionAttendance.where("sessionId").equals(id).toArray();
