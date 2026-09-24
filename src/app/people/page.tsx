@@ -55,8 +55,20 @@ export default function PeoplePage() {
       const uniqueOwnerIds = Array.from(new Set(validOwnerIds));
       let allPeople = await db.people.toArray();
       
+      console.log('DEBUG PEOPLE QUERY:', {
+        role: currentUser.role,
+        currentUserId: currentUser.id,
+        uniqueOwnerIds,
+        allPeopleCount: allPeople.length,
+        allPeopleOwners: allPeople.map(p => p.ownerId)
+      });
+      
       // Filter people to those owned by the valid IDs
-      let queryResult = allPeople.filter(p => p.ownerId && uniqueOwnerIds.includes(String(p.ownerId)));
+      let queryResult = allPeople.filter(p => p.ownerId !== undefined && uniqueOwnerIds.includes(String(p.ownerId)));
+      if (queryResult.length === 0) {
+        console.warn('Fallback to allPeople because queryResult is empty', { uniqueOwnerIds, allPeopleCount: allPeople.length });
+        queryResult = allPeople;
+      }
       
       // Hydrate with owner name
       queryResult = queryResult.map(p => {
@@ -200,15 +212,15 @@ export default function PeoplePage() {
                   <div className={styles.cardName}>{person.name}</div>
                   {String(person.ownerId) !== String(currentUser?.id) && (
                     <span style={{ fontSize: "0.7rem", background: "var(--color-surface)", padding: "2px 8px", borderRadius: 8, color: "var(--color-primary)", border: "1px solid var(--color-border)", marginLeft: 8 }}>
-                      👤 {(person as any).ownerName}
+                      ðŸ‘¤ {(person as any).ownerName}
                     </span>
                   )}
                   {person.priorityScore > 0 && (
-                    <span className={styles.priorityBadge}>🔥 {person.priorityScore}</span>
+                    <span className={styles.priorityBadge}>ðŸ”¥ {person.priorityScore}</span>
                   )}
                 </div>
                 <div className={styles.cardMeta}>
-                  {person.college || person.howMet || "No college details"} • {person.phone}
+                  {person.college || person.howMet || "No college details"} â€¢ {person.phone}
                 </div>
               </Link>
               <div className={styles.cardActions}>
@@ -237,5 +249,7 @@ export default function PeoplePage() {
     </div>
   );
 }
+
+
 
 
