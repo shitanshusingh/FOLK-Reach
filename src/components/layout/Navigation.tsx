@@ -29,9 +29,6 @@ import {
 import { clsx } from 'clsx';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
-
 import { NotificationsTray } from '../notifications/NotificationsTray';
 import { BirthdayChecker } from '../notifications/BirthdayChecker';
 import { QuickAddContact } from '../people/QuickAddContact';
