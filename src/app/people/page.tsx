@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 // @ts-nocheck
 import { useLiveQuery } from "@/lib/firestore";
 import { db } from "@/lib/db";
@@ -30,7 +30,40 @@ export default function PeoplePage() {
     async () => {
       if (!currentUser?.id) return [];
       
-      let queryResult = await db.people.where('ownerId').equals(currentUser.id).toArray();
+      let allUsers = await db.users.toArray();
+      let allTeams = await db.teams.toArray();
+      
+      let validOwnerIds = [String(currentUser.id)];
+
+      if (currentUser.role === 'SUPER_ADMIN') {
+        validOwnerIds = allUsers.map(u => String(u.id));
+      } else if (currentUser.role === 'FOLK_GUIDE') {
+        const myTeams = allTeams.filter(t => String(t.guideId) === String(currentUser.id));
+        const myTeamIds = myTeams.map(t => String(t.id));
+        const myUsers = allUsers.filter(u => 
+          String(u.guideId) === String(currentUser.id) || 
+          (u.teamId && myTeamIds.includes(String(u.teamId)))
+        );
+        validOwnerIds = [...validOwnerIds, ...myUsers.map(u => String(u.id))];
+      } else if (currentUser.role === 'FOLK_LEADER' || currentUser.role === 'LEADER') {
+        if (currentUser.teamId) {
+          const myTeamUsers = allUsers.filter(u => String(u.teamId) === String(currentUser.teamId));
+          validOwnerIds = [...validOwnerIds, ...myTeamUsers.map(u => String(u.id))];
+        }
+      }
+
+      const uniqueOwnerIds = Array.from(new Set(validOwnerIds));
+      let allPeople = await db.people.toArray();
+      
+      // Filter people to those owned by the valid IDs
+      let queryResult = allPeople.filter(p => p.ownerId && uniqueOwnerIds.includes(String(p.ownerId)));
+      
+      // Hydrate with owner name
+      queryResult = queryResult.map(p => {
+        const owner = allUsers.find(u => String(u.id) === String(p.ownerId));
+        return { ...p, ownerName: owner ? owner.name : 'Unknown' };
+      });
+
       // Sort by priorityScore descending
       queryResult.sort((a, b) => b.priorityScore - a.priorityScore);
 
@@ -165,8 +198,13 @@ export default function PeoplePage() {
               <Link href={`/people/${person.id}`} className={styles.cardInfo}>
                 <div className={styles.cardNameRow}>
                   <div className={styles.cardName}>{person.name}</div>
+                  {String(person.ownerId) !== String(currentUser?.id) && (
+                    <span style={{ fontSize: "0.7rem", background: "var(--color-surface)", padding: "2px 8px", borderRadius: 8, color: "var(--color-primary)", border: "1px solid var(--color-border)", marginLeft: 8 }}>
+                      👤 {(person as any).ownerName}
+                    </span>
+                  )}
                   {person.priorityScore > 0 && (
-                    <span className={styles.priorityBadge}>⭐ {person.priorityScore}</span>
+                    <span className={styles.priorityBadge}>🔥 {person.priorityScore}</span>
                   )}
                 </div>
                 <div className={styles.cardMeta}>
@@ -199,3 +237,5 @@ export default function PeoplePage() {
     </div>
   );
 }
+
+
