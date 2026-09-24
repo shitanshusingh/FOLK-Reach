@@ -45,12 +45,7 @@ export default function PeoplePage() {
           (u.teamId && myTeamIds.includes(String(u.teamId)))
         );
         validOwnerIds = [...validOwnerIds, ...myUsers.map(u => String(u.id))];
-      } else if (currentUser.role === 'FOLK_LEADER' || currentUser.role === 'LEADER') {
-        if (currentUser.teamId) {
-          const myTeamUsers = allUsers.filter(u => String(u.teamId) === String(currentUser.teamId));
-          validOwnerIds = [...validOwnerIds, ...myTeamUsers.map(u => String(u.id))];
-        }
-      }
+
 
       const uniqueOwnerIds = Array.from(new Set(validOwnerIds));
       let allPeople = await db.people.toArray();
