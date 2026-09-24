@@ -343,22 +343,35 @@
   }
   
   .mlBadge {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--color-text-muted);
-    background: rgba(255, 255, 255, 0.05);
-    padding: 4px 8px;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 6px 12px;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
   }
   
-  .mlBadge svg {
-    color: var(--color-text);
-    opacity: 0.7;
+  .badgeCalls { 
+    background: rgba(34, 197, 94, 0.15); 
+    color: var(--color-success); 
+    border: 1px solid rgba(34,197,94,0.3); 
   }
+  .badgeCalls svg { color: var(--color-success); opacity: 1; }
+  
+  .badgeContacts { 
+    background: rgba(59, 130, 246, 0.15); 
+    color: var(--color-primary); 
+    border: 1px solid rgba(59,130,246,0.3); 
+  }
+  .badgeContacts svg { color: var(--color-primary); opacity: 1; }
+  
+  .badgeConnections { 
+    background: rgba(245, 158, 11, 0.15); 
+    color: var(--color-warning); 
+    border: 1px solid rgba(245,158,11,0.3); 
+  }
+  .badgeConnections svg { color: var(--color-warning); opacity: 1; }
   
   .mlPrimary {
     text-align: center;
