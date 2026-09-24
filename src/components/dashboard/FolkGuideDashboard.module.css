@@ -338,18 +338,25 @@
   
   .mlStatsRow {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+    gap: 4px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .mlStatsRow::-webkit-scrollbar {
+    display: none;
   }
   
   .mlBadge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    font-size: 0.8rem;
+    gap: 4px;
+    font-size: 0.65rem;
     font-weight: 700;
-    padding: 6px 12px;
-    border-radius: 12px;
+    padding: 4px 6px;
+    border-radius: 8px;
+    white-space: nowrap;
   }
   
   .badgeCalls { 

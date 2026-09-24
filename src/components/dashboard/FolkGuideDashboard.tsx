@@ -333,13 +333,13 @@ export function FolkGuideDashboard() {
                 <div className={styles.mlName}>{user.name}</div>
                 <div className={styles.mlStatsRow}>
                   <div className={`${styles.mlBadge} ${styles.badgeCalls}`} title="Follow-up Calls">
-                    <Phone size={12} /> {user.callsWeek} Calls
+                    <Phone size={10} /> {user.callsWeek} Calls
                   </div>
                   <div className={`${styles.mlBadge} ${styles.badgeContacts}`} title="New Contacts Added">
-                    <TrendingUp size={12} /> {user.contactsWeek} New
+                    <TrendingUp size={10} /> {user.contactsWeek} New
                   </div>
                   <div className={`${styles.mlBadge} ${styles.badgeConnections}`} title="Total Network">
-                    <Users size={12} /> {user.contactsTotal} Total
+                    <Users size={10} /> {user.contactsTotal} Total
                   </div>
                 </div>
               </div>
