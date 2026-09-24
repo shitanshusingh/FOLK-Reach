@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 // @ts-nocheck
 import { useLiveQuery } from "@/lib/firestore";
 import { db } from "@/lib/db";
@@ -42,11 +42,26 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
   const session = useFirestoreDoc('sessions', id);
   const allUsers = useLiveQuery(async () => {
     if (!currentUser?.id) return [];
-    if (currentUser.teamId) {
-      return await db.users.where('teamId').equals(currentUser.teamId).toArray();
+    let users = await db.users.toArray();
+    
+    if (currentUser.role === "SUPER_ADMIN") {
+      return users;
+    } else if (currentUser.role === "FOLK_GUIDE") {
+      const allTeams = await db.teams.toArray();
+      const myTeams = allTeams.filter(t => String(t.guideId) === String(currentUser.id));
+      const myTeamIds = myTeams.map(t => String(t.id));
+      return users.filter(u => 
+        String(u.guideId) === String(currentUser.id) || 
+        (u.teamId && myTeamIds.includes(String(u.teamId))) ||
+        String(u.id) === String(currentUser.id)
+      );
+    } else if (currentUser.role === "FOLK_LEADER" || currentUser.role === "LEADER") {
+      if (currentUser.teamId) {
+        return users.filter(u => String(u.teamId) === String(currentUser.teamId) || String(u.id) === String(currentUser.id));
+      }
     }
     return [currentUser];
-  }, [currentUser?.id, currentUser?.teamId]);
+  }, [currentUser?.id, currentUser?.role]);
   
   const attendanceRecords = useLiveQuery(async () => {
     let records = await db.sessionAttendance.where("sessionId").equals(id).toArray();
@@ -295,14 +310,14 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                         {record.personName}
                       </Link>
                       {record.personPriority > 0 && (
-                        <span className={styles.callerPriority}>⭐ {record.personPriority}</span>
+                        <span className={styles.callerPriority}>â­ {record.personPriority}</span>
                       )}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                      {record.isNewContact ? '🆕 New Contact' : '🔄 Old Contact'}
+                      {record.isNewContact ? 'ðŸ†• New Contact' : 'ðŸ”„ Old Contact'}
                       {record.calledAt && (
                         <span style={{ marginLeft: 8, color: 'var(--color-success)' }}>
-                          ✅ Called at {format(safeDate(record.calledAt), 'h:mm a')}
+                          âœ… Called at {format(safeDate(record.calledAt), 'h:mm a')}
                           {record.actualCallerName && ` by ${record.actualCallerName}`}
                         </span>
                       )}
@@ -328,15 +343,15 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                     onClick={() => setActiveCallModal(record.id as number)}
                     style={{ padding: '6px 12px', borderRadius: '4px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', fontSize: '0.85rem', cursor: 'pointer', textAlign: 'center', flex: 1, fontWeight: 500 }}
                   >
-                    {record.status === 'PENDING_CALL' && '⏳ Pending'}
-                    {record.status === 'CONFIRMED' && '✅ Confirmed'}
-                    {record.status === 'MAYBE' && '🤔 Maybe'}
-                    {record.status === 'NOT_COMING' && '❌ Not Coming'}
-                    {record.status === 'JOINING_NEXT_SESSION' && '⏭️ Next Session'}
-                    {record.status === 'DECLINED' && '🛑 Declined'}
-                    {record.status === 'DID_NOT_ANSWER' && '📵 No Answer'}
-                    {record.status === 'ATTENDED' && '✅ Attended'}
-                    {record.status === 'MISSED' && '❌ Missed'}
+                    {record.status === 'PENDING_CALL' && 'â³ Pending'}
+                    {record.status === 'CONFIRMED' && 'âœ… Confirmed'}
+                    {record.status === 'MAYBE' && 'ðŸ¤” Maybe'}
+                    {record.status === 'NOT_COMING' && 'âŒ Not Coming'}
+                    {record.status === 'JOINING_NEXT_SESSION' && 'â­ï¸ Next Session'}
+                    {record.status === 'DECLINED' && 'ðŸ›‘ Declined'}
+                    {record.status === 'DID_NOT_ANSWER' && 'ðŸ“µ No Answer'}
+                    {record.status === 'ATTENDED' && 'âœ… Attended'}
+                    {record.status === 'MISSED' && 'âŒ Missed'}
                   </div>
                   
                   <button 
@@ -370,7 +385,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
               style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
               onClick={downloadCSV}
             >
-              ⬇️ Download Report (CSV)
+              â¬‡ï¸ Download Report (CSV)
             </button>
           </div>
 
@@ -600,7 +615,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                       )}
                       {attendanceSubTab === 'CHECKED_IN' && record.checkedInAt && (
                         <span style={{ fontSize: '0.85rem', fontWeight: 500, marginLeft: 8, color: 'var(--color-success)' }}>
-                          • {format(safeDate(record.checkedInAt), "h:mm a")}
+                          â€¢ {format(safeDate(record.checkedInAt), "h:mm a")}
                         </span>
                       )}
                     </div>
@@ -771,7 +786,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
           <div className={styles.modalContent} style={{ maxWidth: 400, textAlign: 'center' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
               <h2 className={styles.sectionTitle}>Session QR Code</h2>
-              <button onClick={() => setShowQRModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--color-text)' }}>✕</button>
+              <button onClick={() => setShowQRModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--color-text)' }}>âœ•</button>
             </div>
             <p style={{ color: 'var(--color-text-muted)', marginBottom: 24, fontSize: '0.9rem' }}>Guests can scan this code to check in and register.</p>
             <div style={{ display: 'inline-flex', justifyContent: 'center', background: 'white', padding: 24, borderRadius: 16, marginBottom: 24 }}>
@@ -822,7 +837,7 @@ function EditSessionModal({ session, onClose, onSuccess }: { session: any, onClo
       <div className={styles.modalContent}>
         <div className={styles.modalHeader} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
           <h2 className={styles.sectionTitle}>Edit Session</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--color-text)' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--color-text)' }}>âœ•</button>
         </div>
         <form onSubmit={handleSave}>
           <div className={styles.formGroup}>
@@ -979,15 +994,15 @@ function CallOutcomeModal({ recordId, onClose, onSuccess, currentUser }: { recor
             value={status} 
             onChange={val => setStatus(val as any)}
             options={[
-              { value: "CONFIRMED", label: "✅ Will Come (Confirmed)" },
-              { value: "MAYBE", label: "🤔 Maybe / Not Sure" },
-              { value: "JOINING_NEXT_SESSION", label: "⏭️ Will join for next session" },
-              { value: "NOT_COMING", label: "❌ Not Coming (This time)" },
-              { value: "DECLINED", label: "🛑 Declined / Not Interested" },
-              { value: "DID_NOT_ANSWER", label: "📵 Did Not Answer" },
-              { value: "BUSY", label: "🕒 Busy / Call Back Later" },
-              { value: "UNAVAILABLE", label: "🚫 Unavailable" },
-              { value: "RESCHEDULE", label: "📅 Reschedule Call" }
+              { value: "CONFIRMED", label: "âœ… Will Come (Confirmed)" },
+              { value: "MAYBE", label: "ðŸ¤” Maybe / Not Sure" },
+              { value: "JOINING_NEXT_SESSION", label: "â­ï¸ Will join for next session" },
+              { value: "NOT_COMING", label: "âŒ Not Coming (This time)" },
+              { value: "DECLINED", label: "ðŸ›‘ Declined / Not Interested" },
+              { value: "DID_NOT_ANSWER", label: "ðŸ“µ Did Not Answer" },
+              { value: "BUSY", label: "ðŸ•’ Busy / Call Back Later" },
+              { value: "UNAVAILABLE", label: "ðŸš« Unavailable" },
+              { value: "RESCHEDULE", label: "ðŸ“… Reschedule Call" }
             ]}
           />
         </div>
@@ -1131,7 +1146,7 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
       <div className={styles.modalContent} style={{ maxWidth: 600 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
           <h2 className={styles.sectionTitle}>Add to Calling Campaign</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--color-text)' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--color-text)' }}>âœ•</button>
         </div>
         
         <div style={{ marginBottom: 16 }}>
@@ -1168,10 +1183,10 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
 
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, marginBottom: 16, whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
           <button className={styles.badge} style={{ flexShrink: 0, background: 'var(--color-danger-light)', color: 'var(--color-danger)' }} onClick={() => handleBulkInvite('HOT')}>
-            + Add All Hot (⭐20+)
+            + Add All Hot (â­20+)
           </button>
           <button className={styles.badge} style={{ flexShrink: 0, background: 'var(--color-warning-light)', color: 'var(--color-warning)' }} onClick={() => handleBulkInvite('PRIORITY')}>
-            + Add All Priority (⭐10+)
+            + Add All Priority (â­10+)
           </button>
           <button className={styles.badge} style={{ flexShrink: 0, background: 'var(--color-primary-light)', color: 'var(--color-primary)' }} onClick={() => handleBulkInvite('WARM')}>
             + Add All Warm (10-19)
@@ -1201,7 +1216,7 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
             <div key={person.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, border: '1px solid var(--color-border)', borderRadius: 8 }}>
               <div>
                 <span style={{ fontWeight: 600 }}>{person.name}</span>
-                {person.priorityScore > 0 && <span style={{ marginLeft: 8, fontSize: '0.75rem', color: 'var(--color-warning)' }}>⭐ {person.priorityScore}</span>}
+                {person.priorityScore > 0 && <span style={{ marginLeft: 8, fontSize: '0.75rem', color: 'var(--color-warning)' }}>â­ {person.priorityScore}</span>}
               </div>
               <button 
                 onClick={() => handleInvite(person.id as number)}
@@ -1220,4 +1235,5 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
     </div>
   );
 }
+
 
