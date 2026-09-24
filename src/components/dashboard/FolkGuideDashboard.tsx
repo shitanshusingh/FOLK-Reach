@@ -150,13 +150,13 @@ export function FolkGuideDashboard() {
       <header className={styles.header}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
           <div style={{ flex: 1, minWidth: 280 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h1 className={styles.greeting}>Performance Dashboard</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <h1 className={styles.greeting} style={{ marginBottom: 0 }}>Performance Dashboard</h1>
               <button className={`no-print ${styles.btnExportIcon}`} onClick={() => window.print()} title="Export PDF">
                 <FileDown size={20} />
               </button>
             </div>
-            <p className={styles.subtitle}>Welcome back, {currentUser?.name}. Monitor your team's progress.</p>
+            <p className={styles.subtitle} style={{ marginTop: 8 }}>Welcome back, {currentUser?.name}. Monitor your team's progress.</p>
           </div>
           
           <div className={`no-print ${styles.filterContainer}`}>
