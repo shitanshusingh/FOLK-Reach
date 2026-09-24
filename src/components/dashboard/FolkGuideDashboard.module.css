@@ -134,6 +134,7 @@
   border: none;
   font-weight: 600;
   cursor: pointer;
+  justify-content: center;
 }
 
 .referralGrid {
@@ -187,85 +188,164 @@
   max-width: 600px;
 }
 
+/* MOBILE LIST LEADERBOARD */
+.mlContainer {
+  display: none;
+}
+
 @media print {
-  body {
-    background: white;
-    color: black;
-  }
-  
-  :global(.no-print) {
-    display: none !important;
-  }
-  
-  .container {
-    padding: 0;
-    border: none;
-    box-shadow: none;
-  }
-  
-  .section {
-    background: transparent;
-    border: 1px solid #ccc;
-    box-shadow: none;
-  }
-  
-  .table th, .table td {
-    color: black;
-    border-bottom: 1px solid #ccc;
-  }
-  
-  .greeting::before {
-    content: "FolkReach Performance Report";
-    display: block;
-    font-size: 1.2rem;
-    color: #666;
-    margin-bottom: 8px;
-  }
+  body { background: white; color: black; }
+  :global(.no-print) { display: none !important; }
+  .container { padding: 0; border: none; box-shadow: none; }
+  .section { background: transparent; border: 1px solid #ccc; box-shadow: none; }
+  .table th, .table td { color: black; border-bottom: 1px solid #ccc; }
+  .greeting::before { content: "FolkReach Performance Report"; display: block; font-size: 1.2rem; color: #666; margin-bottom: 8px; }
 }
 
 @media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+  
+  .filterContainer {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px !important;
+    width: 100%;
+  }
+  
   .filterSelect {
     width: 100%;
-    margin-bottom: 8px;
+    margin: 0;
   }
+  
   .btnDownload {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .table thead {
-    display: none;
-  }
-  
-  .table, .table tbody, .table tr, .table td {
-    display: block;
-    width: 100%;
-  }
-  
-  .table tr {
-    margin-bottom: 16px;
-    background: var(--glass-bg);
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
+    grid-column: span 2;
     padding: 12px;
   }
   
-  .table td {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  
+  .statCard {
+    padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .statIcon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+  }
+  
+  .statIcon svg {
+    width: 20px; height: 20px;
+  }
+  
+  .statValue {
+    font-size: 1.5rem;
+  }
+  
+  .section {
+    padding: 16px;
+  }
+  
+  .sectionTitle {
+    font-size: 1.15rem;
+  }
+
+  /* HIDE DESKTOP TABLE */
+  .tableWrapper {
+    display: none;
+  }
+  
+  /* SHOW MOBILE LIST */
+  .mlContainer {
+    display: block;
+  }
+  
+  .mlCard {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    border: none;
-    padding: 8px 0;
+    padding: 16px;
+    background: var(--glass-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    margin-bottom: 12px;
+    gap: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   }
   
-  .table td::before {
-    content: attr(data-label);
-    font-weight: 600;
+  .mlRank {
+    font-size: 1.25rem;
+    font-weight: 800;
     color: var(--color-text-muted);
-    font-size: 0.85rem;
+    width: 32px;
+    text-align: center;
   }
   
-  :global(.hide-mobile) {
-    display: none !important;
+  .mlRank[data-top="1"] { color: #fbbf24; }
+  .mlRank[data-top="2"] { color: #9ca3af; }
+  .mlRank[data-top="3"] { color: #b45309; }
+
+  .mlBody {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .mlName {
+    font-weight: 700;
+    color: var(--color-text);
+    font-size: 1.05rem;
+  }
+  
+  .mlStatsRow {
+    display: flex;
+    gap: 16px;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    flex-wrap: wrap;
+  }
+  
+  .mlStatItem {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+  }
+  
+  .mlStatItem svg {
+    color: var(--color-primary);
+  }
+  
+  .mlPrimary {
+    text-align: center;
+    background: rgba(168, 85, 247, 0.1);
+    padding: 10px 14px;
+    border-radius: 12px;
+    min-width: 72px;
+  }
+  
+  .mlPrimaryValue {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #a855f7;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  
+  .mlPrimaryLabel {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #a855f7;
+    letter-spacing: 0.5px;
   }
 }

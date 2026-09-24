@@ -168,7 +168,7 @@ export function FolkGuideDashboard() {
             <p className={styles.subtitle}>Welcome back, {currentUser?.name}. Monitor your team's progress.</p>
           </div>
           
-          <div className="no-print" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className={`no-print ${styles.filterContainer}`} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
             <select 
               value={dateFilter} 
               onChange={e => setDateFilter(e.target.value as DateFilter)}
@@ -310,6 +310,8 @@ export function FolkGuideDashboard() {
       
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Leaderboard & Performance</h2>
+        
+        {/* DESKTOP TABLE */}
         <div className={styles.tableWrapper}>
           <table className={styles.table}>
             <thead>
@@ -326,15 +328,15 @@ export function FolkGuideDashboard() {
             <tbody>
               {metrics.userPerformance.map((user, idx) => (
                 <tr key={user.id} onClick={() => setDrilldownUserId(String(user.id))} style={{ cursor: 'pointer' }} className={styles.tableRowHover}>
-                  <td data-label="Rank" style={{ fontWeight: 'bold', color: idx === 0 ? 'var(--color-warning)' : 'inherit' }}>#{idx + 1}</td>
-                  <td data-label="Member" style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{user.name}</td>
-                  <td data-label="Role" className="hide-mobile">
+                  <td style={{ fontWeight: 'bold', color: idx === 0 ? 'var(--color-warning)' : 'inherit' }}>#{idx + 1}</td>
+                  <td style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{user.name}</td>
+                  <td>
                     <span className={styles.roleBadge}>{user.role}</span>
                   </td>
-                  <td data-label="1-to-1s" style={{ fontWeight: user.meetingsWeek > 0 ? 'bold' : 'normal', color: user.meetingsWeek > 0 ? '#a855f7' : 'inherit' }}>{user.meetingsWeek}</td>
-                  <td data-label="Calls" style={{ fontWeight: user.callsWeek > 0 ? 'bold' : 'normal', color: user.callsWeek > 0 ? 'var(--color-success)' : 'inherit' }}>{user.callsWeek}</td>
-                  <td data-label="New Contacts" style={{ fontWeight: user.contactsWeek > 0 ? 'bold' : 'normal', color: user.contactsWeek > 0 ? 'var(--color-primary)' : 'inherit' }}>{user.contactsWeek}</td>
-                  <td data-label="Total Contacts" style={{ fontWeight: 600 }}>{user.contactsTotal}</td>
+                  <td style={{ fontWeight: user.meetingsWeek > 0 ? 'bold' : 'normal', color: user.meetingsWeek > 0 ? '#a855f7' : 'inherit' }}>{user.meetingsWeek}</td>
+                  <td style={{ fontWeight: user.callsWeek > 0 ? 'bold' : 'normal', color: user.callsWeek > 0 ? 'var(--color-success)' : 'inherit' }}>{user.callsWeek}</td>
+                  <td style={{ fontWeight: user.contactsWeek > 0 ? 'bold' : 'normal', color: user.contactsWeek > 0 ? 'var(--color-primary)' : 'inherit' }}>{user.contactsWeek}</td>
+                  <td style={{ fontWeight: 600 }}>{user.contactsTotal}</td>
                 </tr>
               ))}
               {metrics.userPerformance.length === 0 && (
@@ -344,6 +346,41 @@ export function FolkGuideDashboard() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* MOBILE LIST */}
+        <div className={styles.mlContainer}>
+          {metrics.userPerformance.map((user, idx) => (
+            <div key={user.id} className={styles.mlCard} onClick={() => setDrilldownUserId(String(user.id))}>
+              <div className={styles.mlRank} data-top={idx + 1 <= 3 ? idx + 1 : 0}>
+                #{idx + 1}
+              </div>
+              <div className={styles.mlBody}>
+                <div className={styles.mlName}>{user.name}</div>
+                <div className={styles.mlStatsRow}>
+                  <div className={styles.mlStatItem}>
+                    <Phone size={12} />
+                    <span>{user.callsWeek}</span>
+                  </div>
+                  <div className={styles.mlStatItem}>
+                    <Users size={12} />
+                    <span>{user.contactsWeek}</span>
+                  </div>
+                  <div className={styles.mlStatItem}>
+                    <TrendingUp size={12} />
+                    <span>{user.contactsTotal}</span>
+                  </div>
+                </div>
+              </div>
+              <div className={styles.mlPrimary}>
+                <div className={styles.mlPrimaryValue}>{user.meetingsWeek}</div>
+                <div className={styles.mlPrimaryLabel}>1-to-1s</div>
+              </div>
+            </div>
+          ))}
+          {metrics.userPerformance.length === 0 && (
+            <div style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: '20px 0' }}>No team members found.</div>
+          )}
         </div>
       </div>
 
