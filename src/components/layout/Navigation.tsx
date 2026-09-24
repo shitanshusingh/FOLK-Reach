@@ -23,11 +23,14 @@ import {
   User as UserIcon,
   Gift,
   ShieldCheck,
-  Compass
+  Compass,
+  UserCheck
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 
 import { NotificationsTray } from '../notifications/NotificationsTray';
 import { BirthdayChecker } from '../notifications/BirthdayChecker';
@@ -47,6 +50,7 @@ const baseNavItems = [
   { name: 'Analytics', href: '/analytics', icon: BarChart },
   { name: 'Super Admin', href: '/admin', icon: ShieldCheck, roles: ['SUPER_ADMIN'] },
   { name: 'Folk Guide', href: '/guide', icon: Compass, roles: ['FOLK_GUIDE'] },
+  { name: 'Referrals', href: '/referrals', icon: UserCheck, roles: ['FOLK_GUIDE', 'SUPER_ADMIN'] },
   { name: 'Profile', href: '/profile', icon: UserIcon },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
@@ -76,12 +80,25 @@ export function Navigation({ children }: { children: React.ReactNode }) {
 
   // Filter nav items based on user role
   const currentUserRole = currentUser?.role || 'RESIDENT';
-  const navItems = baseNavItems.filter(item => {
+  let navItems = baseNavItems.filter(item => {
     if (item.roles) {
       return item.roles.includes(currentUserRole);
     }
     return true;
   });
+
+  if (currentUserRole === 'FOLK_GUIDE') {
+    const followUps = navItems.find(i => i.name === 'Follow-ups');
+    const referrals = navItems.find(i => i.name === 'Referrals');
+    
+    // Remove both
+    navItems = navItems.filter(i => i.name !== 'Follow-ups' && i.name !== 'Referrals');
+    
+    // Insert Referrals at index 3 (bottom bar)
+    if (referrals) navItems.splice(3, 0, referrals);
+    // Move Follow-ups to the end (More menu)
+    if (followUps) navItems.push(followUps);
+  }
 
   // Top 4 for mobile
   const mobileNavTop = navItems.slice(0, 4);

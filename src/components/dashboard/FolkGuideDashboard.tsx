@@ -238,34 +238,6 @@ export function FolkGuideDashboard() {
         </div>
       </header>
       
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle} style={{ color: 'var(--color-danger)' }}>Incoming Referrals ({metrics.referrals.length})</h2>
-        {metrics.referrals.length > 0 ? (
-          <div className={styles.referralGrid}>
-            {metrics.referrals.map(ref => (
-              <div key={ref.id} className={styles.referralCard}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{ref.person?.name || 'Unknown Contact'}</h3>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: 4 }}>{ref.title}</div>
-                  </div>
-                  {ref.person?.phone && (
-                    <a href={'tel:' + ref.person?.phone} className={styles.btnCall}>
-                      <PhoneCall size={16} /> Call
-                    </a>
-                  )}
-                </div>
-                <div style={{ background: 'var(--glass-bg)', padding: 12, borderRadius: 8, fontSize: '0.9rem', whiteSpace: 'pre-wrap' }}>
-                  {ref.description || ref.notes}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div style={{ color: 'var(--color-text-muted)', padding: '20px 0' }}>No incoming referrals at the moment.</div>
-        )}
-      </div>
-
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
           <div className={styles.statIcon} style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--color-primary)' }}>
