@@ -343,6 +343,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                   {['FOLK_LEADER', 'LEADER', 'SUPER_ADMIN', 'FOLK_GUIDE'].includes(currentUser?.role || '') ? (
                     <select
                         className={styles.actionSelect}
+                        style={{ flexBasis: '100%' }}
                         value={record.assignedUserId ? record.assignedUserId.toString() : ""}
                         onChange={(e) => handleAssignCaller(record.id as number, e.target.value)}
                       >
@@ -352,7 +353,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                         ))}
                       </select>
                   ) : (
-                    <div style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-border)', fontSize: '0.85rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center' }}>
+                    <div style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-border)', fontSize: '0.85rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', flexBasis: '100%' }}>
                       {record.assignedUserId === currentUser?.id ? 'Me' : allUsers?.find(u => u.id === record.assignedUserId)?.name || 'Unassigned'}
                     </div>
                   )}
