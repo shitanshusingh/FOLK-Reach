@@ -341,12 +341,16 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                 
                 <div className={styles.callCardActions}>
                   {['FOLK_LEADER', 'LEADER', 'SUPER_ADMIN', 'FOLK_GUIDE'].includes(currentUser?.role || '') ? (
-                    <GlassSelect 
-                      value={record.assignedUserId ? record.assignedUserId.toString() : ""}
-                      onChange={(val) => handleAssignCaller(record.id as number, val)}
-                      placeholder="Unassigned"
-                      options={allUsers?.map(u => ({ value: u.id!.toString(), label: u.name })) || []}
-                    />
+                    <select
+                        className={styles.actionSelect}
+                        value={record.assignedUserId ? record.assignedUserId.toString() : ""}
+                        onChange={(e) => handleAssignCaller(record.id as number, e.target.value)}
+                      >
+                        <option value="">Unassigned</option>
+                        {allUsers?.map(u => (
+                          <option key={u.id} value={u.id!.toString()}>{u.name}</option>
+                        ))}
+                      </select>
                   ) : (
                     <div style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-border)', fontSize: '0.85rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center' }}>
                       {record.assignedUserId === currentUser?.id ? 'Me' : allUsers?.find(u => u.id === record.assignedUserId)?.name || 'Unassigned'}
@@ -681,9 +685,11 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                     </button>
                   ) : (
                     <div style={{ flex: 1 }}>
-                      <GlassSelect 
+                      <select
+                        className={styles.actionSelect}
                         value={record.status}
-                        onChange={async (val) => {
+                        onChange={async (e) => {
+                          const val = e.target.value;
                           const updateData: any = { status: val };
                           if (val === 'ATTENDED' && !record.checkedInAt) {
                             updateData.checkedInAt = new Date();
@@ -702,13 +708,12 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                           await firestoreAPI.update('sessionAttendance', record.id as number, updateData);
                           setRefreshTrigger(prev => prev + 1);
                         }}
-                        options={[
-                          { value: "CONFIRMED", label: "Expected" },
-                          { value: "ATTENDED", label: "Attended" },
-                          { value: "MISSED", label: "Missed" },
-                          { value: "JOINING_NEXT_SESSION", label: "Next Session" }
-                        ]}
-                      />
+                      >
+                        <option value="CONFIRMED">Expected</option>
+                        <option value="ATTENDED">Attended</option>
+                        <option value="MISSED">Missed</option>
+                        <option value="JOINING_NEXT_SESSION">Next Session</option>
+                      </select>
                     </div>
                   )}
                   <a href={`tel:${record.personPhone}`} className={styles.callActionBtn} aria-label="Call">
