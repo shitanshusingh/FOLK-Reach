@@ -23,8 +23,20 @@ export function FolkGuideDashboard() {
   const metrics = useLiveQuery(async () => {
     if (!currentUser) return null;
     
-    // Get all users under this Folk Guide (or all if SUPER_ADMIN).
+    // Get all users and teams
     let allUsers = await db.users.toArray();
+    let allTeams = await db.teams.toArray();
+    
+    // Filter by Folk Guide if not Super Admin
+    if (currentUser.role === 'FOLK_GUIDE') {
+      allTeams = allTeams.filter(t => String(t.guideId) === String(currentUser.id));
+      const myTeamIds = allTeams.map(t => String(t.id));
+      allUsers = allUsers.filter(u => 
+        String(u.guideId) === String(currentUser.id) || 
+        (u.teamId && myTeamIds.includes(String(u.teamId)))
+      );
+    }
+
     let myUsers = allUsers.filter(u => u.role !== 'SUPER_ADMIN' && u.role !== 'FOLK_GUIDE');
     
     if (teamFilter !== 'ALL') {
@@ -35,9 +47,6 @@ export function FolkGuideDashboard() {
     }
     
     const myUserIds = myUsers.map(u => String(u.id));
-    
-    // Get all teams for filter
-    const allTeams = await db.teams.toArray();
     
     // Get all people assigned to these users
     const allPeople = await db.people.toArray();
