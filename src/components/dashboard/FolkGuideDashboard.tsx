@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, subMonths, isWithinInterval, startOfDay, endOfDay, subDays } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import styles from "./FolkGuideDashboard.module.css";
-import { Users, Phone, Calendar as CalendarIcon, TrendingUp, Download, PhoneCall, X } from "lucide-react";
+import { Users, Phone, Calendar as CalendarIcon, TrendingUp, Download, PhoneCall, X, FileDown } from "lucide-react";
 
 type DateFilter = 'TODAY' | 'YESTERDAY' | 'THIS_WEEK' | 'LAST_WEEK' | 'THIS_MONTH' | 'LAST_MONTH' | 'ALL_TIME' | 'CUSTOM';
 
@@ -132,19 +132,6 @@ export function FolkGuideDashboard() {
       return b.contactsWeek - a.contactsWeek;
     });
 
-    // Incoming Referrals (Tasks)
-    const tasks = await db.tasks.toArray();
-    const myReferrals = tasks.filter(t => 
-      String(t.assignedToUserId || t.assignedUserId) === String(currentUser.id) && 
-      t.title.includes('Referral') && 
-      (t.status === 'TODO' || t.status === 'PENDING')
-    );
-
-    const referralsWithPeople = await Promise.all(myReferrals.map(async ref => {
-      const person = await db.people.get(Number(ref.personId)) || await db.people.get(String(ref.personId));
-      return { ...ref, person };
-    }));
-    
     return {
       allUsersForFilter: allUsers.filter(u => u.role !== 'SUPER_ADMIN' && u.role !== 'FOLK_GUIDE'),
       allTeams,
@@ -152,8 +139,7 @@ export function FolkGuideDashboard() {
       contactsPeriod,
       callsPeriod,
       meetingsPeriod,
-      userPerformance,
-      referrals: referralsWithPeople
+      userPerformance
     };
   }, [currentUser, dateFilter, customStartDate, customEndDate, teamFilter, peopleFilter]);
 
@@ -163,29 +149,36 @@ export function FolkGuideDashboard() {
     <div className={styles.container} id="dashboard-report">
       <header className={styles.header}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
-          <div>
-            <h1 className={styles.greeting}>Performance Dashboard</h1>
+          <div style={{ flex: 1, minWidth: 280 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h1 className={styles.greeting}>Performance Dashboard</h1>
+              <button className={`no-print ${styles.btnExportIcon}`} onClick={() => window.print()} title="Export PDF">
+                <FileDown size={20} />
+              </button>
+            </div>
             <p className={styles.subtitle}>Welcome back, {currentUser?.name}. Monitor your team's progress.</p>
           </div>
           
-          <div className={`no-print ${styles.filterContainer}`} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-            <select 
-              value={dateFilter} 
-              onChange={e => setDateFilter(e.target.value as DateFilter)}
-              className={styles.filterSelect}
-            >
-              <option value="TODAY">Today</option>
-              <option value="YESTERDAY">Yesterday</option>
-              <option value="THIS_WEEK">This Week</option>
-              <option value="LAST_WEEK">Last Week</option>
-              <option value="THIS_MONTH">This Month</option>
-              <option value="LAST_MONTH">Last Month</option>
-              <option value="ALL_TIME">All Time</option>
-              <option value="CUSTOM">Custom Range</option>
-            </select>
+          <div className={`no-print ${styles.filterContainer}`}>
+            <div className={styles.selectWrapper}>
+              <select 
+                value={dateFilter} 
+                onChange={e => setDateFilter(e.target.value as DateFilter)}
+                className={styles.filterSelect}
+              >
+                <option value="TODAY">Today</option>
+                <option value="YESTERDAY">Yesterday</option>
+                <option value="THIS_WEEK">This Week</option>
+                <option value="LAST_WEEK">Last Week</option>
+                <option value="THIS_MONTH">This Month</option>
+                <option value="LAST_MONTH">Last Month</option>
+                <option value="ALL_TIME">All Time</option>
+                <option value="CUSTOM">Custom Range</option>
+              </select>
+            </div>
 
             {dateFilter === 'CUSTOM' && (
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', width: '100%' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', gridColumn: 'span 2' }}>
                 <input 
                   type="date" 
                   value={customStartDate} 
@@ -204,78 +197,78 @@ export function FolkGuideDashboard() {
               </div>
             )}
 
-            <select 
-              value={teamFilter} 
-              onChange={e => {
-                setTeamFilter(e.target.value);
-                setPeopleFilter('ALL'); // Reset member filter when team changes
-              }}
-              className={styles.filterSelect}
-            >
-              <option value="ALL">All Teams</option>
-              {metrics.allTeams.map(t => (
-                <option key={t.id} value={String(t.id)}>{t.name}</option>
-              ))}
-            </select>
+            <div className={styles.selectWrapper}>
+              <select 
+                value={teamFilter} 
+                onChange={e => {
+                  setTeamFilter(e.target.value);
+                  setPeopleFilter('ALL');
+                }}
+                className={styles.filterSelect}
+              >
+                <option value="ALL">All Teams</option>
+                {metrics.allTeams.map(t => (
+                  <option key={t.id} value={String(t.id)}>{t.name}</option>
+                ))}
+              </select>
+            </div>
             
-            <select 
-              value={peopleFilter} 
-              onChange={e => setPeopleFilter(e.target.value)}
-              className={styles.filterSelect}
-            >
-              <option value="ALL">All Members</option>
-              {metrics.allUsersForFilter
-                .filter(u => teamFilter === 'ALL' || String(u.teamId) === teamFilter)
-                .map(u => (
-                  <option key={u.id} value={String(u.id)}>{u.name}</option>
-              ))}
-            </select>
-            
-            <button className={styles.btnDownload} onClick={() => window.print()}>
-              <Download size={16} /> Export PDF
-            </button>
+            <div className={styles.selectWrapper}>
+              <select 
+                value={peopleFilter} 
+                onChange={e => setPeopleFilter(e.target.value)}
+                className={styles.filterSelect}
+              >
+                <option value="ALL">All Members</option>
+                {metrics.allUsersForFilter
+                  .filter(u => teamFilter === 'ALL' || String(u.teamId) === teamFilter)
+                  .map(u => (
+                    <option key={u.id} value={String(u.id)}>{u.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </header>
-      
+
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
           <div className={styles.statIcon} style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--color-primary)' }}>
-            <Users size={24} />
+            <TrendingUp size={20} />
           </div>
           <div className={styles.statInfo}>
-            <div className={styles.statLabel}>New Contacts</div>
             <div className={styles.statValue}>{metrics.contactsPeriod}</div>
+            <div className={styles.statLabel}>New Contacts</div>
           </div>
         </div>
         
         <div className={styles.statCard}>
           <div className={styles.statIcon} style={{ background: 'rgba(34, 197, 94, 0.1)', color: 'var(--color-success)' }}>
-            <Phone size={24} />
+            <Phone size={20} />
           </div>
           <div className={styles.statInfo}>
-            <div className={styles.statLabel}>Follow-up Calls</div>
             <div className={styles.statValue}>{metrics.callsPeriod}</div>
+            <div className={styles.statLabel}>Follow-up Calls</div>
           </div>
         </div>
         
         <div className={styles.statCard}>
           <div className={styles.statIcon} style={{ background: 'rgba(168, 85, 247, 0.1)', color: '#a855f7' }}>
-            <CalendarIcon size={24} />
+            <CalendarIcon size={20} />
           </div>
           <div className={styles.statInfo}>
-            <div className={styles.statLabel}>1-to-1 Meetings</div>
             <div className={styles.statValue}>{metrics.meetingsPeriod}</div>
+            <div className={styles.statLabel}>1-to-1 Meetings</div>
           </div>
         </div>
         
         <div className={styles.statCard}>
           <div className={styles.statIcon} style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--color-danger)' }}>
-            <TrendingUp size={24} />
+            <Users size={20} />
           </div>
           <div className={styles.statInfo}>
-            <div className={styles.statLabel}>Total Network</div>
             <div className={styles.statValue}>{metrics.totalContacts}</div>
+            <div className={styles.statLabel}>Total Connections</div>
           </div>
         </div>
       </div>
@@ -294,7 +287,7 @@ export function FolkGuideDashboard() {
                 <th>1-to-1s</th>
                 <th>Calls</th>
                 <th>New Contacts</th>
-                <th>Total Contacts</th>
+                <th>Total Connections</th>
               </tr>
             </thead>
             <tbody>
@@ -330,23 +323,20 @@ export function FolkGuideDashboard() {
               <div className={styles.mlBody}>
                 <div className={styles.mlName}>{user.name}</div>
                 <div className={styles.mlStatsRow}>
-                  <div className={styles.mlStatItem}>
-                    <Phone size={12} />
-                    <span>{user.callsWeek}</span>
+                  <div className={styles.mlBadge} title="Calls">
+                    <Phone size={10} /> {user.callsWeek}
                   </div>
-                  <div className={styles.mlStatItem}>
-                    <Users size={12} />
-                    <span>{user.contactsWeek}</span>
+                  <div className={styles.mlBadge} title="New Contacts">
+                    <TrendingUp size={10} /> {user.contactsWeek}
                   </div>
-                  <div className={styles.mlStatItem}>
-                    <TrendingUp size={12} />
-                    <span>{user.contactsTotal}</span>
+                  <div className={styles.mlBadge} title="Total Connections">
+                    <Users size={10} /> {user.contactsTotal}
                   </div>
                 </div>
               </div>
               <div className={styles.mlPrimary}>
                 <div className={styles.mlPrimaryValue}>{user.meetingsWeek}</div>
-                <div className={styles.mlPrimaryLabel}>1-to-1s</div>
+                <div className={styles.mlPrimaryLabel}>1-TO-1S</div>
               </div>
             </div>
           ))}
