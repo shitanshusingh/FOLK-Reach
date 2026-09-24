@@ -144,7 +144,36 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
       };
     }));
 
-    const filtered = joined;
+    // Fetch full hierarchy to determine visibility
+    let allUsers = await db.users.toArray();
+    let allTeams = await db.teams.toArray();
+    
+    let validOwnerIds = [String(currentUser.id)];
+
+    if (currentUser.role === 'SUPER_ADMIN') {
+      validOwnerIds = allUsers.map(u => String(u.id));
+    } else if (currentUser.role === 'FOLK_GUIDE') {
+      const myTeams = allTeams.filter(t => String(t.guideId) === String(currentUser.id));
+      const myTeamIds = myTeams.map(t => String(t.id));
+      const myUsers = allUsers.filter(u => 
+        String(u.guideId) === String(currentUser.id) || 
+        (u.teamId && myTeamIds.includes(String(u.teamId)))
+      );
+      validOwnerIds = [...validOwnerIds, ...myUsers.map(u => String(u.id))];
+    } else if (currentUser.role === 'FOLK_LEADER' || currentUser.role === 'LEADER') {
+      if (currentUser.teamId) {
+        const myTeamUsers = allUsers.filter(u => String(u.teamId) === String(currentUser.teamId));
+        validOwnerIds = [...validOwnerIds, ...myTeamUsers.map(u => String(u.id))];
+      }
+    }
+
+    const uniqueOwnerIds = new Set(validOwnerIds);
+
+    const filtered = joined.filter(record => {
+      const ownerId = String(record.personOwnerId);
+      const assignedId = record.assignedUserId ? String(record.assignedUserId) : null;
+      return uniqueOwnerIds.has(ownerId) || (assignedId && uniqueOwnerIds.has(assignedId));
+    });
 
     filtered.sort((a, b) => {
       // 1. Current user's assigned/owned contacts bubble to the top
@@ -1083,11 +1112,26 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
   const [selectedUserId, setSelectedUserId] = useState<string>('ALL');
 
   const teamUsers = useLiveQuery(async () => {
-    if (['SUPER_ADMIN', 'FOLK_GUIDE'].includes(currentUser?.role || '')) {
+    if (!currentUser?.id) return [];
+    if (currentUser.role === 'SUPER_ADMIN') {
       return await db.users.toArray();
     }
-    if (!currentUser?.teamId) return currentUser?.id ? [currentUser] : [];
-    return await db.users.where('teamId').equals(currentUser.teamId).toArray();
+    if (currentUser.role === 'FOLK_GUIDE') {
+      let allTeams = await db.teams.toArray();
+      const myTeams = allTeams.filter(t => String(t.guideId) === String(currentUser.id));
+      const myTeamIds = myTeams.map(t => String(t.id));
+      const allUsers = await db.users.toArray();
+      return allUsers.filter(u => 
+        String(u.guideId) === String(currentUser.id) || 
+        (u.teamId && myTeamIds.includes(String(u.teamId)))
+      );
+    }
+    if (currentUser.role === 'FOLK_LEADER' || currentUser.role === 'LEADER') {
+      if (!currentUser.teamId) return [currentUser];
+      return await db.users.where('teamId').equals(currentUser.teamId).toArray();
+    }
+    // Regular MEMBER
+    return [currentUser];
   }, [currentUser?.teamId, currentUser?.id, currentUser?.role]);
 
   const allPeople = useLiveQuery(async () => {
