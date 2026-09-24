@@ -497,18 +497,18 @@ export default function PersonProfilePage({ params }: { params: Promise<{ id: st
                   if (!referGuideId) return;
                   await db.tasks.add({
                     personId: id,
-                    assignedUserId: referGuideId,
+                    assignedToUserId: referGuideId,
                     title: `Referral: ${person.name}`,
                     type: 'MEETING',
-                    status: 'PENDING',
-                    dueDate: new Date(),
-                    notes: `Referred by ${currentUser?.name}:\n${referNotes}`
+                    status: 'TODO',
+                    dueDate: new Date().toISOString(),
+                    description: `Referred by ${currentUser?.name}:\n${referNotes}`
                   });
                   await db.notifications.add({
                     userId: referGuideId,
                     message: `${currentUser?.name} referred a contact to you: ${person.name}.`,
                     isRead: false,
-                    createdAt: new Date(),
+                    createdAt: new Date().toISOString(),
                     link: `/people/${id}`
                   });
                   alert(`Referred to Guide successfully!`);

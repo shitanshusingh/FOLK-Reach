@@ -135,9 +135,9 @@ export function FolkGuideDashboard() {
     // Incoming Referrals (Tasks)
     const tasks = await db.tasks.toArray();
     const myReferrals = tasks.filter(t => 
-      String(t.assignedUserId) === String(currentUser.id) && 
+      String(t.assignedToUserId || t.assignedUserId) === String(currentUser.id) && 
       t.title.includes('Referral') && 
-      t.status === 'PENDING'
+      (t.status === 'TODO' || t.status === 'PENDING')
     );
 
     const referralsWithPeople = await Promise.all(myReferrals.map(async ref => {
@@ -236,9 +236,9 @@ export function FolkGuideDashboard() {
         </div>
       </header>
       
-      {metrics.referrals.length > 0 && (
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle} style={{ color: 'var(--color-danger)' }}>Incoming Referrals ({metrics.referrals.length})</h2>
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle} style={{ color: 'var(--color-danger)' }}>Incoming Referrals ({metrics.referrals.length})</h2>
+        {metrics.referrals.length > 0 ? (
           <div className={styles.referralGrid}>
             {metrics.referrals.map(ref => (
               <div key={ref.id} className={styles.referralCard}>
@@ -254,13 +254,15 @@ export function FolkGuideDashboard() {
                   )}
                 </div>
                 <div style={{ background: 'var(--glass-bg)', padding: 12, borderRadius: 8, fontSize: '0.9rem', whiteSpace: 'pre-wrap' }}>
-                  {ref.notes}
+                  {ref.description || ref.notes}
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <div style={{ color: 'var(--color-text-muted)', padding: '20px 0' }}>No incoming referrals at the moment.</div>
+        )}
+      </div>
 
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
