@@ -23,6 +23,8 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
   const [durationMinutes, setDurationMinutes] = useState<number | "">("");
   const [isManuallyEdited, setIsManuallyEdited] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [isTimerRunning, setIsTimerRunning] = useState(true);
+  const [hasHidden, setHasHidden] = useState(false);
   const [startTime] = useState(Date.now());
 
   // Automatically calculate elapsed time when they return to the app
@@ -30,6 +32,7 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
     if (type !== 'CALL') return;
 
     const updateTimer = () => {
+      if (!isTimerRunning) return;
       const elapsedMs = Date.now() - startTime;
       const totalSecs = Math.floor(elapsedMs / 1000);
       setElapsedSeconds(totalSecs);
@@ -40,8 +43,13 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
     };
 
     const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'hidden') {
+        setHasHidden(true);
+      } else if (document.visibilityState === 'visible') {
         updateTimer();
+        if (hasHidden) {
+          setIsTimerRunning(false);
+        }
       }
     };
     
@@ -52,7 +60,7 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
       document.removeEventListener('visibilitychange', handleVisibility);
       clearInterval(interval);
     };
-  }, [type, startTime, isManuallyEdited]);
+  }, [type, startTime, isManuallyEdited, isTimerRunning, hasHidden]);
   
   // Meeting specific
   const [meetingLocation, setMeetingLocation] = useState("At FOLK");

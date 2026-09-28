@@ -15,6 +15,8 @@ export function QuickDialerModal({ onClose }: { onClose: () => void }) {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [durationMinutes, setDurationMinutes] = useState<number | "">("");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [isTimerRunning, setIsTimerRunning] = useState(true);
+  const [hasHidden, setHasHidden] = useState(false);
   const [isManuallyEdited, setIsManuallyEdited] = useState(false);
   
   // Outcome State (Only shown if tracking)
@@ -46,6 +48,7 @@ export function QuickDialerModal({ onClose }: { onClose: () => void }) {
     if (!isCalling || !startTime) return;
 
     const updateTimer = () => {
+      if (!isTimerRunning) return;
       const elapsedMs = Date.now() - startTime;
       const totalSecs = Math.floor(elapsedMs / 1000);
       setElapsedSeconds(totalSecs);
@@ -56,8 +59,13 @@ export function QuickDialerModal({ onClose }: { onClose: () => void }) {
     };
 
     const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'hidden') {
+        setHasHidden(true);
+      } else if (document.visibilityState === 'visible') {
         updateTimer();
+        if (hasHidden) {
+          setIsTimerRunning(false);
+        }
       }
     };
     
@@ -68,7 +76,7 @@ export function QuickDialerModal({ onClose }: { onClose: () => void }) {
       document.removeEventListener('visibilitychange', handleVisibility);
       clearInterval(interval);
     };
-  }, [isCalling, startTime, isManuallyEdited]);
+  }, [isCalling, startTime, isManuallyEdited, isTimerRunning, hasHidden]);
 
   const formatTime = (totalSeconds: number) => {
     const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
