@@ -31,7 +31,7 @@ export default function AnalyticsPage() {
       people = people.filter(p => userIds.includes(String(p.assignedUserId)) || userIds.includes(String(p.ownerId)));
       
       const peopleIds = people.map(p => String(p.id));
-      interactions = interactions.filter(i => peopleIds.includes(String(i.personId)));
+      interactions = interactions.filter(i => peopleIds.includes(String(i.personId)) || (String(i.personId) === "UNSAVED_CALL" && userIds.includes(String(i.creatorId))));
       tasks = tasks.filter(t => peopleIds.includes(String(t.personId)));
     } else if (currentUser.role === 'FOLK_LEADER') {
       title = "Residence Analytics";
@@ -40,7 +40,7 @@ export default function AnalyticsPage() {
       people = people.filter(p => userIds.includes(String(p.assignedUserId)) || userIds.includes(String(p.ownerId)));
       
       const peopleIds = people.map(p => String(p.id));
-      interactions = interactions.filter(i => peopleIds.includes(String(i.personId)));
+      interactions = interactions.filter(i => peopleIds.includes(String(i.personId)) || (String(i.personId) === "UNSAVED_CALL" && userIds.includes(String(i.creatorId))));
       tasks = tasks.filter(t => peopleIds.includes(String(t.personId)));
     } else {
       title = "Your Personal Analytics";
@@ -48,7 +48,7 @@ export default function AnalyticsPage() {
       people = people.filter(p => userIds.includes(String(p.assignedUserId)) || userIds.includes(String(p.ownerId)));
       
       const peopleIds = people.map(p => String(p.id));
-      interactions = interactions.filter(i => peopleIds.includes(String(i.personId)));
+      interactions = interactions.filter(i => peopleIds.includes(String(i.personId)) || (String(i.personId) === "UNSAVED_CALL" && userIds.includes(String(i.creatorId))));
       tasks = tasks.filter(t => peopleIds.includes(String(t.personId)));
     }
 

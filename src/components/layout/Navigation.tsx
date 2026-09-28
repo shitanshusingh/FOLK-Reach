@@ -32,6 +32,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { NotificationsTray } from '../notifications/NotificationsTray';
 import { BirthdayChecker } from '../notifications/BirthdayChecker';
 import { QuickAddContact } from '../people/QuickAddContact';
+import { QuickDialerModal } from '../people/QuickDialerModal';
+import { Phone, UserPlus } from 'lucide-react';
 
 const baseNavItems = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -56,6 +58,8 @@ export function Navigation({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { logout, currentUser } = useAuth();
   const [showGlobalQuickAdd, setShowGlobalQuickAdd] = useState(false);
+  const [showQuickDialer, setShowQuickDialer] = useState(false);
+  const [showFabMenu, setShowFabMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
@@ -229,19 +233,46 @@ export function Navigation({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      {/* Global Floating Action Button for Quick Add (Only on Dashboard & People) */}
+      {/* Global Floating Action Button Menu (Only on Dashboard & People) */}
       {(pathname === '/' || pathname === '/people') && (
-        <button 
-          className={styles.globalFab}
-          onClick={() => setShowGlobalQuickAdd(true)}
-          aria-label="Quick Add Contact"
-        >
-          <Plus size={28} />
-        </button>
+        <>
+          {showFabMenu && (
+            <div className={styles.fabMenuOverlay} onClick={() => setShowFabMenu(false)}>
+              <div className={styles.fabMenu} onClick={e => e.stopPropagation()}>
+                <button 
+                  className={styles.fabMenuItem} 
+                  onClick={() => { setShowFabMenu(false); setShowGlobalQuickAdd(true); }}
+                >
+                  <UserPlus size={20} />
+                  <span>Add Contact</span>
+                </button>
+                <button 
+                  className={styles.fabMenuItem} 
+                  onClick={() => { setShowFabMenu(false); setShowQuickDialer(true); }}
+                >
+                  <Phone size={20} />
+                  <span>Quick Dialer</span>
+                </button>
+              </div>
+            </div>
+          )}
+          <button 
+            className={styles.globalFab}
+            onClick={() => setShowFabMenu(!showFabMenu)}
+            aria-label="Actions Menu"
+            style={{ transform: showFabMenu ? 'rotate(45deg)' : 'rotate(0deg)' }}
+          >
+            <Plus size={28} />
+          </button>
+        </>
       )}
 
       {showGlobalQuickAdd && (
         <QuickAddContact onClose={() => setShowGlobalQuickAdd(false)} />
+      )}
+      
+      {showQuickDialer && (
+        <QuickDialerModal onClose={() => setShowQuickDialer(false)} />
       )}
       
       {/* Invisible Background Checkers */}
