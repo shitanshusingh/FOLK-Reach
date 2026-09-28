@@ -156,6 +156,16 @@ export default function DashboardPage() {
       );
     }
 
+    // Second: Add anyone who was interacted with today (so they stay in the completed list!)
+    for (const [personId, interaction] of doneToday.entries()) {
+      if (inActionPlan.has(personId)) continue;
+      const person = allPeople.find(p => p.id === personId);
+      if (person) {
+        const type = (interaction.type === 'MEETING' || interaction.type === 'PRASADAM' || interaction.type === 'BOOK') ? 'MEETING' : 'CALL';
+        addToActionPlan(person, 'Completed Today', false, type);
+      }
+    }
+
     // Third: Intelligent Auto-Pipeline Fill
     // We want to fill the dashboard with contacts based on URGENCY.
     // URGENCY = daysSince / threshold. 
@@ -206,27 +216,10 @@ export default function DashboardPage() {
       else dormantCandidates.push(candidate);
     }
 
-    // Sort each tier by urgency descending
-    const sortByUrgency = (a: Candidate, b: Candidate) => b.urgency - a.urgency;
-    hotCandidates.sort(sortByUrgency);
-    warmCandidates.sort(sortByUrgency);
-    coldCandidates.sort(sortByUrgency);
-    dormantCandidates.sort(sortByUrgency);
-
-    const mixedCandidates: Candidate[] = [];
-    const queues = [hotCandidates, warmCandidates, coldCandidates, dormantCandidates];
-    
-    // Round-robin pull from each tier to ensure a healthy mixture of all contact types
-    let activeQueues = queues.length;
-    while(activeQueues > 0) {
-      activeQueues = 0;
-      for (const queue of queues) {
-        if (queue.length > 0) {
-          mixedCandidates.push(queue.shift()!);
-          activeQueues++;
-        }
-      }
-    }
+    // Pure urgency sort across all tiers so that completed items smoothly slide up 
+    // and new items strictly append to the bottom of the list.
+    const mixedCandidates = [...hotCandidates, ...warmCandidates, ...coldCandidates, ...dormantCandidates];
+    mixedCandidates.sort((a, b) => b.urgency - a.urgency);
 
     for (const { person, daysSince, threshold, urgency } of mixedCandidates) {
       const isDue = urgency >= 1;
