@@ -104,7 +104,7 @@ export default function DashboardPage() {
       
       // If they already did something today, categorize them based on what they actually DID today
       const isRescheduled = outcome === 'Reschedule';
-      const isDone = !!interaction && !isRescheduled; 
+      const isDone = !!interaction; 
       
       const isMeeting = interaction?.type === 'MEETING' || interaction?.type === 'PRASADAM' || interaction?.type === 'BOOK' || outcome === 'Meeting - Done' || outcome === 'Done' || isRescheduled;
       const resolvedType = !!interaction ? (isMeeting ? 'MEETING' : 'CALL') : type;
