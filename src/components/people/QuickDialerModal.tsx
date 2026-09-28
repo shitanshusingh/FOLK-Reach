@@ -89,8 +89,8 @@ export function QuickDialerModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={e => e.stopPropagation()}>
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
         <div className={styles.header}>
           <h2>📞 Quick Dialer</h2>
           <button onClick={onClose} className={styles.closeBtn}><X size={20} /></button>
