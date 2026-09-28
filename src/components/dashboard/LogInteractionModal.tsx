@@ -22,6 +22,7 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
   const [notes, setNotes] = useState("");
   const [durationMinutes, setDurationMinutes] = useState<number | "">("");
   const [isManuallyEdited, setIsManuallyEdited] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [startTime] = useState(Date.now());
 
   // Automatically calculate elapsed time when they return to the app
@@ -31,6 +32,7 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
     const updateTimer = () => {
       const elapsedMs = Date.now() - startTime;
       const totalSecs = Math.floor(elapsedMs / 1000);
+      setElapsedSeconds(totalSecs);
       
       if (!isManuallyEdited) {
         setDurationMinutes(Math.max(1, Math.ceil(totalSecs / 60)));
@@ -43,7 +45,7 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
       }
     };
     
-    const interval = setInterval(updateTimer, 5000);
+    const interval = setInterval(updateTimer, 1000);
 
     document.addEventListener('visibilitychange', handleVisibility);
     return () => {
@@ -159,6 +161,12 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
     }
   };
 
+  const formatTime = (totalSeconds: number) => {
+    const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+    const s = (totalSeconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalContent}>
@@ -250,7 +258,14 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
                 </div>
               )}
               <div className={styles.formGroup}>
-                <label className={styles.label}>Call Duration (minutes)</label>
+                <label className={styles.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Call Duration (minutes)</span>
+                  {!isManuallyEdited && elapsedSeconds > 0 && (
+                    <span style={{ fontFamily: 'monospace', fontSize: '1rem', color: 'var(--color-primary)', background: 'var(--color-surface-hover)', padding: '2px 8px', borderRadius: 4 }}>
+                      {formatTime(elapsedSeconds)}
+                    </span>
+                  )}
+                </label>
                 <input 
                   type="number"
                   min="0"

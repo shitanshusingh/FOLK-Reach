@@ -23,32 +23,37 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
   const [notes, setNotes] = useState("");
   const [durationMinutes, setDurationMinutes] = useState<number | "">("");
   const [isManuallyEdited, setIsManuallyEdited] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [startTime] = useState(Date.now());
 
   // Automatically calculate elapsed time when they return to the app
   useEffect(() => {
     if (type !== 'CALL') return;
 
+    const updateTimer = () => {
+      const elapsedMs = Date.now() - startTime;
+      const totalSecs = Math.floor(elapsedMs / 1000);
+      setElapsedSeconds(totalSecs);
+      
+      if (!isManuallyEdited) {
+        setDurationMinutes(Math.max(1, Math.ceil(totalSecs / 60)));
+      }
+    };
+
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        const elapsedMs = Date.now() - startTime;
-        const elapsedMins = Math.round(elapsedMs / 60000);
-        setDurationMinutes(prev => prev === "" ? Math.max(1, elapsedMins) : prev);
+        updateTimer();
       }
     };
     
-    const interval = setInterval(() => {
-      const elapsedMs = Date.now() - startTime;
-      const elapsedMins = Math.round(elapsedMs / 60000);
-      setDurationMinutes(prev => prev === "" && elapsedMins > 0 ? elapsedMins : prev);
-    }, 10000);
+    const interval = setInterval(updateTimer, 1000);
 
     document.addEventListener('visibilitychange', handleVisibility);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
       clearInterval(interval);
     };
-  }, [type, startTime]);
+  }, [type, startTime, isManuallyEdited]);
   const [selectedTopics, setSelectedTopics] = useState<number[]>([]);
   
   // Book specific
@@ -154,6 +159,12 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
     }
   };
 
+  const formatTime = (totalSeconds: number) => {
+    const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+    const s = (totalSeconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalContent}>
@@ -215,7 +226,14 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
 
               {type === 'CALL' && (
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>Call Duration (minutes)</label>
+                  <label className={styles.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>Call Duration (minutes)</span>
+                    {!isManuallyEdited && elapsedSeconds > 0 && (
+                      <span style={{ fontFamily: 'monospace', fontSize: '1rem', color: 'var(--color-primary)', background: 'var(--color-surface-hover)', padding: '2px 8px', borderRadius: 4 }}>
+                        {formatTime(elapsedSeconds)}
+                      </span>
+                    )}
+                  </label>
                   <input 
                     type="number" 
                     min="0"
