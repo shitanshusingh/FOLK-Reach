@@ -123,7 +123,7 @@ export function QuickDialerModal({ onClose }: { onClose: () => void }) {
 
               <button 
                 type="button" 
-                className={styles.submitBtn} 
+                className={`${styles.btn} ${styles.btnSave}`} 
                 onClick={handleCall}
                 disabled={!phoneNumber}
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
@@ -172,7 +172,7 @@ export function QuickDialerModal({ onClose }: { onClose: () => void }) {
                 <button type="button" onClick={onClose} className={styles.cancelBtn} style={{ flex: 1, padding: '12px', borderRadius: 8, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--color-text)' }}>
                   Discard
                 </button>
-                <button type="button" onClick={handleSaveTrack} className={styles.submitBtn} style={{ flex: 1 }}>
+                <button type="button" onClick={handleSaveTrack} className={`${styles.btn} ${styles.btnSave}`} style={{ flex: 1 }}>
                   Save Time
                 </button>
               </div>
