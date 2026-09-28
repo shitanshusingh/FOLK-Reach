@@ -14,6 +14,8 @@ export function QuickDialerModal({ onClose }: { onClose: () => void }) {
   const [isCalling, setIsCalling] = useState(false);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [durationMinutes, setDurationMinutes] = useState<number | "">("");
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [isManuallyEdited, setIsManuallyEdited] = useState(false);
   
   // Outcome State (Only shown if tracking)
   const [outcome, setOutcome] = useState("Connected - Good Interaction");
@@ -39,30 +41,40 @@ export function QuickDialerModal({ onClose }: { onClose: () => void }) {
     setMatchedPerson(match || null);
   }, [phoneNumber, allPeople]);
 
-  // Handle return from native dialer
+  // Handle return from native dialer & live timer
   useEffect(() => {
     if (!isCalling || !startTime) return;
 
+    const updateTimer = () => {
+      const elapsedMs = Date.now() - startTime;
+      const totalSecs = Math.floor(elapsedMs / 1000);
+      setElapsedSeconds(totalSecs);
+      
+      if (!isManuallyEdited) {
+        setDurationMinutes(Math.max(1, Math.ceil(totalSecs / 60)));
+      }
+    };
+
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        const elapsedMs = Date.now() - startTime;
-        const elapsedMins = Math.round(elapsedMs / 60000);
-        setDurationMinutes(prev => prev === "" ? Math.max(1, elapsedMins) : prev);
+        updateTimer();
       }
     };
     
-    const interval = setInterval(() => {
-      const elapsedMs = Date.now() - startTime;
-      const elapsedMins = Math.round(elapsedMs / 60000);
-      setDurationMinutes(prev => prev === "" && elapsedMins > 0 ? elapsedMins : prev);
-    }, 10000);
+    const interval = setInterval(updateTimer, 1000);
 
     document.addEventListener('visibilitychange', handleVisibility);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
       clearInterval(interval);
     };
-  }, [isCalling, startTime]);
+  }, [isCalling, startTime, isManuallyEdited]);
+
+  const formatTime = (totalSeconds: number) => {
+    const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+    const s = (totalSeconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
 
   const handleCall = () => {
     if (!phoneNumber) return;
@@ -136,7 +148,10 @@ export function QuickDialerModal({ onClose }: { onClose: () => void }) {
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
                 <Phone size={48} style={{ color: 'var(--color-primary)', marginBottom: 16, animation: 'pulse 2s infinite' }} />
                 <h3>Call in progress...</h3>
-                <p style={{ color: 'var(--color-text-muted)' }}>When you return, log the time below.</p>
+                <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--color-text)', margin: '16px 0', fontFamily: 'monospace' }}>
+                  {formatTime(elapsedSeconds)}
+                </div>
+                <p style={{ color: 'var(--color-text-muted)' }}>Timer continues running in the background.</p>
               </div>
 
               <div className={styles.formGroup}>
@@ -146,9 +161,17 @@ export function QuickDialerModal({ onClose }: { onClose: () => void }) {
                   min="0"
                   className={styles.input} 
                   value={durationMinutes}
-                  onChange={e => setDurationMinutes(e.target.value ? Number(e.target.value) : "")}
+                  onChange={e => {
+                    setIsManuallyEdited(true);
+                    setDurationMinutes(e.target.value ? Number(e.target.value) : "");
+                  }}
                   placeholder="e.g. 5"
                 />
+                {!isManuallyEdited && elapsedSeconds > 0 && (
+                  <small style={{ color: 'var(--color-primary)', marginTop: 4, display: 'block' }}>
+                    Auto-tracking based on live timer.
+                  </small>
+                )}
               </div>
 
               {matchedPerson && (
