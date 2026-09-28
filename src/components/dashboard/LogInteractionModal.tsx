@@ -1,7 +1,7 @@
 "use client";
 // @ts-nocheck
 import { db } from "@/lib/db";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { X } from "lucide-react";
 import styles from "./LogInteractionModal.module.css";
@@ -21,6 +21,34 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
   const [outcome, setOutcome] = useState("Connected - Good Interaction");
   const [notes, setNotes] = useState("");
   const [durationMinutes, setDurationMinutes] = useState<number | "">("");
+  const [startTime] = useState(Date.now());
+
+  // Automatically calculate elapsed time when they return to the app
+  useEffect(() => {
+    if (type !== 'CALL') return;
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        const elapsedMs = Date.now() - startTime;
+        const elapsedMins = Math.round(elapsedMs / 60000);
+        // Only auto-fill if they haven't manually edited it already, or if it's currently empty
+        setDurationMinutes(prev => prev === "" ? Math.max(1, elapsedMins) : prev);
+      }
+    };
+    
+    // Also run a simple timer just in case they never background the app
+    const interval = setInterval(() => {
+      const elapsedMs = Date.now() - startTime;
+      const elapsedMins = Math.round(elapsedMs / 60000);
+      setDurationMinutes(prev => prev === "" && elapsedMins > 0 ? elapsedMins : prev);
+    }, 10000);
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      clearInterval(interval);
+    };
+  }, [type, startTime]);
   
   // Meeting specific
   const [meetingLocation, setMeetingLocation] = useState("At FOLK");

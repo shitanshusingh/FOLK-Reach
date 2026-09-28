@@ -3,7 +3,7 @@
 import { useLiveQuery } from "@/lib/firestore";
 import { db } from "@/lib/db";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, UserPlus, Phone, CheckCircle, Clock, Edit2, Trash2, QrCode, XCircle } from "lucide-react";
 import { GlassSelect } from "@/components/ui/GlassSelect";
