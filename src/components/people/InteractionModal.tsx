@@ -22,6 +22,7 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
   const [purpose, setPurpose] = useState("");
   const [notes, setNotes] = useState("");
   const [durationMinutes, setDurationMinutes] = useState<number | "">("");
+  const [isManuallyEdited, setIsManuallyEdited] = useState(false);
   const [startTime] = useState(Date.now());
 
   // Automatically calculate elapsed time when they return to the app
@@ -221,7 +222,7 @@ export function InteractionModal({ personId, initialType = 'CALL', onClose }: In
                     className={styles.input} 
                     placeholder="e.g. 5"
                     value={durationMinutes}
-                    onChange={e => setDurationMinutes(e.target.value ? Number(e.target.value) : "")}
+                    onChange={e => { setIsManuallyEdited(true); setDurationMinutes(e.target.value ? Number(e.target.value) : ""); }}
                   />
                 </div>
               )}

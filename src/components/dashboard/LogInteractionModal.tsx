@@ -21,34 +21,36 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
   const [outcome, setOutcome] = useState("Connected - Good Interaction");
   const [notes, setNotes] = useState("");
   const [durationMinutes, setDurationMinutes] = useState<number | "">("");
+  const [isManuallyEdited, setIsManuallyEdited] = useState(false);
   const [startTime] = useState(Date.now());
 
   // Automatically calculate elapsed time when they return to the app
   useEffect(() => {
     if (type !== 'CALL') return;
 
+    const updateTimer = () => {
+      const elapsedMs = Date.now() - startTime;
+      const totalSecs = Math.floor(elapsedMs / 1000);
+      
+      if (!isManuallyEdited) {
+        setDurationMinutes(Math.max(1, Math.ceil(totalSecs / 60)));
+      }
+    };
+
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        const elapsedMs = Date.now() - startTime;
-        const elapsedMins = Math.round(elapsedMs / 60000);
-        // Only auto-fill if they haven't manually edited it already, or if it's currently empty
-        setDurationMinutes(prev => prev === "" ? Math.max(1, elapsedMins) : prev);
+        updateTimer();
       }
     };
     
-    // Also run a simple timer just in case they never background the app
-    const interval = setInterval(() => {
-      const elapsedMs = Date.now() - startTime;
-      const elapsedMins = Math.round(elapsedMs / 60000);
-      setDurationMinutes(prev => prev === "" && elapsedMins > 0 ? elapsedMins : prev);
-    }, 10000);
+    const interval = setInterval(updateTimer, 5000);
 
     document.addEventListener('visibilitychange', handleVisibility);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
       clearInterval(interval);
     };
-  }, [type, startTime]);
+  }, [type, startTime, isManuallyEdited]);
   
   // Meeting specific
   const [meetingLocation, setMeetingLocation] = useState("At FOLK");
@@ -254,7 +256,7 @@ export function LogInteractionModal({ person, type, onClose, onSuccess }: LogInt
                   min="0"
                   className={styles.input} 
                   value={durationMinutes}
-                  onChange={e => setDurationMinutes(e.target.value ? Number(e.target.value) : "")}
+                  onChange={e => { setIsManuallyEdited(true); setDurationMinutes(e.target.value ? Number(e.target.value) : ""); }}
                   placeholder="e.g. 5"
                 />
               </div>
