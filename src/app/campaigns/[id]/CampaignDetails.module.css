@@ -16,37 +16,42 @@
 }
 
 .statsCard {
-  display: flex;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
   margin: 24px 0;
 }
 
 .statBox {
-  flex: 1;
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  padding: 24px;
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 16px;
+  padding: 16px 20px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  box-shadow: var(--shadow-sm);
+  justify-content: flex-start;
+  align-items: flex-start;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  position: relative;
+  overflow: hidden;
 }
 
 .statBox h3 {
-  font-size: 1rem;
+  font-size: 0.8rem;
   color: var(--color-text-muted);
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .statNumber {
-  font-size: 2.5rem;
+  font-size: 1.8rem;
   font-weight: 800;
   color: var(--color-text);
   margin: 0;
+  line-height: 1;
 }
 
 .textSuccess {
@@ -196,7 +201,7 @@
     justify-content: center;
   }
   .statsCard {
-    flex-direction: column;
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
   .statBox {

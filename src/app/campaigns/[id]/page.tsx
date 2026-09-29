@@ -83,8 +83,12 @@ export default function CampaignDetailsPage() {
 
       <div className={styles.statsCard}>
         <div className={styles.statBox}>
-          <h3>Total Assigned</h3>
+          <h3>Assigned</h3>
           <p className={styles.statNumber}>{totalLeads}</p>
+        </div>
+        <div className={styles.statBox}>
+          <h3>Pending</h3>
+          <p className={styles.statNumber}>{pendingLeads.length}</p>
         </div>
         <div className={styles.statBox}>
           <h3>Completed</h3>
