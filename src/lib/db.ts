@@ -164,7 +164,7 @@ export interface CampaignLead {
   name: string;
   phone: string;
   hostel?: string;
-  status: 'PENDING' | 'INTERESTED' | 'NOT_INTERESTED' | 'NO_ANSWER' | 'CONVERTED';
+  status: 'PENDING' | 'INTERESTED' | 'NOT_INTERESTED' | 'NO_ANSWER' | 'CONVERTED' | 'FOLLOW_UP' | 'AVERAGE';
   assignedToUserId?: string | number;
   callNotes?: string;
   durationMinutes?: number;
