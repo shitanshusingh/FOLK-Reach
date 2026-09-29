@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './Navigation.module.css';
-import { 
+import {  
   LayoutDashboard, 
   Users, 
   Calendar, 
@@ -25,7 +25,7 @@ import {
   ShieldCheck,
   Compass,
   UserCheck
-} from 'lucide-react';
+, PhoneCall } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,6 +40,7 @@ const baseNavItems = [
   { name: 'People', href: '/people', icon: Users },
   { name: 'Sessions', href: '/sessions', icon: Calendar },
   { name: 'Follow-ups', href: '/tasks', icon: CheckSquare },
+    { name: 'Campaigns', href: '/campaigns', icon: PhoneCall },
   { name: '1-to-1s', href: '/meetings', icon: Coffee },
   { name: 'Birthdays', href: '/birthdays', icon: Gift },
   { name: 'Groups', href: '/groups', icon: FolderOpen },

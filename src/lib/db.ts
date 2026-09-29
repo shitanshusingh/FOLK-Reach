@@ -147,6 +147,30 @@ export interface CustomGroup {
   description?: string;
 }
 
+
+export interface Campaign {
+  id?: string | number;
+  title: string;
+  description?: string;
+  creatorId: string | number;
+  teamId?: string | number;
+  status: 'ACTIVE' | 'COMPLETED';
+  createdAt: Date | string;
+}
+
+export interface CampaignLead {
+  id?: string | number;
+  campaignId: string | number;
+  name: string;
+  phone: string;
+  hostel?: string;
+  status: 'PENDING' | 'INTERESTED' | 'NOT_INTERESTED' | 'NO_ANSWER' | 'CONVERTED';
+  assignedToUserId?: string | number;
+  callNotes?: string;
+  durationMinutes?: number;
+  lastCalledAt?: Date | string;
+}
+
 export interface ContactTransfer {
   id?: string | number;
   personId: string | number;
@@ -263,6 +287,8 @@ export const db = {
   notifications: createCollectionProxy('notifications'),
   customFields: createCollectionProxy('customFields'),
   customGroups: createCollectionProxy('customGroups'),
+  campaigns: createCollectionProxy('campaigns'),
+  campaignLeads: createCollectionProxy('campaignLeads'),
 };
 
 // Remove dummy data seeding logic! It's Firebase now.
