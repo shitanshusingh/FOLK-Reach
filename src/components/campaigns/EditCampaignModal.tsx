@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { db } from "@/lib/db";
 import { X } from "lucide-react";
-import styles from "./CreateCampaignModal.module.css";
+import styles from "../../app/campaigns/Campaigns.module.css";
 import { useLiveQuery } from "@/lib/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 
