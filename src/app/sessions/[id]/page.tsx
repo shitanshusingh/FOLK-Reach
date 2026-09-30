@@ -327,15 +327,15 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
       {activeTab === 'CALLING' && (
         <div>
           <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>Calling Campaign</h2>
+            <h2 className={styles.sectionTitle}>Session Calling List</h2>
             <button className={styles.btnAction} onClick={() => setShowInviteModal(true)}>
-              <UserPlus size={18} /> Add to Campaign
+              <UserPlus size={18} /> Add to Calling List
             </button>
           </div>
 
           <input
             type="text"
-            placeholder="Search campaign by name or phone..."
+            placeholder="Search list by name or phone..."
             value={callingSearchQuery}
             onChange={e => setCallingSearchQuery(e.target.value)}
             style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-border)', marginBottom: '16px', background: 'var(--color-surface)', color: 'var(--color-text)' }}
@@ -1161,7 +1161,7 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
   const handleInvite = async (personId: number) => {
     const existing = await db.sessionAttendance.where({ sessionId, personId }).first() || await db.sessionAttendance.where('sessionId').equals(sessionId).and(r => r.personId === personId).first();
     if (existing) {
-      alert("This person is already in the campaign!");
+      alert("This person is already in this session!");
       return;
     }
 
@@ -1209,7 +1209,7 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
     <div className={styles.modalOverlay}>
       <div className={styles.modalContent} style={{ maxWidth: 600 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-          <h2 className={styles.sectionTitle}>Add to Calling Campaign</h2>
+          <h2 className={styles.sectionTitle}>Add to Session Calling List</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--color-text)' }}>✕</button>
         </div>
         
@@ -1292,7 +1292,7 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
             </div>
           ))}
           {allPeople && allPeople.filter(p => !existingPersonIds.has(p.id)).length === 0 && (
-            <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: 20 }}>Everyone is already in the campaign!</p>
+            <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: 20 }}>Everyone is already in the session calling list!</p>
           )}
         </div>
       </div>
