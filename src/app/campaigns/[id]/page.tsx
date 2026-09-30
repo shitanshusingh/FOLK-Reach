@@ -98,7 +98,7 @@ export default function CampaignDetailsPage() {
             <h1 style={{ fontSize: '2.5rem', lineHeight: 1.1, marginBottom: 8 }}>{campaign.title}</h1>
             <p style={{ color: 'var(--color-text-muted)', marginBottom: 12 }}>{campaign.description}</p>
             
-            {(currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'FOLK_GUIDE' || String(campaign.createdByUserId) === String(currentUser?.id)) && (
+            {(currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'FOLK_GUIDE' || String(campaign.creatorId) === String(currentUser?.id)) && (
               <div style={{ display: 'flex', gap: 12 }}>
                 <button onClick={() => setShowEditModal(true)} style={{ background: 'var(--color-surface)', border: '1px solid var(--glass-border)', color: 'var(--color-text)', padding: '6px 12px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.9rem', cursor: 'pointer' }}>
                   <Edit size={16} /> Edit
