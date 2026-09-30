@@ -97,7 +97,7 @@ export function EditCampaignModal({ campaign, onClose, teamUsers, rawLeads }: { 
 
           <div className={styles.formGroup}>
             <label>Assign Callers</label>
-            <div className={styles.assigneesGrid}>
+            <div className={styles.assigneesList}>
               {teamUsers.map((u: any) => (
                 <label key={u.id} className={styles.assigneeCheckbox}>
                   <input 
