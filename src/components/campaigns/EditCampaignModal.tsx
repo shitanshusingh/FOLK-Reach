@@ -5,10 +5,12 @@ import styles from "../../app/campaigns/Campaigns.module.css";
 import { useLiveQuery } from "@/lib/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 
-export function EditCampaignModal({ campaign, onClose, teamUsers }: { campaign: any; onClose: () => void; teamUsers: any[] }) {
+export function EditCampaignModal({ campaign, onClose, teamUsers, rawLeads }: { campaign: any; onClose: () => void; teamUsers: any[]; rawLeads: any[] }) {
   const [title, setTitle] = useState(campaign.title);
   const [description, setDescription] = useState(campaign.description || "");
-  const [selectedAssignees, setSelectedAssignees] = useState<string[]>(campaign.assigneeIds || []);
+  // Derive initial assignees dynamically from pending leads (since we didn't store assigneeIds historically)
+  const initialAssignees = Array.from(new Set(rawLeads.filter(l => l.status === 'PENDING' || l.status === 'NO_ANSWER').map(l => String(l.assignedToUserId))));
+  const [selectedAssignees, setSelectedAssignees] = useState<string[]>(initialAssignees);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleAssignee = (userId: string) => {
@@ -26,7 +28,7 @@ export function EditCampaignModal({ campaign, onClose, teamUsers }: { campaign: 
 
     try {
       // 1. Find removed assignees
-      const removedAssignees = campaign.assigneeIds.filter((id: string) => !selectedAssignees.includes(id));
+      const removedAssignees = initialAssignees.filter((id: string) => !selectedAssignees.includes(id));
       
       if (removedAssignees.length > 0) {
         // Fetch all PENDING leads for this campaign

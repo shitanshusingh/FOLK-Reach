@@ -115,10 +115,10 @@ export default function CampaignDetailsPage() {
             
             {(currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'FOLK_GUIDE' || String(campaign.creatorId) === String(currentUser?.id)) && (
               <div style={{ display: 'flex', gap: 12 }}>
-                <button onClick={() => setShowEditModal(true)} style={{ background: 'var(--color-surface)', border: '1px solid var(--glass-border)', color: 'var(--color-text)', padding: '6px 12px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.9rem', cursor: 'pointer' }}>
+                <button onClick={() => setShowEditModal(true)} className={styles.actionBtn}>
                   <Edit size={16} /> Edit
                 </button>
-                <button onClick={handleDelete} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '6px 12px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.9rem', cursor: 'pointer' }}>
+                <button onClick={handleDelete} className={`${styles.actionBtn} ${styles.deleteBtn}`}>
                   <Trash2 size={16} /> Delete
                 </button>
               </div>
@@ -206,7 +206,8 @@ export default function CampaignDetailsPage() {
       {showEditModal && teamUsers && (
         <EditCampaignModal 
           campaign={campaign} 
-          teamUsers={teamUsers} 
+          teamUsers={teamUsers}
+          rawLeads={rawLeads}
           onClose={() => setShowEditModal(false)} 
         />
       )}
