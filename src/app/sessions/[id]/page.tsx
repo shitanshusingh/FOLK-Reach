@@ -783,9 +783,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
             const person = await firestoreAPI.get('people', personId as string | number);
             
             // Prevent duplicate records
-            const existingRecord = await db.sessionAttendance
-              .where({ sessionId: id, personId: personId as number })
-              .first() || await db.sessionAttendance.where('sessionId').equals(id).and(r => r.personId === (personId as number)).first();
+            const existingRecord = await db.sessionAttendance.where('sessionId').equals(id).filter((r: any) => String(r.personId) === String(personId)).first();
 
             if (existingRecord) {
               await firestoreAPI.update('sessionAttendance', existingRecord.id as number, {
@@ -1159,7 +1157,7 @@ function InviteModal({ sessionId, onClose, onSuccess, existingRecords }: any) {
   const existingPersonIds = new Set(existingRecords.map((r: any) => r.personId));
   
   const handleInvite = async (personId: number) => {
-    const existing = await db.sessionAttendance.where({ sessionId, personId }).first() || await db.sessionAttendance.where('sessionId').equals(sessionId).and(r => r.personId === personId).first();
+    const existing = await db.sessionAttendance.where('sessionId').equals(sessionId).filter((r: any) => String(r.personId) === String(personId)).first();
     if (existing) {
       alert("This person is already in this session!");
       return;
