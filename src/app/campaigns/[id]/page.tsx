@@ -62,6 +62,21 @@ export default function CampaignDetailsPage() {
   };
 
 
+
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this entire campaign? This cannot be undone.")) return;
+    try {
+      await db.campaigns.delete(campaignId);
+      for (const l of rawLeads) {
+         await db.campaignLeads.delete(l.id);
+      }
+      router.push('/campaigns');
+    } catch(e) {
+      console.error(e);
+      alert("Error deleting campaign");
+    }
+  };
+
   const downloadCSV = () => {
     const headers = ["Name", "Phone", "Assigned Member", "Status", "Notes", "Duration (mins)", "Call Date"];
     const rows = visibleLeads.map(l => {
