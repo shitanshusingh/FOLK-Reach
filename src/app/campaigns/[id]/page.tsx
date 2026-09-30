@@ -15,6 +15,8 @@ export default function CampaignDetailsPage() {
   
   const campaignId = params.id as string;
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const campaign = useLiveQuery(async () => {
     return await db.campaigns.get(campaignId);
@@ -63,8 +65,9 @@ export default function CampaignDetailsPage() {
 
 
 
-  const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this entire campaign? This cannot be undone.")) return;
+  
+  const performDelete = async () => {
+    setIsDeleting(true);
     try {
       await db.campaigns.delete(campaignId);
       for (const l of rawLeads) {
@@ -74,8 +77,10 @@ export default function CampaignDetailsPage() {
     } catch(e) {
       console.error(e);
       alert("Error deleting campaign");
+      setIsDeleting(false);
     }
   };
+
 
   const downloadCSV = () => {
     const headers = ["Name", "Phone", "Assigned Member", "Status", "Notes", "Duration (mins)", "Call Date"];
@@ -118,7 +123,7 @@ export default function CampaignDetailsPage() {
                 <button onClick={() => setShowEditModal(true)} className={styles.actionBtn}>
                   <Edit size={16} /> Edit
                 </button>
-                <button onClick={handleDelete} className={`${styles.actionBtn} ${styles.deleteBtn}`}>
+                <button onClick={() => setShowDeleteModal(true)} className={`${styles.actionBtn} ${styles.deleteBtn}`}>
                   <Trash2 size={16} /> Delete
                 </button>
               </div>
@@ -210,6 +215,24 @@ export default function CampaignDetailsPage() {
           rawLeads={rawLeads}
           onClose={() => setShowEditModal(false)} 
         />
+      )}
+
+      {showDeleteModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent} style={{ maxWidth: 400, textAlign: 'center' }}>
+            <Trash2 size={48} color="#ef4444" style={{ margin: '0 auto 16px' }} />
+            <h2 style={{ marginBottom: 12 }}>Delete Campaign?</h2>
+            <p style={{ color: 'var(--color-text-muted)', marginBottom: 24 }}>
+              Are you sure you want to permanently delete this campaign and all of its lead data? This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button onClick={() => setShowDeleteModal(false)} className="secondary-btn" disabled={isDeleting}>Cancel</button>
+              <button onClick={performDelete} className="primary-btn" style={{ background: '#ef4444', borderColor: '#ef4444', color: '#fff' }} disabled={isDeleting}>
+                {isDeleting ? "Deleting..." : "Yes, Delete It"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
