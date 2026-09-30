@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLiveQuery } from "@/lib/firestore";
 import { db } from "@/lib/db";
 import { Phone, X, ThumbsUp, ThumbsDown, RotateCcw, AlertTriangle, ArrowLeft, User, CalendarClock, Minus, PhoneOff, CheckCircle } from "lucide-react";
+import { QuickAddContact } from "@/components/people/QuickAddContact";
 
 export default function CampaignDialerPage() {
   const params = useParams();
@@ -17,10 +18,19 @@ export default function CampaignDialerPage() {
     const list = await db.campaignLeads.toArray();
     return list.filter(l => 
       String(l.campaignId) === String(campaignId) && 
-      String(l.assignedToUserId) === String(currentUser.id) &&
-      l.status === 'PENDING'
+      String(l.assignedToUserId) === String(currentUser.id)
     );
   }, [campaignId, currentUser]);
+  
+  // Auto-seek to the first PENDING lead on mount
+  useEffect(() => {
+    if (rawLeads && rawLeads.length > 0 && currentIndex === 0) {
+      const firstPendingIndex = rawLeads.findIndex(l => l.status === 'PENDING');
+      if (firstPendingIndex > 0) {
+        setCurrentIndex(firstPendingIndex);
+      }
+    }
+  }, [rawLeads?.length]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isCalling, setIsCalling] = useState(false);
@@ -31,7 +41,7 @@ export default function CampaignDialerPage() {
   
   // Disposition State
   const [notes, setNotes] = useState("");
-  const [convertToContact, setConvertToContact] = useState(true);
+  const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Timer Logic
@@ -111,7 +121,7 @@ export default function CampaignDialerPage() {
 
       // 1. Update Lead Status
       await db.campaignLeads.update(currentLead.id as string, {
-        status: (outcomeStatus === 'INTERESTED' && convertToContact) ? 'CONVERTED' : outcomeStatus,
+        status: currentLead.personId ? 'CONVERTED' : outcomeStatus,
         callNotes: notes,
         durationMinutes: isCalling ? durationMinutes : 0,
         lastCalledAt: new Date().toISOString()
@@ -159,7 +169,12 @@ export default function CampaignDialerPage() {
     setElapsedSeconds(0);
     setIsTimerRunning(false);
     setNotes("");
-    setConvertToContact(true);
+    // no op
+  };
+
+  const backLead = () => {
+    resetState();
+    if (currentIndex > 0) setCurrentIndex(i => i - 1);
   };
 
   const skipLead = () => {
@@ -261,35 +276,50 @@ export default function CampaignDialerPage() {
                     <RotateCcw size={20} /> No Answer (Retry Later)
                   </button>
                   
-                  <div style={{ marginTop: 24, textAlign: 'left', background: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, border: '1px solid var(--glass-border)' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', fontSize: '0.95rem' }}>
-                      <input 
-                        type="checkbox" 
-                        checked={convertToContact}
-                        onChange={e => setConvertToContact(e.target.checked)}
-                        style={{ width: 18, height: 18, accentColor: 'var(--color-primary)' }}
-                      />
-                      Save to Main CRM Contact List
-                    </label>
-                  </div>
+                  {!currentLead.personId && (
+                    <div style={{ marginTop: 24, textAlign: 'center' }}>
+                      <button 
+                        onClick={() => setShowAddContactModal(true)}
+                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', color: 'white', padding: '10px 20px', borderRadius: 'var(--radius-full)', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600 }}
+                      >
+                        + Create CRM Contact for this Lead
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           )}
         </div>
       </div>
+      
+      {showAddContactModal && (
+        <QuickAddContact 
+          onClose={() => setShowAddContactModal(false)}
+          personToEdit={{ name: currentLead.name, phone: currentLead.phone }}
+          onSuccess={async (newPersonId) => {
+             await db.campaignLeads.update(currentLead.id as string, { personId: newPersonId });
+             setShowAddContactModal(false);
+          }}
+        />
+      )}
 
       {/* Bottom Action Bar */}
       <div style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.1)', background: 'rgba(20,20,25,0.8)', backdropFilter: 'blur(20px)', marginTop: 'auto' }}>
         <button onClick={() => router.push(`/campaigns/${campaignId}`)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: 600, padding: '10px 16px', borderRadius: 'var(--radius-full)' }}>
           <ArrowLeft size={16} /> Exit
         </button>
-        <div style={{ fontSize: '0.85rem', color: '#c4b5fd', fontWeight: 700, background: 'rgba(124,58,237,0.15)', padding: '6px 12px', borderRadius: 'var(--radius-full)', border: '1px solid rgba(124,58,237,0.3)' }}>
-          {currentIndex + 1} of {rawLeads.length}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button onClick={backLead} disabled={currentIndex === 0} style={{ background: 'transparent', border: 'none', color: currentIndex === 0 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.5)', cursor: currentIndex === 0 ? 'default' : 'pointer', fontWeight: 600 }}>
+            &larr; Back
+          </button>
+          <div style={{ fontSize: '0.85rem', color: '#c4b5fd', fontWeight: 700, background: 'rgba(124,58,237,0.15)', padding: '6px 12px', borderRadius: 'var(--radius-full)', border: '1px solid rgba(124,58,237,0.3)' }}>
+            {currentIndex + 1} of {rawLeads.length}
+          </div>
+          <button onClick={skipLead} disabled={currentIndex >= rawLeads.length - 1} style={{ background: 'transparent', border: 'none', color: currentIndex >= rawLeads.length - 1 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.5)', cursor: currentIndex >= rawLeads.length - 1 ? 'default' : 'pointer', fontWeight: 600 }}>
+            Skip &rarr;
+          </button>
         </div>
-        <button onClick={skipLead} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontWeight: 600 }}>
-          Skip &rarr;
-        </button>
       </div>
     </div>
   );

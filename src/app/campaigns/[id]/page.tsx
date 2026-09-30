@@ -4,7 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLiveQuery } from "@/lib/firestore";
 import { db } from "@/lib/db";
-import { PhoneCall, ArrowLeft, Play, User, Clock, CheckCircle } from "lucide-react";
+import { PhoneCall, ArrowLeft, Play, User, Clock, CheckCircle, Edit, Trash2, Download } from "lucide-react";
+import { EditCampaignModal } from "@/components/campaigns/EditCampaignModal";
 import styles from "./CampaignDetails.module.css";
 
 export default function CampaignDetailsPage() {
@@ -13,6 +14,7 @@ export default function CampaignDetailsPage() {
   const { currentUser } = useAuth();
   
   const campaignId = params.id as string;
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const campaign = useLiveQuery(async () => {
     return await db.campaigns.get(campaignId);
@@ -66,13 +68,24 @@ export default function CampaignDetailsPage() {
           <ArrowLeft size={16} /> Back to Campaigns
         </button>
         <div className={styles.headerFlex} style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-          <div style={{ wordBreak: 'break-word', overflowWrap: 'break-word', maxWidth: '100%' }}>
+          <div style={{ wordBreak: 'break-word', overflowWrap: 'break-word', maxWidth: '100%', flex: 1 }}>
             <h1 style={{ fontSize: '2.5rem', lineHeight: 1.1, marginBottom: 8 }}>{campaign.title}</h1>
-            <p style={{ color: 'var(--color-text-muted)' }}>{campaign.description}</p>
+            <p style={{ color: 'var(--color-text-muted)', marginBottom: 12 }}>{campaign.description}</p>
+            
+            {(currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'FOLK_GUIDE' || String(campaign.createdByUserId) === String(currentUser?.id)) && (
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button onClick={() => setShowEditModal(true)} style={{ background: 'var(--color-surface)', border: '1px solid var(--glass-border)', color: 'var(--color-text)', padding: '6px 12px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.9rem', cursor: 'pointer' }}>
+                  <Edit size={16} /> Edit
+                </button>
+                <button onClick={handleDelete} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '6px 12px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.9rem', cursor: 'pointer' }}>
+                  <Trash2 size={16} /> Delete
+                </button>
+              </div>
+            )}
           </div>
           <button 
             className="primary-btn" 
-            style={{ padding: '12px 24px', fontSize: '1.1rem' }}
+            style={{ padding: '12px 24px', fontSize: '1.1rem', flexShrink: 0, marginLeft: 16 }}
             disabled={pendingLeads.length === 0}
             onClick={() => router.push(`/campaigns/${campaignId}/dialer`)}
           >
@@ -103,9 +116,14 @@ export default function CampaignDetailsPage() {
       </div>
 
       <div className={styles.tableContainer}>
-        <div className={styles.tableHeader}>
-          <h2>Lead Responses</h2>
-          <p>You can see responses here and restart the dialer to retry 'No Answer' leads.</p>
+        <div className={styles.tableHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+          <div>
+            <h2>Lead Responses</h2>
+            <p>You can see responses here and restart the dialer to retry 'No Answer' leads.</p>
+          </div>
+          <button onClick={downloadCSV} style={{ background: 'var(--color-surface)', border: '1px solid var(--glass-border)', color: 'var(--color-text)', padding: '8px 16px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem', cursor: 'pointer', fontWeight: 600 }}>
+            <Download size={18} /> Export CSV
+          </button>
         </div>
         
         {visibleLeads.length === 0 ? (
@@ -143,6 +161,14 @@ export default function CampaignDetailsPage() {
           </div>
         )}
       </div>
+
+      {showEditModal && teamUsers && (
+        <EditCampaignModal 
+          campaign={campaign} 
+          teamUsers={teamUsers} 
+          onClose={() => setShowEditModal(false)} 
+        />
+      )}
     </div>
   );
 }
