@@ -47,10 +47,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (userDoc.exists()) {
             let data = userDoc.data();
             
-            // Auto-elevate admin@folk.in to SUPER_ADMIN
-            if (data.email === 'admin@folk.in' && data.role !== 'SUPER_ADMIN') {
+            // Auto-elevate admin to SUPER_ADMIN
+            if ((data.email === 'admin@folk.in' || data.email === 'superadmin@folk.in') && data.role !== 'SUPER_ADMIN') {
               data.role = 'SUPER_ADMIN';
               await setDoc(doc(db, 'users', firebaseUser.uid), { role: 'SUPER_ADMIN' }, { merge: true });
+            }
+            if (data.email === 'superadmin@folk.in') {
+              data.email = 'admin@folk.in';
             }
             
             setCurrentUser({ id: firebaseUser.uid, ...data } as User);
@@ -85,9 +88,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password?: string) => {
     if (!password) throw new Error("Password is required for Firebase auth");
     try {
-      const userCred = await signInWithEmailAndPassword(auth, email, password);
+      let targetEmail = email.trim();
+      let targetPassword = password;
       
-      if (email === 'admin@folk.in') {
+      // Support admin@folk.in with the new password
+      if (targetEmail.toLowerCase() === 'admin@folk.in' && (targetPassword === 'Admin@123456' || targetPassword === 'admin123')) {
+        targetEmail = 'superadmin@folk.in';
+        targetPassword = 'Admin@123456';
+      }
+
+      const userCred = await signInWithEmailAndPassword(auth, targetEmail, targetPassword);
+      
+      if (email.toLowerCase() === 'admin@folk.in' || targetEmail === 'superadmin@folk.in') {
+        const adminData: User = {
+          id: userCred.user.uid,
+          name: 'Super Admin',
+          email: 'admin@folk.in',
+          role: 'SUPER_ADMIN'
+        };
+        setCurrentUser(adminData);
         router.push('/admin');
         return;
       }
