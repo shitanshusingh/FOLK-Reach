@@ -126,7 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           router.push('/');
         }
       } else {
-        await signOut(auth);
+        await firebaseSignOut(auth);
         throw new Error("Your account was found, but your profile is missing from the database. This happens if the account was created manually in the Firebase Console instead of through the app. Please ask the Super Admin to delete the account from Firebase and sign up properly through the app.");
       }
     } catch (error: any) {

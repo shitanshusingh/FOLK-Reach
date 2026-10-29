@@ -129,30 +129,20 @@ export default function CampaignDialerPage() {
 
       // 2. Log Interaction to User Analytics
       await db.interactions.add({
-        personId: "UNSAVED_CALL",
+        personId: currentLead.personId || "UNSAVED_CALL",
         userId: currentUser.id,
         type: 'CALL',
         notes: `Campaign Call: ${currentLead.name}. Result: ${outcomeStatus}. Notes: ${notes}`,
         date: new Date().toISOString(),
       });
 
-      // 3. Optional: Create Contact
-      if (outcomeStatus === 'INTERESTED' && convertToContact) {
-        await db.people.add({
-          name: currentLead.name,
-          phone: currentLead.phone,
-          assignedUserId: currentUser.id,
-          priorityScore: 3,
-          tags: ["Campaign Lead"],
-          notes: `Converted from Campaign: ${notes}`
-        });
-      }
-
-      // 4. Move to Next Lead
+      // 3. Move to Next Lead
       resetState();
       
       if (currentIndex >= rawLeads.length - 1) {
         router.push(`/campaigns/${campaignId}`);
+      } else {
+        setCurrentIndex(prev => prev + 1);
       }
       
     } catch (error) {
