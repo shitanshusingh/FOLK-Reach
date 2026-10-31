@@ -1,38 +1,60 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import React, { useState, useEffect, Suspense } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLiveQuery } from "@/lib/firestore";
 import { db } from "@/lib/db";
-import { Phone, X, ThumbsUp, ThumbsDown, RotateCcw, AlertTriangle, ArrowLeft, User, CalendarClock, Minus, PhoneOff, CheckCircle } from "lucide-react";
+import { Phone, ThumbsUp, ThumbsDown, RotateCcw, ArrowLeft, User, CalendarClock, Minus, PhoneOff, CheckCircle } from "lucide-react";
 import { QuickAddContact } from "@/components/people/QuickAddContact";
 
-export default function CampaignDialerPage() {
+function CampaignDialerContent() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { currentUser } = useAuth();
+  
   const campaignId = params.id as string;
+  const mode = searchParams.get('mode') || 'all'; // 'retry' | 'pending' | 'all'
 
   const rawLeads = useLiveQuery(async () => {
     if (!currentUser) return [];
     const list = await db.campaignLeads.toArray();
-    return list.filter(l => 
+    const userLeads = list.filter(l => 
       String(l.campaignId) === String(campaignId) && 
       String(l.assignedToUserId) === String(currentUser.id)
     );
-  }, [campaignId, currentUser]);
-  
-  // Auto-seek to the first PENDING lead on mount
-  useEffect(() => {
-    if (rawLeads && rawLeads.length > 0 && currentIndex === 0) {
-      const firstPendingIndex = rawLeads.findIndex(l => l.status === 'PENDING');
-      if (firstPendingIndex > 0) {
-        setCurrentIndex(firstPendingIndex);
-      }
+    // If user is a leader and has no specifically assigned leads, allow dialing campaign leads
+    if (userLeads.length === 0 && ["LEADER", "FOLK_LEADER", "ADMIN", "SUPER_ADMIN", "FOLK_GUIDE"].includes(currentUser.role)) {
+      return list.filter(l => String(l.campaignId) === String(campaignId));
     }
-  }, [rawLeads?.length]);
+    return userLeads;
+  }, [campaignId, currentUser]);
 
+  // Stable session queue containing IDs of leads to dial in this session
+  const [queueIds, setQueueIds] = useState<string[] | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Initialize queue once when rawLeads is loaded
+  useEffect(() => {
+    if (rawLeads && queueIds === null) {
+      const pending = rawLeads.filter(l => l.status === 'PENDING');
+      const noAnswer = rawLeads.filter(l => l.status === 'NO_ANSWER');
+
+      let targetLeads: any[] = [];
+      if (mode === 'retry') {
+        targetLeads = noAnswer;
+      } else if (mode === 'pending') {
+        targetLeads = pending;
+      } else {
+        // Default: uncalled pending leads first, then no answer retries
+        targetLeads = [...pending, ...noAnswer];
+      }
+
+      setQueueIds(targetLeads.map(l => String(l.id)));
+      setCurrentIndex(0);
+    }
+  }, [rawLeads, queueIds, mode]);
+
   const [isCalling, setIsCalling] = useState(false);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -43,6 +65,17 @@ export default function CampaignDialerPage() {
   const [notes, setNotes] = useState("");
   const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Current lead lookup from rawLeads via stable queueId
+  const currentLeadId = queueIds && queueIds.length > 0 ? queueIds[currentIndex] : null;
+  const currentLead = rawLeads && currentLeadId ? rawLeads.find(l => String(l.id) === currentLeadId) : null;
+
+  // Sync notes when current lead changes
+  useEffect(() => {
+    if (currentLead) {
+      setNotes(currentLead.callNotes || "");
+    }
+  }, [currentLead?.id]);
 
   // Timer Logic
   useEffect(() => {
@@ -80,14 +113,34 @@ export default function CampaignDialerPage() {
     return `${m}:${s}`;
   };
 
-  if (!currentUser || !rawLeads) return null;
+  const resetState = () => {
+    setIsCalling(false);
+    setStartTime(null);
+    setElapsedSeconds(0);
+    setIsTimerRunning(false);
+    setNotes("");
+  };
 
-  if (rawLeads.length === 0) {
+  if (!currentUser || !rawLeads || queueIds === null) {
+    return (
+      <div style={{ padding: '40px 20px', textAlign: 'center', minHeight: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'var(--color-text-muted)' }}>Loading dialer queue...</p>
+      </div>
+    );
+  }
+
+  if (queueIds.length === 0) {
     return (
       <div style={{ padding: '40px 20px', textAlign: 'center', minHeight: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         <CheckCircle size={64} style={{ color: '#10b981', marginBottom: 20 }} />
         <h1>You're All Caught Up!</h1>
-        <p style={{ color: 'var(--color-text-muted)', marginBottom: 30 }}>You have no more pending leads for this campaign.</p>
+        <p style={{ color: 'var(--color-text-muted)', marginBottom: 30 }}>
+          {mode === 'retry' 
+            ? "No 'No Answer' leads left to retry for this campaign." 
+            : mode === 'pending'
+            ? "No new uncalled leads left for this campaign."
+            : "You have no pending or unanswered calls remaining for this campaign."}
+        </p>
         <button className="primary-btn" onClick={() => router.push(`/campaigns/${campaignId}`)}>
           Back to Dashboard
         </button>
@@ -95,12 +148,24 @@ export default function CampaignDialerPage() {
     );
   }
 
-  const currentLead = rawLeads[currentIndex];
+  if (!currentLead) {
+    return (
+      <div style={{ padding: '40px 20px', textAlign: 'center', minHeight: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <CheckCircle size={64} style={{ color: '#10b981', marginBottom: 20 }} />
+        <h1>Calling Session Finished!</h1>
+        <p style={{ color: 'var(--color-text-muted)', marginBottom: 30 }}>You have reached the end of this calling queue.</p>
+        <button className="primary-btn" onClick={() => router.push(`/campaigns/${campaignId}`)}>
+          Back to Dashboard
+        </button>
+      </div>
+    );
+  }
 
   const handleDial = () => {
     if (!currentLead.phone) return;
     setIsCalling(true);
     setStartTime(Date.now());
+    setElapsedSeconds(0);
     setIsTimerRunning(true);
     setHasHidden(false);
 
@@ -116,14 +181,12 @@ export default function CampaignDialerPage() {
 
     try {
       const durationMinutes = Math.max(1, Math.ceil(elapsedSeconds / 60));
-      
-      let finalStatus = outcomeStatus as string;
 
       // 1. Update Lead Status
       await db.campaignLeads.update(currentLead.id as string, {
         status: currentLead.personId ? 'CONVERTED' : outcomeStatus,
         callNotes: notes,
-        durationMinutes: isCalling ? durationMinutes : 0,
+        durationMinutes: isCalling ? durationMinutes : (currentLead.durationMinutes || 0),
         lastCalledAt: new Date().toISOString()
       });
 
@@ -136,10 +199,10 @@ export default function CampaignDialerPage() {
         date: new Date().toISOString(),
       });
 
-      // 3. Move to Next Lead
+      // 3. Move to Next Lead in Queue
       resetState();
       
-      if (currentIndex >= rawLeads.length - 1) {
+      if (currentIndex >= queueIds.length - 1) {
         router.push(`/campaigns/${campaignId}`);
       } else {
         setCurrentIndex(prev => prev + 1);
@@ -153,26 +216,19 @@ export default function CampaignDialerPage() {
     }
   };
 
-  const resetState = () => {
-    setIsCalling(false);
-    setStartTime(null);
-    setElapsedSeconds(0);
-    setIsTimerRunning(false);
-    setNotes("");
-    // no op
-  };
-
   const backLead = () => {
     resetState();
-    if (currentIndex > 0) setCurrentIndex(i => i - 1);
+    if (currentIndex > 0) {
+      setCurrentIndex(i => i - 1);
+    }
   };
 
   const skipLead = () => {
     resetState();
-    if (currentIndex < rawLeads.length - 1) {
+    if (currentIndex < queueIds.length - 1) {
       setCurrentIndex(prev => prev + 1);
     } else {
-      setCurrentIndex(0); // wrap around
+      router.push(`/campaigns/${campaignId}`);
     }
   };
 
@@ -183,14 +239,31 @@ export default function CampaignDialerPage() {
         
         <div style={{ background: 'rgba(20,20,25,0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--radius-xl)', padding: '40px 24px', width: '100%', maxWidth: '400px', textAlign: 'center', boxShadow: 'var(--shadow-xl)', display: 'flex', flexDirection: 'column', alignItems: 'center', backdropFilter: 'blur(20px)' }}>
           
-          <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24, boxShadow: '0 0 20px rgba(124,58,237,0.2)' }}>
+          <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20, boxShadow: '0 0 20px rgba(124,58,237,0.2)' }}>
             <User size={40} style={{ color: '#c4b5fd' }} />
           </div>
+
+          {/* Lead Context Badge */}
+          {currentLead.status === 'NO_ANSWER' && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: 20, padding: '4px 12px', fontSize: '0.8rem', fontWeight: 700, marginBottom: 16 }}>
+              <RotateCcw size={13} /> Retry Call (No Answer Previously)
+            </div>
+          )}
+          {currentLead.status === 'PENDING' && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(139, 92, 246, 0.15)', color: '#c4b5fd', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: 20, padding: '4px 12px', fontSize: '0.8rem', fontWeight: 700, marginBottom: 16 }}>
+              Fresh Lead (Uncalled)
+            </div>
+          )}
+          {currentLead.status !== 'PENDING' && currentLead.status !== 'NO_ANSWER' && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 20, padding: '4px 12px', fontSize: '0.8rem', fontWeight: 700, marginBottom: 16 }}>
+              <CheckCircle size={13} /> Recorded: {currentLead.status}
+            </div>
+          )}
 
           <div style={{ fontSize: '2rem', fontWeight: 800, marginBottom: 8, color: 'var(--color-text)', lineHeight: 1.2 }}>
             {currentLead.name}
           </div>
-          <div style={{ fontSize: '1.25rem', fontFamily: 'monospace', color: '#fff', marginBottom: 32, letterSpacing: '1px', opacity: 0.9 }}>
+          <div style={{ fontSize: '1.25rem', fontFamily: 'monospace', color: '#fff', marginBottom: 28, letterSpacing: '1px', opacity: 0.9 }}>
             {currentLead.phone}
           </div>
 
@@ -288,7 +361,7 @@ export default function CampaignDialerPage() {
           onClose={() => setShowAddContactModal(false)}
           personToEdit={{ name: currentLead.name, phone: currentLead.phone }}
           onSuccess={async (newPersonId) => {
-             await db.campaignLeads.update(currentLead.id as string, { personId: newPersonId });
+             await db.campaignLeads.update(currentLead.id as string, { personId: newPersonId, status: 'CONVERTED' });
              setShowAddContactModal(false);
           }}
         />
@@ -304,13 +377,21 @@ export default function CampaignDialerPage() {
             &larr; Back
           </button>
           <div style={{ fontSize: '0.85rem', color: '#c4b5fd', fontWeight: 700, background: 'rgba(124,58,237,0.15)', padding: '6px 12px', borderRadius: 'var(--radius-full)', border: '1px solid rgba(124,58,237,0.3)' }}>
-            {currentIndex + 1} of {rawLeads.length}
+            {currentIndex + 1} of {queueIds.length}
           </div>
-          <button onClick={skipLead} disabled={currentIndex >= rawLeads.length - 1} style={{ background: 'transparent', border: 'none', color: currentIndex >= rawLeads.length - 1 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.5)', cursor: currentIndex >= rawLeads.length - 1 ? 'default' : 'pointer', fontWeight: 600 }}>
+          <button onClick={skipLead} disabled={currentIndex >= queueIds.length - 1} style={{ background: 'transparent', border: 'none', color: currentIndex >= queueIds.length - 1 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.5)', cursor: currentIndex >= queueIds.length - 1 ? 'default' : 'pointer', fontWeight: 600 }}>
             Skip &rarr;
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CampaignDialerPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: '#fff' }}>Loading dialer...</div>}>
+      <CampaignDialerContent />
+    </Suspense>
   );
 }

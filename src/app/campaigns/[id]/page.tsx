@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLiveQuery } from "@/lib/firestore";
 import { db } from "@/lib/db";
-import { PhoneCall, ArrowLeft, Play, User, Clock, CheckCircle, Edit, Trash2, Download } from "lucide-react";
+import { PhoneCall, ArrowLeft, Play, User, Clock, CheckCircle, Edit, Trash2, Download, RotateCcw } from "lucide-react";
 import { EditCampaignModal } from "@/components/campaigns/EditCampaignModal";
 import styles from "./CampaignDetails.module.css";
 
@@ -17,6 +17,7 @@ export default function CampaignDetailsPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'NO_ANSWER' | 'INTERESTED' | 'NOT_INTERESTED' | 'FOLLOW_UP' | 'PENDING'>('ALL');
 
   const campaign = useLiveQuery(async () => {
     return await db.campaigns.get(campaignId);
@@ -43,9 +44,18 @@ export default function CampaignDetailsPage() {
     : rawLeads.filter(l => String(l.assignedToUserId) === String(currentUser.id));
 
   const totalLeads = visibleLeads.length;
-  const completedLeads = visibleLeads.filter(l => l.status !== 'PENDING' && l.status !== 'NO_ANSWER').length; // No answer means still incomplete technically
-  
-  const pendingLeads = visibleLeads.filter(l => l.status === 'PENDING' || l.status === 'NO_ANSWER');
+  const uncalledLeads = visibleLeads.filter(l => l.status === 'PENDING');
+  const noAnswerLeads = visibleLeads.filter(l => l.status === 'NO_ANSWER');
+  const completedLeads = visibleLeads.filter(l => l.status !== 'PENDING' && l.status !== 'NO_ANSWER');
+  const interestedLeads = visibleLeads.filter(l => l.status === 'INTERESTED' || l.status === 'CONVERTED');
+  const notInterestedLeads = visibleLeads.filter(l => l.status === 'NOT_INTERESTED');
+  const followUpLeads = visibleLeads.filter(l => l.status === 'FOLLOW_UP');
+
+  const filteredLeads = visibleLeads.filter(lead => {
+    if (statusFilter === 'ALL') return true;
+    if (statusFilter === 'INTERESTED') return lead.status === 'INTERESTED' || lead.status === 'CONVERTED';
+    return lead.status === statusFilter;
+  });
 
   const getUserName = (id: string) => {
     const u = teamUsers?.find(u => String(u.id) === String(id));
@@ -58,6 +68,8 @@ export default function CampaignDetailsPage() {
       case 'INTERESTED': return <span className={`${styles.badge} ${styles.success}`}>Interested</span>;
       case 'CONVERTED': return <span className={`${styles.badge} ${styles.success}`}>Converted</span>;
       case 'NOT_INTERESTED': return <span className={`${styles.badge} ${styles.danger}`}>Not Interested</span>;
+      case 'FOLLOW_UP': return <span className={`${styles.badge} ${styles.pending}`}>Follow Up</span>;
+      case 'AVERAGE': return <span className={`${styles.badge} ${styles.warning}`}>Average</span>;
       case 'NO_ANSWER': return <span className={`${styles.badge} ${styles.warning}`}>No Answer (Retry)</span>;
       default: return <span className={styles.badge}>{status}</span>;
     }
@@ -84,7 +96,7 @@ export default function CampaignDetailsPage() {
 
   const downloadCSV = () => {
     const headers = ["Name", "Phone", "Assigned Member", "Status", "Notes", "Duration (mins)", "Call Date"];
-    const rows = visibleLeads.map(l => {
+    const rows = filteredLeads.map(l => {
        const u = teamUsers?.find(u => String(u.id) === String(l.assignedToUserId));
        return [
          l.name,
@@ -101,7 +113,7 @@ export default function CampaignDetailsPage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `campaign_responses_${campaignId}.csv`);
+    link.setAttribute("download", `campaign_responses_${campaignId}_${statusFilter.toLowerCase()}.csv`);
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -129,14 +141,47 @@ export default function CampaignDetailsPage() {
               </div>
             )}
           </div>
-          <button 
-            className="primary-btn" 
-            style={{ padding: '12px 24px', fontSize: '1.1rem', flexShrink: 0, marginLeft: 16 }}
-            disabled={pendingLeads.length === 0}
-            onClick={() => router.push(`/campaigns/${campaignId}/dialer`)}
-          >
-            <Play size={20} /> {pendingLeads.length === 0 ? "All Done!" : "Start Calling"}
-          </button>
+
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+            {uncalledLeads.length > 0 && (
+              <button 
+                className="primary-btn" 
+                style={{ padding: '12px 20px', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 8 }}
+                onClick={() => router.push(`/campaigns/${campaignId}/dialer?mode=pending`)}
+              >
+                <Play size={18} /> Start Calling ({uncalledLeads.length})
+              </button>
+            )}
+
+            {noAnswerLeads.length > 0 && (
+              <button 
+                className="primary-btn" 
+                style={{ 
+                  padding: '12px 20px', 
+                  fontSize: '1rem', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 8,
+                  background: uncalledLeads.length > 0 ? 'rgba(245, 158, 11, 0.15)' : 'var(--color-primary)',
+                  color: uncalledLeads.length > 0 ? '#f59e0b' : '#fff',
+                  border: uncalledLeads.length > 0 ? '1px solid rgba(245, 158, 11, 0.4)' : 'none'
+                }}
+                onClick={() => router.push(`/campaigns/${campaignId}/dialer?mode=retry`)}
+              >
+                <RotateCcw size={18} /> Retry No Answer ({noAnswerLeads.length})
+              </button>
+            )}
+
+            {uncalledLeads.length === 0 && noAnswerLeads.length === 0 && (
+              <button 
+                className="primary-btn" 
+                style={{ padding: '12px 20px', fontSize: '1rem', opacity: 0.7, cursor: 'default' }}
+                disabled
+              >
+                <CheckCircle size={18} /> All Calls Completed!
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -146,17 +191,23 @@ export default function CampaignDetailsPage() {
           <p className={styles.statNumber}>{totalLeads}</p>
         </div>
         <div className={styles.statBox}>
-          <h3>Pending</h3>
-          <p className={styles.statNumber}>{pendingLeads.length}</p>
+          <h3>Pending (New)</h3>
+          <p className={styles.statNumber}>{uncalledLeads.length}</p>
+        </div>
+        <div className={styles.statBox}>
+          <h3 style={{ color: '#f59e0b' }}>No Answer</h3>
+          <p className={styles.statNumber} style={{ color: '#f59e0b' }}>
+            {noAnswerLeads.length}
+          </p>
         </div>
         <div className={styles.statBox}>
           <h3>Completed</h3>
-          <p className={styles.statNumber}>{completedLeads}</p>
+          <p className={styles.statNumber}>{completedLeads.length}</p>
         </div>
         <div className={styles.statBox}>
           <h3>Interested</h3>
           <p className={`${styles.statNumber} ${styles.textSuccess}`}>
-            {visibleLeads.filter(l => l.status === 'INTERESTED' || l.status === 'CONVERTED').length}
+            {interestedLeads.length}
           </p>
         </div>
       </div>
@@ -165,15 +216,60 @@ export default function CampaignDetailsPage() {
         <div className={styles.tableHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <div>
             <h2>Lead Responses</h2>
-            <p>You can see responses here and restart the dialer to retry 'No Answer' leads.</p>
+            <p>View calling responses, filter by outcome, or restart the dialer to retry 'No Answer' leads.</p>
           </div>
           <button onClick={downloadCSV} style={{ background: 'var(--color-surface)', border: '1px solid var(--glass-border)', color: 'var(--color-text)', padding: '8px 16px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem', cursor: 'pointer', fontWeight: 600 }}>
-            <Download size={18} /> Export CSV
+            <Download size={18} /> Export CSV {statusFilter !== 'ALL' ? `(${statusFilter})` : ''}
+          </button>
+        </div>
+
+        <div className={styles.filterTabs}>
+          <button 
+            type="button"
+            onClick={() => setStatusFilter('ALL')} 
+            className={`${styles.filterTab} ${statusFilter === 'ALL' ? styles.filterTabActive : ''}`}
+          >
+            All ({totalLeads})
+          </button>
+          <button 
+            type="button"
+            onClick={() => setStatusFilter('NO_ANSWER')} 
+            className={`${styles.filterTab} ${statusFilter === 'NO_ANSWER' ? styles.filterTabActive : ''}`}
+          >
+            No Answer ({noAnswerLeads.length})
+          </button>
+          <button 
+            type="button"
+            onClick={() => setStatusFilter('INTERESTED')} 
+            className={`${styles.filterTab} ${statusFilter === 'INTERESTED' ? styles.filterTabActive : ''}`}
+          >
+            Interested ({interestedLeads.length})
+          </button>
+          <button 
+            type="button"
+            onClick={() => setStatusFilter('NOT_INTERESTED')} 
+            className={`${styles.filterTab} ${statusFilter === 'NOT_INTERESTED' ? styles.filterTabActive : ''}`}
+          >
+            Not Interested ({notInterestedLeads.length})
+          </button>
+          <button 
+            type="button"
+            onClick={() => setStatusFilter('FOLLOW_UP')} 
+            className={`${styles.filterTab} ${statusFilter === 'FOLLOW_UP' ? styles.filterTabActive : ''}`}
+          >
+            Follow Up ({followUpLeads.length})
+          </button>
+          <button 
+            type="button"
+            onClick={() => setStatusFilter('PENDING')} 
+            className={`${styles.filterTab} ${statusFilter === 'PENDING' ? styles.filterTabActive : ''}`}
+          >
+            Pending ({uncalledLeads.length})
           </button>
         </div>
         
-        {visibleLeads.length === 0 ? (
-          <div className={styles.emptyState}>No leads assigned to you.</div>
+        {filteredLeads.length === 0 ? (
+          <div className={styles.emptyState}>No leads found for this filter.</div>
         ) : (
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
@@ -188,7 +284,7 @@ export default function CampaignDetailsPage() {
                 </tr>
               </thead>
               <tbody>
-                {visibleLeads.map(lead => (
+                {filteredLeads.map(lead => (
                   <tr key={lead.id}>
                     <td className={styles.fw600}>{lead.name}</td>
                     <td className={styles.monospace}>{lead.phone}</td>
