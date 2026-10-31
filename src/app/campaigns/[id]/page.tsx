@@ -29,19 +29,23 @@ export default function CampaignDetailsPage() {
   }, [campaignId]);
 
   const teamUsers = useLiveQuery(async () => {
-    if (!currentUser?.teamId) return [];
     const list = await db.users.toArray();
-    return list.filter(u => u.teamId === currentUser.teamId);
-  }, [currentUser]);
+    const targetTeam = campaign?.teamId || currentUser?.teamId;
+    if (!targetTeam) return list;
+    return list.filter(u => u.teamId === targetTeam);
+  }, [currentUser, campaign?.teamId]);
 
-  if (!currentUser || !campaign || !rawLeads) return null;
+  if (!currentUser) return null;
+  if (!campaign && !isDeleting) return null;
+  if (!rawLeads && !isDeleting) return null;
 
   const isLeader = ["LEADER", "FOLK_LEADER", "ADMIN", "SUPER_ADMIN", "FOLK_GUIDE"].includes(currentUser.role);
+  const canManage = isLeader || String(campaign?.creatorId) === String(currentUser?.id);
   
   // Members only see their leads. Leaders see all.
   const visibleLeads = isLeader 
-    ? rawLeads 
-    : rawLeads.filter(l => String(l.assignedToUserId) === String(currentUser.id));
+    ? (rawLeads || [])
+    : (rawLeads || []).filter(l => String(l.assignedToUserId) === String(currentUser.id));
 
   const totalLeads = visibleLeads.length;
   const uncalledLeads = visibleLeads.filter(l => l.status === 'PENDING');
@@ -75,24 +79,30 @@ export default function CampaignDetailsPage() {
     }
   };
 
-
-
-  
   const performDelete = async () => {
     setIsDeleting(true);
     try {
-      await db.campaigns.delete(campaignId);
-      for (const l of rawLeads) {
-         await db.campaignLeads.delete(l.id);
+      // 1. Delete all associated leads in parallel chunks first
+      if (rawLeads && rawLeads.length > 0) {
+        const chunkSize = 25;
+        for (let i = 0; i < rawLeads.length; i += chunkSize) {
+          const chunk = rawLeads.slice(i, i + chunkSize);
+          await Promise.all(chunk.map(l => db.campaignLeads.delete(l.id)));
+        }
       }
-      router.push('/campaigns');
-    } catch(e) {
-      console.error(e);
-      alert("Error deleting campaign");
+      
+      // 2. Delete the campaign document
+      await db.campaigns.delete(campaignId);
+
+      // 3. Immediately route back to campaigns page
+      router.replace('/campaigns');
+    } catch(e: any) {
+      console.error("Error deleting campaign:", e);
+      alert("Error deleting campaign: " + (e?.message || e));
       setIsDeleting(false);
+      setShowDeleteModal(false);
     }
   };
-
 
   const downloadCSV = () => {
     const headers = ["Name", "Phone", "Assigned Member", "Status", "Notes", "Duration (mins)", "Call Date"];
@@ -127,10 +137,10 @@ export default function CampaignDetailsPage() {
         </button>
         <div className={styles.headerFlex} style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
           <div style={{ wordBreak: 'break-word', overflowWrap: 'break-word', maxWidth: '100%', flex: 1 }}>
-            <h1 style={{ fontSize: '2.5rem', lineHeight: 1.1, marginBottom: 8 }}>{campaign.title}</h1>
-            <p style={{ color: 'var(--color-text-muted)', marginBottom: 12 }}>{campaign.description}</p>
+            <h1 style={{ fontSize: '2.5rem', lineHeight: 1.1, marginBottom: 8 }}>{campaign?.title || "Campaign"}</h1>
+            <p style={{ color: 'var(--color-text-muted)', marginBottom: 12 }}>{campaign?.description || ""}</p>
             
-            {(currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'FOLK_GUIDE' || String(campaign.creatorId) === String(currentUser?.id)) && (
+            {canManage && (
               <div style={{ display: 'flex', gap: 12 }}>
                 <button onClick={() => setShowEditModal(true)} className={styles.actionBtn}>
                   <Edit size={16} /> Edit
@@ -304,7 +314,7 @@ export default function CampaignDetailsPage() {
         )}
       </div>
 
-      {showEditModal && teamUsers && (
+      {showEditModal && teamUsers && rawLeads && campaign && (
         <EditCampaignModal 
           campaign={campaign} 
           teamUsers={teamUsers}
